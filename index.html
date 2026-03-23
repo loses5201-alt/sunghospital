@@ -443,6 +443,11 @@ tr:hover td{background:var(--s2)}
 .eexp.open{display:block}
 
 /* ── LOGIN PAGE ── */
+.btn-google{width:100%;padding:11px;border-radius:var(--radius-sm);border:1.5px solid #dadce0;background:white;color:#3c4043;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;margin-top:2px}
+.btn-google:hover{background:#f8f9fa;border-color:#c4527a;box-shadow:0 1px 6px rgba(0,0,0,0.1)}
+.login-divider{display:flex;align-items:center;gap:10px;margin:12px 0}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--b1)}
+.login-divider span{font-size:11px;color:var(--faint)}
 #loginScreen{position:fixed;inset:0;overflow-y:auto;background:linear-gradient(145deg,#4a1535 0%,#8b3060 45%,#c4527a 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px}
 .login-card{position:relative;background:white;border-radius:20px;padding:20px 36px 32px;width:390px;max-width:94vw;box-shadow:0 30px 80px rgba(100,20,50,0.35)}
 .login-hero{position:absolute;top:-155px;left:50%;transform:translateX(-50%);width:160px;height:190px;z-index:10;filter:drop-shadow(0 8px 40px rgba(212,175,55,0.6))}
@@ -463,6 +468,7 @@ tr:hover td{background:var(--s2)}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
@@ -587,6 +593,7 @@ function loadStore(){
 }
 // Firebase 同步設定
 let fbDb = null;
+let fbAuth = null;
 (function() {
   try {
     firebase.initializeApp({
@@ -599,6 +606,7 @@ let fbDb = null;
   appId: "1:1019796894908:web:7bb5aad634f90974a80cb9"
 });
     fbDb = firebase.database();
+    fbAuth = firebase.auth();
     console.log('✓ Firebase 連線成功');
   } catch(e) { console.warn('本機模式:', e.message); }
 })();
@@ -1732,6 +1740,37 @@ function showModal(title,bodyHtml,onSave){
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');}
 document.getElementById('overlay').onclick=function(e){if(e.target===this)closeModal();};
+
+
+function doGoogleLogin(){
+  if(!fbAuth){alert('Firebase 連線中，請稍後再試');return;}
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(provider).then(result=>{
+    const gUser = result.user;
+    // 找看看有沒有對應帳號
+    let matched = store.users.find(u=>u.email===gUser.email||u.googleId===gUser.uid);
+    if(!matched){
+      // 第一次登入自動建立帳號
+      matched = {
+        id:uid(), username:gUser.email.split('@')[0],
+        password:'', name:gUser.displayName||gUser.email.split('@')[0],
+        email:gUser.email, googleId:gUser.uid,
+        role:'member', deptId:'', title:'', avatar:'ava'
+      };
+      store.users.push(matched);
+      saveStore();
+    }
+    currentUser = matched;
+    document.getElementById('loginErr').style.display='none';
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appShell').style.display='block';
+    initApp();
+  }).catch(e=>{
+    const el=document.getElementById('loginErr');
+    el.textContent='Google 登入失敗：'+e.message;
+    el.style.display='block';
+  });
+}
 
 function setSyncDot(ok) {
   const el = document.getElementById('syncDot');
