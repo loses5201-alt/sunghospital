@@ -276,7 +276,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 /* ── Calendar ── */
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .cal-nav{display:flex;gap:8px;align-items:center}
-.cal-nav button{width:30px;height:30px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .12s}
+.cal-nav button{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .12s}
 .cal-nav button:hover{background:var(--s2)}
 .cal-title{font-size:15px;font-weight:600;letter-spacing:-.02em}
 .cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
@@ -287,7 +287,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .cal-cell.today{border-color:var(--green);background:var(--green-bg)}
 .cal-cell.other-month .cal-date-num{color:var(--faint)}
 .cal-date-num{font-size:12px;font-weight:500;margin-bottom:3px}
-.cal-event{font-size:10px;padding:1px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-events-desktop{display:block}.cal-event{font-size:10px;padding:1px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .cal-event-meeting{background:var(--blue-bg);color:var(--blue)}
 .cal-event-shift{background:var(--green-bg);color:var(--green)}
 .cal-event-urgent{background:var(--red-bg);color:var(--red)}
@@ -376,8 +376,11 @@ tr:hover td{background:var(--s2)}
   .tabs{padding:0 14px}
   .stats-bar{display:none}
   .modal{padding:18px}
-  .cal-cell{min-height:54px}
-  .cal-event{display:none}
+  .cal-cell{min-height:38px;padding:3px}
+  .cal-events-desktop{display:none}
+  .cal-date-num{font-size:11px}
+  .cal-grid{gap:1px}
+  .cal-grid-header{margin-bottom:2px}
 }
 @media(max-width:440px){
   .sidebar{position:fixed;top:0;left:48px;height:100vh;z-index:400;box-shadow:var(--shadow-md)}
@@ -1517,8 +1520,10 @@ function renderCalendar(){
       ...meetings.map(m=>`<div class="cal-event cal-event-meeting" onclick="event.stopPropagation();selectMeeting('${m.id}');setPage('meetings')" title="${esc(m.title)}">${esc(m.title)}</div>`),
       ...shifts.map(s=>`<div class="cal-event cal-event-shift" title="${esc(s.unit)}">${s.shift==='morning'?'早':s.shift==='afternoon'?'午':'夜'} ${esc(s.unit)}</div>`)
     ].join('');
-    return`<div class="cal-cell ${isToday?'today':''} ${!cell.current?'other-month':''}">
-      <div class="cal-date-num">${cell.date.getDate()}</div>${events}
+    const hasEvent = meetings.length > 0 || shifts.length > 0;
+    return`<div class="cal-cell ${isToday?'today':''} ${!cell.current?'other-month':''}" onclick="showCalDay('${ds}')">
+      <div class="cal-date-num">${cell.date.getDate()}${hasEvent?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--pk);margin-left:3px;vertical-align:middle"></span>':''}</div>
+      <div class="cal-events-desktop">${events}</div>
     </div>`;
   }).join('');
 
@@ -1537,6 +1542,24 @@ function renderCalendar(){
     <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--green-bg);border-radius:2px;display:inline-block"></span>交班</span>
   </div>`;
 }
+
+function showCalDay(ds) {
+  const meetings = store.meetings.filter(m => m.date === ds);
+  const shifts = store.shifts.filter(s => s.date === ds);
+  if (!meetings.length && !shifts.length) return;
+  const items = [
+    ...meetings.map(m => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);cursor:pointer" onclick="closeModal();selectMeeting('${m.id}');setPage('meetings')">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0"></span>
+      <div><div style="font-size:13px;font-weight:600">${esc(m.title)}</div><div style="font-size:11px;color:var(--faint)">會議</div></div>
+    </div>`),
+    ...shifts.map(s => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1)">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
+      <div><div style="font-size:13px;font-weight:600">${esc(s.unit)}</div><div style="font-size:11px;color:var(--faint)">${s.shift==='morning'?'早班':s.shift==='afternoon'?'午班':'夜班'}</div></div>
+    </div>`)
+  ].join('');
+  showModal(fmtDate(ds) + ' 行程', items, null);
+}
+
 function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 
 // ══════════════════════════════════════════
