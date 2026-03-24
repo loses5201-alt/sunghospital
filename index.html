@@ -763,11 +763,19 @@ function initApp(){
   if(fbDb){
     fbDb.ref('data').once('value').then(function(snap){
       var d=snap.val();
-      if(d){store=d;try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){} mergeNew();}
-      else{fbDb.ref('data').set(store);}
+      // 只有雲端資料有實質內容才覆蓋本地
+      if(d && d.users && d.users.length > 0){
+        store=d;
+        try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
+        mergeNew();
+      } else {
+        // 雲端是空的，把本地資料推上去
+        fbDb.ref('data').set(store);
+      }
+      // 即時監聽：只有在有實質資料時才更新
       fbDb.ref('data').on('value',function(s){
         var nd=s.val();
-        if(nd&&currentUser){
+        if(nd && nd.users && nd.users.length > 0 && currentUser){
           store=nd;
           try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
           updateAnnBadge();updateIrBadge();
