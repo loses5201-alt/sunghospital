@@ -276,7 +276,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 /* ── Calendar ── */
 .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .cal-nav{display:flex;gap:8px;align-items:center}
-.cal-nav button{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .12s}
+.cal-nav button{width:30px;height:30px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text);transition:background .12s}
 .cal-nav button:hover{background:var(--s2)}
 .cal-title{font-size:15px;font-weight:600;letter-spacing:-.02em}
 .cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
@@ -287,7 +287,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .cal-cell.today{border-color:var(--green);background:var(--green-bg)}
 .cal-cell.other-month .cal-date-num{color:var(--faint)}
 .cal-date-num{font-size:12px;font-weight:500;margin-bottom:3px}
-.cal-events-desktop{display:block}.cal-event{font-size:10px;padding:1px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-event{font-size:10px;padding:1px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .cal-event-meeting{background:var(--blue-bg);color:var(--blue)}
 .cal-event-shift{background:var(--green-bg);color:var(--green)}
 .cal-event-urgent{background:var(--red-bg);color:var(--red)}
@@ -376,11 +376,8 @@ tr:hover td{background:var(--s2)}
   .tabs{padding:0 14px}
   .stats-bar{display:none}
   .modal{padding:18px}
-  .cal-cell{min-height:38px;padding:3px}
-  .cal-events-desktop{display:none}
-  .cal-date-num{font-size:11px}
-  .cal-grid{gap:1px}
-  .cal-grid-header{margin-bottom:2px}
+  .cal-cell{min-height:54px}
+  .cal-event{display:none}
 }
 @media(max-width:440px){
   .sidebar{position:fixed;top:0;left:48px;height:100vh;z-index:400;box-shadow:var(--shadow-md)}
@@ -446,11 +443,6 @@ tr:hover td{background:var(--s2)}
 .eexp.open{display:block}
 
 /* ── LOGIN PAGE ── */
-.btn-google{width:100%;padding:11px;border-radius:var(--radius-sm);border:1.5px solid #dadce0;background:white;color:#3c4043;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .15s;margin-top:2px}
-.btn-google:hover{background:#f8f9fa;border-color:#c4527a;box-shadow:0 1px 6px rgba(0,0,0,0.1)}
-.login-divider{display:flex;align-items:center;gap:10px;margin:12px 0}
-.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--b1)}
-.login-divider span{font-size:11px;color:var(--faint)}
 #loginScreen{position:fixed;inset:0;overflow-y:auto;background:linear-gradient(145deg,#4a1535 0%,#8b3060 45%,#c4527a 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px}
 .login-card{position:relative;background:white;border-radius:20px;padding:20px 36px 32px;width:390px;max-width:94vw;box-shadow:0 30px 80px rgba(100,20,50,0.35)}
 .login-hero{position:absolute;top:-155px;left:50%;transform:translateX(-50%);width:160px;height:190px;z-index:10;filter:drop-shadow(0 8px 40px rgba(212,175,55,0.6))}
@@ -488,11 +480,8 @@ tr:hover td{background:var(--s2)}
     <label class="login-lbl">密碼</label>
     <input class="login-input" id="loginPass" type="password" placeholder="輸入密碼" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn-login" onclick="doLogin()">登入系統</button>
-    <div class="login-divider"><span>或</span></div>
-    <button class="btn-google" onclick="doGoogleLogin()">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      使用 Google 帳號登入
-    </button>
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0"><div style="flex:1;height:1px;background:var(--b1)"></div><span style="font-size:11px;color:var(--faint)">或</span><div style="flex:1;height:1px;background:var(--b1)"></div></div>
+    <button onclick="doGoogleLogin()" style="width:100%;padding:11px;border-radius:var(--radius-sm);border:1.5px solid #dadce0;background:white;color:#3c4043;font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>使用 Google 帳號登入</button>
     <div class="login-hints">
       <strong>管理員：</strong>admin / admin123 &nbsp;|&nbsp; gong_yoo / 123456<br>
       <strong>醫護：</strong>songhye / 123456 &nbsp;|&nbsp; leeminho / 123456<br>
@@ -594,17 +583,9 @@ tr:hover td{background:var(--s2)}
 // ══════════════════════════════════════════
 // STORAGE & INIT
 // ══════════════════════════════════════════
-const STORE_KEY='sunghospital_v3';
-function loadStore(){
-  ['sunghospital_v1','sunghospital_v2','medlog_v4','medlog_v3','medlog_v2','meetinglog_v2'].forEach(k=>localStorage.removeItem(k));
-  try{const d=localStorage.getItem(STORE_KEY);return d?JSON.parse(d):null;}catch{return null;}
-}
-// Firebase 同步設定
-let fbDb = null;
-let fbAuth = null;
-(function() {
-  try {
-    firebase.initializeApp({
+
+// ── Firebase 雲端同步 ──
+const FB_CONFIG = {
   apiKey: "AIzaSyCVzKxsbUW4zDeCOOUjSlZqYNjb0zn7VfU",
   authDomain: "sunghospital-9eb65.firebaseapp.com",
   databaseURL: "https://sunghospital-9eb65-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -612,16 +593,31 @@ let fbAuth = null;
   storageBucket: "sunghospital-9eb65.firebasestorage.app",
   messagingSenderId: "1019796894908",
   appId: "1:1019796894908:web:7bb5aad634f90974a80cb9"
-});
+};
+let fbDb = null;
+let fbAuth = null;
+
+window.addEventListener('load', function() {
+  try {
+    if (typeof firebase === 'undefined') { setSyncDot(false); return; }
+    if(!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
     fbDb = firebase.database();
     fbAuth = firebase.auth();
-    console.log('✓ Firebase 連線成功');
-  } catch(e) { console.warn('本機模式:', e.message); }
-})();
+    setSyncDot(true);
+  } catch(e) {
+    setSyncDot(false);
+  }
+});
 
-function saveStore() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
-  if (fbDb) fbDb.ref('hospitalData').set(store).catch(()=>{});
+const STORE_KEY='sunghospital_v3';
+function loadStore(){
+  // 清除所有舊版本快取
+  ['sunghospital_v1','sunghospital_v2','medlog_v4','medlog_v3','medlog_v2','meetinglog_v2'].forEach(k=>localStorage.removeItem(k));
+  try{const d=localStorage.getItem(STORE_KEY);return d?JSON.parse(d):null;}catch{return null;}
+}
+function saveStore(){
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
+  if(fbDb){fbDb.ref('data').set(store).catch(function(){});}
 }
 
 function defaultStore(){
@@ -721,10 +717,10 @@ let currentUser=null,currentMeetingId=null,currentTab='notes',currentPage='meeti
 // ══════════════════════════════════════════
 const AVCOLORS=['av-a','av-b','av-c','av-d','av-e','av-f','av-g','av-h','av-i','av-j'];
 function getAv(uid){const u=store.users.find(x=>x.id===uid);return u?u.avatar:AVCOLORS[0];}
-function userName(uid){const u=store.users.find(x=>x.id===uid);return u?u.name:'—';}
+function userName(uid){if(!uid)return'';const u=store.users&&store.users.find(x=>x.id===uid);return u?u.name:'';}
 function userDept(uid){const u=store.users.find(x=>x.id===uid);if(!u||!u.deptId)return'';const d=store.departments.find(x=>x.id===u.deptId);return d?d.name:'';}
 function userTitle(uid){const u=store.users.find(x=>x.id===uid);return u?u.title||'':'';}
-function initials(name){const p=name.trim().split(/\s+/);return p.length>=2?p[0][0]+p[1][0]:name.slice(0,2).toUpperCase();}
+function initials(name){if(!name)return'?';const p=name.trim().split(/\s+/);return p.length>=2?p[0][0]+p[1][0]:name.slice(0,2).toUpperCase();}
 function today(){return new Date().toISOString().split('T')[0];}
 function nowTime(){return new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});}
 function fmtDate(d){if(!d)return'';const[y,m,dd]=d.split('-');return`${y}/${m}/${dd}`;}
@@ -732,7 +728,7 @@ function dueClass(due,status){
   if(status==='已完成')return'due-ok';if(!due)return'';
   if(due<today())return'due-over';if(due<=addD(today(),3))return'due-warn';return'due-ok';
 }
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,5);}
 function isAdmin(){return currentUser&&currentUser.role==='admin';}
 function prioBadge(p){
@@ -749,8 +745,11 @@ function avatarEl(uid,size=26){
 // LOGIN
 // ══════════════════════════════════════════
 function doLogin(){
-  const uname=document.getElementById('loginUser').value.trim();
-  const pass=document.getElementById('loginPass').value;
+  const userEl=document.getElementById('loginUser');
+  const passEl=document.getElementById('loginPass');
+  if(!userEl||!passEl)return;
+  const uname=userEl.value.trim();
+  const pass=passEl.value;
   const user=store.users.find(u=>u.username===uname&&u.password===pass);
   if(!user){document.getElementById('loginErr').style.display='block';return;}
   currentUser=user;
@@ -761,30 +760,22 @@ function doLogin(){
 }
 function initApp(){
   mergeNew();
-  if (fbDb) {
-    fbDb.ref('hospitalData').once('value').then(snap => {
-      const data = snap.val();
-      if (data) {
-        store = data;
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
-        mergeNew();
-      } else {
-        fbDb.ref('hospitalData').set(store);
-      }
-      // 即時監聽變更
-      fbDb.ref('hospitalData').on('value', s => {
-        const d = s.val();
-        if (d && currentUser) {
-          const wasPage = currentPage;
-          store = d;
-          try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
-          if (wasPage === 'meetings') { renderSidebar(); if(currentMeetingId) renderMeetingMain(); }
-          updateAnnBadge(); updateIrBadge();
+  if(fbDb){
+    fbDb.ref('data').once('value').then(function(snap){
+      var d=snap.val();
+      if(d){store=d;try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){} mergeNew();}
+      else{fbDb.ref('data').set(store);}
+      fbDb.ref('data').on('value',function(s){
+        var nd=s.val();
+        if(nd&&currentUser){
+          store=nd;
+          try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
+          updateAnnBadge();updateIrBadge();
         }
       });
       setSyncDot(true);
-    }).catch(() => setSyncDot(false));
-  } else { setSyncDot(false); }
+    }).catch(function(){setSyncDot(false);});
+  }
   if(isAdmin()){
     document.getElementById('navDepts').style.display='flex';
     document.getElementById('navUsers').style.display='flex';
@@ -794,9 +785,13 @@ function initApp(){
   checkPendingEmergency();
 }
 function updateNavUser(){
+  if(!currentUser)return;
   const el=document.getElementById('navUser');
-  el.textContent=initials(currentUser.name);
-  el.className='nav-user '+currentUser.avatar;
+  if(el){el.textContent=initials(currentUser.name);el.className='nav-user '+currentUser.avatar;}
+  const nm=document.getElementById('navUserName');
+  const rl=document.getElementById('navUserRole');
+  if(nm)nm.textContent=currentUser.name;
+  if(rl)rl.textContent=(userTitle(currentUser.id)||'')+(userDept(currentUser.id)?' · '+userDept(currentUser.id):'');
 }
 function toggleProfileMenu(){
   const m=document.getElementById('profileMenu');
@@ -815,7 +810,36 @@ document.addEventListener('click',function(e){
   const u=document.getElementById('navUser');
   if(m&&!m.contains(e.target)&&u&&!u.contains(e.target))m.classList.remove('open');
 });
+function setSyncDot(ok){
+  var el=document.getElementById('syncDot');
+  if(el){el.style.background=ok?'#2e7d5a':'#b8909a';el.title=ok?'雲端同步中':'本機模式';}
+}
+function doGoogleLogin(){
+  if(!fbAuth){alert('Firebase 連線中，請稍後再試');return;}
+  var provider=new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(provider).then(function(result){
+    var gu=result.user;
+    var matched=store.users.find(function(u){return u.email===gu.email||u.googleId===gu.uid;});
+    if(!matched){
+      matched={id:uid(),username:gu.email.split('@')[0],password:'',name:gu.displayName||gu.email.split('@')[0],
+        email:gu.email,googleId:gu.uid,role:'member',deptId:'',title:'',avatar:'ava'};
+      store.users.push(matched);saveStore();
+    }
+    currentUser=matched;
+    document.getElementById('loginErr').style.display='none';
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appShell').style.display='block';
+    initApp();
+  }).catch(function(e){
+    var el=document.getElementById('loginErr');
+    el.textContent='Google 登入失敗：'+e.message;
+    el.style.display='block';
+  });
+}
 function logout(){
+  if(fbDb)fbDb.ref('data').off();
+  if(fbAuth&&fbAuth.currentUser)fbAuth.signOut();
+  
   currentUser=null;currentMeetingId=null;
   document.getElementById('appShell').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
@@ -1344,20 +1368,24 @@ function openEmergencyBroadcast(){
     <div style="background:var(--red-bg);border:1px solid #f0c0c0;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red)">
       ⚠ 緊急廣播將強制所有在線用戶收到彈出通知，需本人確認已讀。
     </div>
-    <div class="form-row"><label>緊急等級</label><select id="emLevel">
+    <div class="form-row"><label>緊急等級</label><select id="emBroadcastLevel">
       <option value="green">🟢 一般通知</option>
       <option value="yellow">🟡 黃色警示</option>
       <option value="orange">🟠 橙色警示</option>
       <option value="red">🔴 紅色緊急</option>
     </select></div>
-    <div class="form-row"><label>標題</label><input id="emTitle" placeholder="緊急事件標題..."></div>
-    <div class="form-row"><label>詳細說明</label><textarea id="emBody" placeholder="請說明緊急事件詳情、應對措施..."></textarea></div>`,sendEmergency);
+    <div class="form-row"><label>標題</label><input id="emBroadcastTitle" placeholder="緊急事件標題..."></div>
+    <div class="form-row"><label>詳細說明</label><textarea id="emBroadcastBody" placeholder="請說明緊急事件詳情、應對措施..."></textarea></div>`,sendEmergency);
 }
 function sendEmergency(){
-  const title=document.getElementById('emTitle').value.trim();
-  const body=document.getElementById('emBody').value.trim();
+  const titleEl=document.getElementById('emBroadcastTitle');
+  const bodyEl=document.getElementById('emBroadcastBody');
+  const levelEl=document.getElementById('emBroadcastLevel');
+  if(!titleEl)return;
+  const title=titleEl.value.trim();
+  const body=bodyEl?bodyEl.value.trim():'';
   if(!title)return;
-  const level=document.getElementById('emLevel').value;
+  const level=levelEl?levelEl.value:'green';
   const confirms={};
   confirms[currentUser.id]=true;
   const em={id:uid(),title,body,level,authorId:currentUser.id,time:today()+' '+nowTime(),confirms};
@@ -1520,10 +1548,8 @@ function renderCalendar(){
       ...meetings.map(m=>`<div class="cal-event cal-event-meeting" onclick="event.stopPropagation();selectMeeting('${m.id}');setPage('meetings')" title="${esc(m.title)}">${esc(m.title)}</div>`),
       ...shifts.map(s=>`<div class="cal-event cal-event-shift" title="${esc(s.unit)}">${s.shift==='morning'?'早':s.shift==='afternoon'?'午':'夜'} ${esc(s.unit)}</div>`)
     ].join('');
-    const hasEvent = meetings.length > 0 || shifts.length > 0;
-    return`<div class="cal-cell ${isToday?'today':''} ${!cell.current?'other-month':''}" onclick="showCalDay('${ds}')">
-      <div class="cal-date-num">${cell.date.getDate()}${hasEvent?'<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--pk);margin-left:3px;vertical-align:middle"></span>':''}</div>
-      <div class="cal-events-desktop">${events}</div>
+    return`<div class="cal-cell ${isToday?'today':''} ${!cell.current?'other-month':''}">
+      <div class="cal-date-num">${cell.date.getDate()}</div>${events}
     </div>`;
   }).join('');
 
@@ -1542,24 +1568,6 @@ function renderCalendar(){
     <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--green-bg);border-radius:2px;display:inline-block"></span>交班</span>
   </div>`;
 }
-
-function showCalDay(ds) {
-  const meetings = store.meetings.filter(m => m.date === ds);
-  const shifts = store.shifts.filter(s => s.date === ds);
-  if (!meetings.length && !shifts.length) return;
-  const items = [
-    ...meetings.map(m => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);cursor:pointer" onclick="closeModal();selectMeeting('${m.id}');setPage('meetings')">
-      <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0"></span>
-      <div><div style="font-size:13px;font-weight:600">${esc(m.title)}</div><div style="font-size:11px;color:var(--faint)">會議</div></div>
-    </div>`),
-    ...shifts.map(s => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1)">
-      <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
-      <div><div style="font-size:13px;font-weight:600">${esc(s.unit)}</div><div style="font-size:11px;color:var(--faint)">${s.shift==='morning'?'早班':s.shift==='afternoon'?'午班':'夜班'}</div></div>
-    </div>`)
-  ].join('');
-  showModal(fmtDate(ds) + ' 行程', items, null);
-}
-
 function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 
 // ══════════════════════════════════════════
@@ -1769,41 +1777,6 @@ function showModal(title,bodyHtml,onSave){
 function closeModal(){document.getElementById('overlay').classList.remove('open');}
 document.getElementById('overlay').onclick=function(e){if(e.target===this)closeModal();};
 
-
-function doGoogleLogin(){
-  if(!fbAuth){alert('Firebase 連線中，請稍後再試');return;}
-  const provider = new firebase.auth.GoogleAuthProvider();
-  fbAuth.signInWithPopup(provider).then(result=>{
-    const gUser = result.user;
-    // 找看看有沒有對應帳號
-    let matched = store.users.find(u=>u.email===gUser.email||u.googleId===gUser.uid);
-    if(!matched){
-      // 第一次登入自動建立帳號
-      matched = {
-        id:uid(), username:gUser.email.split('@')[0],
-        password:'', name:gUser.displayName||gUser.email.split('@')[0],
-        email:gUser.email, googleId:gUser.uid,
-        role:'member', deptId:'', title:'', avatar:'ava'
-      };
-      store.users.push(matched);
-      saveStore();
-    }
-    currentUser = matched;
-    document.getElementById('loginErr').style.display='none';
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('appShell').style.display='block';
-    initApp();
-  }).catch(e=>{
-    const el=document.getElementById('loginErr');
-    el.textContent='Google 登入失敗：'+e.message;
-    el.style.display='block';
-  });
-}
-
-function setSyncDot(ok) {
-  const el = document.getElementById('syncDot');
-  if (el) { el.style.background = ok ? '#2e7d5a' : '#b8909a'; el.title = ok ? '🟢 雲端同步中' : '⚪ 本機模式'; }
-}
 function hideSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.style.display='none';}
 
 // 新功能預設資料
