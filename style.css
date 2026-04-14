@@ -67,7 +67,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .btn-new:hover{background:var(--s2)}
 
 /* ── Main ── */
-.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;min-width:0;min-height:0}
+.main{flex:1;overflow-y:auto;min-width:0;height:100vh}
 .main-header{background:var(--surface);border-bottom:1px solid var(--b1);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;position:sticky;top:0;z-index:10}
 .main-header h1{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .main-header-meta{font-size:11px;color:var(--faint);margin-top:2px}
@@ -175,7 +175,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .chat-name{font-size:11px;font-weight:600;margin-bottom:2px;display:flex;align-items:baseline;gap:7px}
 .chat-time{font-size:10px;color:var(--faint);font-weight:400}
 .chat-bubble{font-size:13px;line-height:1.6;padding:8px 11px;background:var(--surface);border:1px solid var(--b1);border-radius:0 var(--radius) var(--radius) var(--radius);display:inline-block;max-width:85%}
-.chat-input-wrap{border-top:1px solid var(--b1);padding:10px 0 0;display:flex;gap:7px;align-items:center;flex-shrink:0}
+.chat-input-wrap{border-top:1px solid var(--b1);padding:10px 0;display:flex;gap:7px;align-items:center;position:sticky;bottom:0;background:var(--bg)}
 .chat-input{flex:1;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 11px;background:var(--surface);color:var(--text);outline:none;resize:none;line-height:1.5}
 .chat-input:focus{border-color:var(--b3)}
 .btn-send{padding:7px 14px;border-radius:var(--radius-sm);border:none;background:var(--text);color:white;font-size:12px;font-family:inherit;cursor:pointer;font-weight:500}
@@ -460,4 +460,4 @@ tr:hover td{background:var(--s2)}
 .login-noc{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid rgba(212,175,55,0.15);font-size:10px;color:#c8a060;letter-spacing:.12em;font-weight:600;font-family:'Nunito',sans-serif}
 
 
-#pageContainer{flex:1;overflow-y:auto;min-height:0;height:100vh}
+#pageContainer{flex:1;overflow-y:auto;height:100vh}

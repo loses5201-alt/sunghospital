@@ -383,7 +383,7 @@ function setPage(page){
 function renderPageInMain(fn){
   const c=document.getElementById('pageContainer');
   c.innerHTML='';
-  c.style.cssText='flex:1;overflow-y:auto;min-height:0;height:100vh';
+  c.style.cssText='';
   fn(c);
 }
 function renderEmptyMain(){
@@ -440,7 +440,7 @@ function renderMeetingMain(){
   const rc=Object.values(m.reads||{}).filter(r=>r.read).length;
   const rt=Object.keys(m.reads||{}).length;
   const pc=document.getElementById('pageContainer');
-  pc.style.cssText='flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0;height:100vh';
+  pc.style.cssText='';
   pc.innerHTML=`
     <div class="main-header">
       <div style="min-width:0"><h1>${esc(m.title)}</h1><div class="main-header-meta">${fmtDate(m.date)} · ${m.attendeeIds.length} 位與會成員</div></div>
@@ -586,7 +586,7 @@ function renderChat(c,m){
       <div class="chat-bubble">${esc(msg.text)}</div>
     </div>
   </div>`).join('');
-  c.style.cssText='flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:14px 20px 0';
+  c.style.cssText='padding:14px 20px 0';
   c.innerHTML=`<div class="chat-messages" id="chatMsgs">${msgs||'<div style="text-align:center;padding:30px;font-size:12px;color:var(--faint)">尚無訊息</div>'}</div>
     <div class="chat-input-wrap">
       <textarea class="chat-input" id="chatInput" rows="1" placeholder="輸入訊息（Enter 送出）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
