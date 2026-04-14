@@ -383,7 +383,7 @@ function setPage(page){
 function renderPageInMain(fn){
   const c=document.getElementById('pageContainer');
   c.innerHTML='';
-  c.style.cssText='flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0;height:100vh';
+  c.style.cssText='flex:1;overflow-y:auto;min-height:0';
   fn(c);
 }
 function renderEmptyMain(){
