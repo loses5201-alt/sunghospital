@@ -166,7 +166,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 
 /* ── Chat ── */
 .chat-wrap{display:flex;flex-direction:column;height:100%;padding:14px 20px 0;overflow:hidden}
-.chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:8px}
+.chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:8px;min-height:0}
 .chat-messages::-webkit-scrollbar{width:3px}
 .chat-messages::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .chat-msg{display:flex;gap:9px;padding:5px 0;align-items:flex-start}

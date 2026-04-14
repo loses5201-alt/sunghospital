@@ -586,7 +586,7 @@ function renderChat(c,m){
       <div class="chat-bubble">${esc(msg.text)}</div>
     </div>
   </div>`).join('');
-  c.style.cssText='display:flex;flex-direction:column;height:100%;overflow:hidden;padding:14px 20px 0';
+  c.style.cssText='flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:14px 20px 0';
   c.innerHTML=`<div class="chat-messages" id="chatMsgs">${msgs||'<div style="text-align:center;padding:30px;font-size:12px;color:var(--faint)">尚無訊息</div>'}</div>
     <div class="chat-input-wrap">
       <textarea class="chat-input" id="chatInput" rows="1" placeholder="輸入訊息（Enter 送出）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
