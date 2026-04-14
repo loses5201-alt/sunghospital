@@ -383,7 +383,7 @@ function setPage(page){
 function renderPageInMain(fn){
   const c=document.getElementById('pageContainer');
   c.innerHTML='';
-  c.style.cssText='flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;height:100vh';
+  c.style.cssText='flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0;height:100vh';
   fn(c);
 }
 function renderEmptyMain(){
@@ -440,7 +440,7 @@ function renderMeetingMain(){
   const rc=Object.values(m.reads||{}).filter(r=>r.read).length;
   const rt=Object.keys(m.reads||{}).length;
   const pc=document.getElementById('pageContainer');
-  pc.style.cssText='flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;height:100vh';
+  pc.style.cssText='flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0;height:100vh';
   pc.innerHTML=`
     <div class="main-header">
       <div style="min-width:0"><h1>${esc(m.title)}</h1><div class="main-header-meta">${fmtDate(m.date)} · ${m.attendeeIds.length} 位與會成員</div></div>

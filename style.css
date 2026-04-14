@@ -67,8 +67,8 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .btn-new:hover{background:var(--s2)}
 
 /* ── Main ── */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.main-header{background:var(--surface);border-bottom:1px solid var(--b1);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px}
+.main{flex:1;display:flex;flex-direction:column;overflow-y:auto;min-width:0;min-height:0}
+.main-header{background:var(--surface);border-bottom:1px solid var(--b1);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;position:sticky;top:0;z-index:10}
 .main-header h1{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .main-header-meta{font-size:11px;color:var(--faint);margin-top:2px}
 .header-actions{display:flex;gap:7px;align-items:center;flex-shrink:0;flex-wrap:wrap}
@@ -97,7 +97,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .tab-cnt{font-size:10px;padding:1px 5px;border-radius:99px}
 
 /* ── Tab content ── */
-.tab-content{flex:1;overflow-y:auto;padding:20px;min-height:0}
+.tab-content{flex:1;padding:20px}
 .tab-content::-webkit-scrollbar{width:4px}
 .tab-content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .sec-label{font-size:10px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;margin-top:20px}
@@ -298,8 +298,8 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .metric-lbl{font-size:11px;color:var(--faint);margin-top:2px}
 
 /* ── Admin pages ── */
-.admin-layout{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.admin-content{flex:1;overflow-y:auto;padding:20px;min-height:0}
+.admin-layout{flex:1;display:flex;flex-direction:column}
+.admin-content{padding:20px}
 .admin-content::-webkit-scrollbar{width:4px}
 .admin-content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .table-wrap{background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);overflow:hidden;overflow-x:auto}
@@ -460,4 +460,4 @@ tr:hover td{background:var(--s2)}
 .login-noc{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid rgba(212,175,55,0.15);font-size:10px;color:#c8a060;letter-spacing:.12em;font-weight:600;font-family:'Nunito',sans-serif}
 
 
-#pageContainer{flex:1;overflow:hidden;min-height:0;height:100vh}
+#pageContainer{flex:1;overflow-y:auto;min-height:0;height:100vh}
