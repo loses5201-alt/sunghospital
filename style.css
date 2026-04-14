@@ -24,7 +24,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 
 
 /* ── Shell ── */
-.shell{display:flex;flex-direction:row;height:100vh}
+.shell{display:flex;flex-direction:row;height:100vh;overflow:hidden}
 #appShell{display:none;width:100%;height:100%}
 
 /* ── Nav ── */
@@ -41,7 +41,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .nav-user:hover{border-color:rgba(255,255,255,0.4)}
 
 /* ── Sidebar ── */
-.sidebar{width:248px;background:var(--surface);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .2s}
+.sidebar{width:248px;background:var(--surface);border-right:1px solid var(--b1);display:flex;flex-direction:column;flex-shrink:0;height:100%;overflow-y:auto;transition:width .2s}
 .sidebar.collapsed{width:0;overflow:hidden}
 .sidebar-head{padding:16px 14px 12px;border-bottom:1px solid var(--b1)}
 .sidebar-head h2{font-size:13px;font-weight:600;letter-spacing:-.01em}
@@ -67,7 +67,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .btn-new:hover{background:var(--s2)}
 
 /* ── Main ── */
-.main{flex:1;overflow-y:auto;min-width:0;height:100vh}
+.main{flex:1;overflow-y:auto;min-width:0;height:100%;min-height:0}
 .main-header{background:var(--surface);border-bottom:1px solid var(--b1);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;position:sticky;top:0;z-index:10}
 .main-header h1{font-size:16px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .main-header-meta{font-size:11px;color:var(--faint);margin-top:2px}
@@ -460,4 +460,4 @@ tr:hover td{background:var(--s2)}
 .login-noc{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid rgba(212,175,55,0.15);font-size:10px;color:#c8a060;letter-spacing:.12em;font-weight:600;font-family:'Nunito',sans-serif}
 
 
-#pageContainer{flex:1;overflow-y:auto;height:100vh}
+#pageContainer{flex:1;overflow-y:auto;height:100%;min-height:0}
