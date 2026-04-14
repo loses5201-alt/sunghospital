@@ -97,7 +97,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .tab-cnt{font-size:10px;padding:1px 5px;border-radius:99px}
 
 /* ── Tab content ── */
-.tab-content{padding:20px;width:100%}
+.tab-content{padding:20px;width:100%;flex-shrink:0}
 .tab-content::-webkit-scrollbar{width:4px}
 .tab-content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .sec-label{font-size:10px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;margin-top:20px}
@@ -298,7 +298,7 @@ body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var
 .metric-lbl{font-size:11px;color:var(--faint);margin-top:2px}
 
 /* ── Admin pages ── */
-.admin-layout{display:flex;flex-direction:column;width:100%}
+.admin-layout{display:flex;flex-direction:column;width:100%;flex-shrink:0}
 .admin-content{padding:20px}
 .admin-content::-webkit-scrollbar{width:4px}
 .admin-content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
