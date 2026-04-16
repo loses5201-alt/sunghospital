@@ -398,6 +398,16 @@ function renderPageInMain(fn){
   c.innerHTML='';
   c.style.cssText='';
   fn(c);
+  // 頁面切換淡入動畫
+  c.classList.remove('page-enter');
+  void c.offsetWidth; // reflow
+  c.classList.add('page-enter');
+  // 卡片 stagger
+  setTimeout(function(){
+    c.querySelectorAll('.card,.task-card,.ann-card,.baby-card,.meeting-item,.person-card,.stat-card').forEach(function(el){
+      el.classList.add('stagger-item');
+    });
+  },10);
 }
 function renderEmptyMain(){
   document.getElementById('pageContainer').innerHTML=`<div style="display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:12px;color:var(--faint);padding:40px">
@@ -454,6 +464,7 @@ function renderMeetingMain(){
   const rt=Object.keys(m.reads||{}).length;
   const pc=document.getElementById('pageContainer');
   pc.style.cssText='';
+  pc.classList.remove('page-enter');void pc.offsetWidth;pc.classList.add('page-enter');
   pc.innerHTML=`
     <div class="main-header">
       <div style="min-width:0"><h1>${esc(m.title)}</h1><div class="main-header-meta">${fmtDate(m.date)} · ${m.attendeeIds.length} 位與會成員</div></div>
@@ -479,6 +490,7 @@ function renderMeetingMain(){
       <div class="tab ${currentTab==='votes'?'active':''}" onclick="switchTab('votes',this)">投票 ${m.votes&&m.votes.length?`<span class="tab-cnt" style="background:var(--purple-bg);color:var(--purple)">${m.votes.length}</span>`:''}</div>
     </div>
     <div class="tab-content" id="tabContent"></div>`;
+  setTimeout(function(){animateNumbers(pc);pc.querySelectorAll('.card,.task-card').forEach(function(el){el.classList.add('stagger-item');});},15);
   renderTab();
 }
 function switchTab(tab,el){
@@ -1113,6 +1125,29 @@ function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}else if
 // ══════════════════════════════════════════
 // STATISTICS
 // ══════════════════════════════════════════
+
+// ── 數字計數動畫 ──
+function animateNumbers(container){
+  const els=(container||document).querySelectorAll('.stat-num,.metric-num');
+  els.forEach(function(el){
+    const target=parseFloat(el.textContent.replace(/[^0-9.]/g,''));
+    if(isNaN(target)||target===0)return;
+    const suffix=el.textContent.replace(/[0-9.]/g,'');
+    const duration=600;
+    const start=performance.now();
+    const from=0;
+    function tick(now){
+      const p=Math.min((now-start)/duration,1);
+      const ease=1-Math.pow(1-p,3); // ease-out cubic
+      const val=Math.round(from+(target-from)*ease);
+      el.textContent=(Number.isInteger(target)?val:val.toFixed(1))+suffix;
+      if(p<1)requestAnimationFrame(tick);
+      else{el.textContent=target+suffix;el.classList.add('num-pop');}
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
 function renderStatsPage(c){
   const allTasks=store.meetings.flatMap(m=>m.tasks);
   const doneTasks=allTasks.filter(t=>t.status==='已完成').length;
@@ -1182,7 +1217,8 @@ function renderStatsPage(c){
             const cnt=store.incidents.filter(i=>i.level===lv).length;
             const l=irLevels[lv];
             return`<div class="metric-box"><div class="metric-num">${cnt}</div><div class="metric-lbl">${l.label}</div></div>`;
-          }).join('')}
+
+  setTimeout(function(){animateNumbers(c);},50);          }).join('')}
         </div>
       </div>
     </div>
