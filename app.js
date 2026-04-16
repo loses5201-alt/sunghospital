@@ -423,30 +423,134 @@ function renderEmptyMain(){
 // SIDEBAR
 // ══════════════════════════════════════════
 function filterMeetings(q){renderSidebar(q);}
-function renderSidebar(q=''){
-  const el=document.getElementById('meetingList');
-  el.innerHTML='';
-  const sub=document.getElementById('sidebarSub');
-  if(sub)sub.textContent=currentUser?currentUser.name+' · '+store.meetings.length+'場':' ';
-  const list=[...store.meetings].sort((a,b)=>b.date.localeCompare(a.date))
-    .filter(m=>!q||m.title.toLowerCase().includes(q.toLowerCase()));
-  list.forEach(m=>{
-    const open=m.tasks.filter(t=>t.status!=='已完成').length;
-    const hasCritical=m.tasks.some(t=>t.priority==='critical'&&t.status!=='已完成');
-    const isRead=m.reads&&m.reads[currentUser.id]&&m.reads[currentUser.id].read;
-    const div=document.createElement('div');
-    div.className='meeting-item'+(m.id===currentMeetingId?' active':'');
-    div.innerHTML=`<div class="mi-title">${esc(m.title)}</div>
-      <div class="mi-meta">${fmtDate(m.date)}
-        ${!isRead?'<span class="mi-badge badge-unread">未讀</span>':''}
-        ${hasCritical?'<span class="mi-badge badge-urgent">緊急</span>':''}
-      </div>
-      <span class="mi-badge ${open===0?'badge-done':'badge-open'}">${open===0?'✓ 完成':open+' 待辦'}</span>`;
-    div.onclick=()=>selectMeeting(m.id);
+function renderSidebar(q) {
+  if (q === undefined) q = '';
+  var el = document.getElementById('meetingList');
+  el.innerHTML = '';
+  var sub = document.getElementById('sidebarSub');
+  if (sub) sub.textContent = currentUser ? currentUser.name + ' · ' + store.meetings.length + '場' : ' ';
+
+  // 我的任務入口
+  var myPending = [];
+  (store.meetings || []).forEach(function(m) {
+    (m.tasks || []).forEach(function(t) {
+      if (t.assigneeId === currentUser.id && t.status !== '已完成') myPending.push(t);
+    });
+  });
+  var isMyTasks = currentMeetingId === '__mytasks__';
+  var myBtn = document.createElement('div');
+  myBtn.className = 'meeting-item my-tasks-entry' + (isMyTasks ? ' active' : '');
+  myBtn.innerHTML = '<div class="mi-title">📋 我的任務</div>'
+    + '<div class="mi-meta">'
+    + (myPending.length
+      ? '<span class="mi-badge badge-open">' + myPending.length + ' 項待辦</span>'
+      : '<span class="mi-badge badge-done">✓ 全部完成</span>')
+    + '</div>';
+  myBtn.onclick = function() { showMyTasks(); };
+  el.appendChild(myBtn);
+
+  var sep = document.createElement('div');
+  sep.style.cssText = 'height:1px;background:var(--b1);margin:6px 8px';
+  el.appendChild(sep);
+
+  var list = [...store.meetings].sort(function(a, b) { return b.date.localeCompare(a.date); })
+    .filter(function(m) { return !q || m.title.toLowerCase().includes(q.toLowerCase()); });
+  list.forEach(function(m) {
+    var open = m.tasks.filter(function(t) { return t.status !== '已完成'; }).length;
+    var hasCritical = m.tasks.some(function(t) { return t.priority === 'critical' && t.status !== '已完成'; });
+    var isRead = m.reads && m.reads[currentUser.id] && m.reads[currentUser.id].read;
+    var div = document.createElement('div');
+    div.className = 'meeting-item' + (m.id === currentMeetingId ? ' active' : '');
+    div.innerHTML = '<div class="mi-title">' + esc(m.title) + '</div>'
+      + '<div class="mi-meta">' + fmtDate(m.date)
+      + (!isRead ? '<span class="mi-badge badge-unread">未讀</span>' : '')
+      + (hasCritical ? '<span class="mi-badge badge-urgent">緊急</span>' : '')
+      + '</div>'
+      + '<span class="mi-badge ' + (open === 0 ? 'badge-done' : 'badge-open') + '">'
+      + (open === 0 ? '✓ 完成' : open + ' 待辦') + '</span>';
+    div.onclick = function() { selectMeeting(m.id); };
     el.appendChild(div);
   });
-  if(!list.length)el.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--faint)">無符合結果</div>';
+  if (!list.length) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;padding:20px;font-size:12px;color:var(--faint)';
+    empty.textContent = '無符合結果';
+    el.appendChild(empty);
+  }
 }
+
+// ── 我的任務（跨會議）──
+function showMyTasks() {
+  currentMeetingId = '__mytasks__';
+  renderSidebar();
+  renderMyTasksMain();
+}
+
+function renderMyTasksMain() {
+  var pc = document.getElementById('pageContainer');
+  pc.style.cssText = '';
+  pc.classList.remove('page-enter'); void pc.offsetWidth; pc.classList.add('page-enter');
+
+  var allTasks = [];
+  (store.meetings || []).forEach(function(m) {
+    (m.tasks || []).forEach(function(t) {
+      if (t.assigneeId === currentUser.id) allTasks.push({t: t, m: m});
+    });
+  });
+
+  var todayStr = today();
+  var overdue  = allTasks.filter(function(x) { return x.t.status !== '已完成' && x.t.due && x.t.due < todayStr; });
+  var dueToday = allTasks.filter(function(x) { return x.t.status !== '已完成' && x.t.due === todayStr; });
+  var pending  = allTasks.filter(function(x) { return x.t.status !== '已完成' && (!x.t.due || x.t.due > todayStr); });
+  var done     = allTasks.filter(function(x) { return x.t.status === '已完成'; });
+
+  function taskRow(x) {
+    var t = x.t; var m = x.m;
+    var origI = m.tasks.indexOf(t);
+    var dc = dueClass(t.due, t.status);
+    return '<div class="task-card">'
+      + '<div class="status-dot ' + (t.status === '已完成' ? 'done' : t.status === '進行中' ? 'in-progress' : '') + '" onclick="cycleTaskGlobal(\'' + m.id + '\',' + origI + ')" title="點擊切換">'
+      + (t.status === '已完成' ? '✓' : t.status === '進行中' ? '◑' : '') + '</div>'
+      + '<div class="task-body">'
+      + '<div class="task-text ' + (t.status === '已完成' ? 'done-text' : '') + '">' + esc(t.text) + '</div>'
+      + '<div class="task-meta">'
+      + '<span style="font-size:11px;color:var(--primary);font-weight:500">' + esc(m.title) + '</span>'
+      + prioBadge(t.priority)
+      + (t.due ? '<span class="due-tag ' + dc + '">' + fmtDate(t.due) + '</span>' : '')
+      + '</div></div></div>';
+  }
+
+  function section(label, items, emptyMsg) {
+    if (!items.length && !emptyMsg) return '';
+    return '<div class="sec-label">' + label + '</div>'
+      + (items.length ? items.map(taskRow).join('') : '<div style="font-size:12px;color:var(--faint);padding:8px 4px">' + emptyMsg + '</div>');
+  }
+
+  pc.innerHTML = '<div class="main-header"><div><h1>我的任務</h1>'
+    + '<div class="main-header-meta">跨所有會議 · 共 ' + allTasks.length + ' 項</div></div></div>'
+    + '<div class="stats-bar">'
+    + '<div class="stat-item"><div class="stat-num">' + allTasks.length + '</div><div class="stat-label">全部</div></div>'
+    + '<div class="stat-item"><div class="stat-num" style="color:var(--red)">' + overdue.length + '</div><div class="stat-label">逾期</div></div>'
+    + '<div class="stat-item"><div class="stat-num" style="color:var(--amber)">' + dueToday.length + '</div><div class="stat-label">今天到期</div></div>'
+    + '<div class="stat-item"><div class="stat-num" style="color:var(--green)">' + done.length + '</div><div class="stat-label">已完成</div></div>'
+    + '</div>'
+    + (overdue.length ? section('⚠️ 逾期（' + overdue.length + '）', overdue, '') : '')
+    + (dueToday.length ? section('🔔 今天到期', dueToday, '') : '')
+    + section('📋 待辦', pending, '沒有待辦任務')
+    + (done.length ? section('✓ 已完成', done, '') : '');
+}
+
+function cycleTaskGlobal(meetingId, origI) {
+  var m = store.meetings.find(function(x) { return x.id === meetingId; });
+  if (!m) return;
+  var s = m.tasks[origI].status;
+  m.tasks[origI].status = s === '待辦' ? '進行中' : s === '進行中' ? '已完成' : '待辦';
+  saveStore();
+  if (currentMeetingId === '__mytasks__') { renderSidebar(); renderMyTasksMain(); }
+  else { renderSidebar(); renderMeetingMain(); }
+}
+
+// ── 紀錄摘要（含行內編輯）──
 function selectMeeting(id){
   currentMeetingId=id;currentTab='notes';
   const m=store.meetings.find(x=>x.id===id);
@@ -512,67 +616,134 @@ function renderTab(){
 }
 
 // ── Notes ──
-function renderNotes(c,m){
-  c.style.cssText='';
-  const chips=m.attendeeIds.map(uid=>{
-    const r=m.reads&&m.reads[uid];
-    return`<div class="attendee-chip" style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm)">
-      ${avatarEl(uid,26)}
-      <div><div style="font-size:12px;font-weight:500">${esc(userName(uid))}</div>
-      <div style="font-size:10px;color:var(--faint)">${esc(userTitle(uid))} · ${esc(userDept(uid))}</div></div>
-      <div style="width:7px;height:7px;border-radius:50%;background:${r&&r.read?'var(--green)':'var(--b3)'};margin-left:auto" title="${r&&r.read?'已讀':'未讀'}"></div>
-    </div>`;
+function renderNotes(c, m) {
+  c.style.cssText = '';
+  var chips = m.attendeeIds.map(function(uid2) {
+    var r = m.reads && m.reads[uid2];
+    return '<div class="attendee-chip" style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm)">'
+      + avatarEl(uid2, 26)
+      + '<div><div style="font-size:12px;font-weight:500">' + esc(userName(uid2)) + '</div>'
+      + '<div style="font-size:10px;color:var(--faint)">' + esc(userTitle(uid2)) + ' · ' + esc(userDept(uid2)) + '</div></div>'
+      + '<div style="width:7px;height:7px;border-radius:50%;background:' + (r && r.read ? 'var(--green)' : 'var(--b3)') + ';margin-left:auto" title="' + (r && r.read ? '已讀' : '未讀') + '"></div>'
+      + '</div>';
   }).join('');
-  const unread=m.attendeeIds.filter(u=>!(m.reads&&m.reads[u]&&m.reads[u].read));
-  c.innerHTML=`<div class="sec-label">與會成員</div>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px">${chips}</div>
-    ${unread.length?`<div class="alert alert-info" style="margin-top:10px"><span>👁</span><div>未讀：${unread.map(u=>esc(userName(u))).join('、')}</div></div>`:''}
-    <div class="sec-label">會議摘要</div>
-    <div style="background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:14px 16px;font-size:14px;line-height:1.8">${esc(m.notes)||'<span style="color:var(--faint)">尚無摘要</span>'}</div>`;
+  var unread = m.attendeeIds.filter(function(u) { return !(m.reads && m.reads[u] && m.reads[u].read); });
+  c.innerHTML = '<div class="sec-label">與會成員</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px">' + chips + '</div>'
+    + (unread.length ? '<div class="alert alert-info" style="margin-top:10px"><span>👁</span><div>未讀：' + unread.map(function(u) { return esc(userName(u)); }).join('、') + '</div></div>' : '')
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">'
+    + '<div class="sec-label" style="margin:0">會議摘要</div>'
+    + (isAdmin() || m.attendeeIds.includes(currentUser.id)
+      ? '<button onclick="editNotesInline(\'' + m.id + '\')" style="font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">✏️ 編輯摘要</button>'
+      : '')
+    + '</div>'
+    + '<div id="notesDisplay" style="background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:14px 16px;font-size:14px;line-height:1.8;white-space:pre-wrap">'
+    + (m.notes ? esc(m.notes) : '<span style="color:var(--faint)">尚無摘要</span>')
+    + '</div>';
 }
 
-// ── Tasks ──
-function renderTasks(c,m){
-  c.style.cssText='';
-  const canEdit=isAdmin()||m.attendeeIds.includes(currentUser.id);
-  const sorted=[...m.tasks].sort((a,b)=>{
-    const po={critical:0,urgent:1,normal:2};
-    return (po[a.priority]||2)-(po[b.priority]||2);
+function editNotesInline(meetingId) {
+  var m = store.meetings.find(function(x) { return x.id === meetingId; });
+  if (!m) return;
+  var d = document.getElementById('notesDisplay');
+  if (!d) return;
+  d.innerHTML = '<textarea id="notesTA" style="width:100%;box-sizing:border-box;min-height:120px;font-family:inherit;font-size:14px;line-height:1.8;border:none;outline:none;resize:vertical;background:transparent;color:var(--text)">'
+    + esc(m.notes || '') + '</textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">'
+    + '<button onclick="renderTab()" style="font-size:12px;padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">取消</button>'
+    + '<button onclick="saveNotesInline(\'' + meetingId + '\')" style="font-size:12px;padding:5px 14px;border-radius:var(--radius-sm);border:none;background:var(--primary);color:white;font-family:inherit;cursor:pointer;font-weight:600">儲存</button>'
+    + '</div>';
+  setTimeout(function() { var ta = document.getElementById('notesTA'); if (ta) ta.focus(); }, 0);
+}
+
+function saveNotesInline(meetingId) {
+  var m = store.meetings.find(function(x) { return x.id === meetingId; });
+  if (!m) return;
+  var ta = document.getElementById('notesTA');
+  if (!ta) return;
+  m.notes = ta.value.trim();
+  saveStore(); renderTab();
+  showToast('摘要已更新', '', '✅');
+}
+
+// ── 任務（含篩選 + 刪除）──
+function renderTasks(c, m) {
+  c.style.cssText = '';
+  var canEdit = isAdmin() || m.attendeeIds.includes(currentUser.id);
+  var sorted = [...m.tasks].sort(function(a, b) {
+    var po = {critical: 0, urgent: 1, normal: 2};
+    return (po[a.priority] || 2) - (po[b.priority] || 2);
   });
-  const rows=sorted.map((t,i)=>{
-    const origI=m.tasks.indexOf(t);
-    const isDone=t.status==='已完成',isIP=t.status==='進行中';
-    const dc=dueClass(t.due,t.status);
-    const cardClass=t.priority==='critical'&&!isDone?'t-critical':t.priority==='urgent'&&!isDone?'t-urgent':'';
-    return`<div class="task-card ${cardClass}">
-      <div class="status-dot ${isDone?'done':isIP?'in-progress':''}" onclick="${canEdit||t.assigneeId===currentUser.id?`cycleStatus(${origI})`:'void(0)'}" title="點擊切換">${isDone?'✓':isIP?'◑':''}</div>
-      <div class="task-body">
-        <div class="task-text ${isDone?'done-text':''}">${esc(t.text)}</div>
-        <div class="task-meta">
-          ${avatarEl(t.assigneeId,18)}<span class="task-assignee">${esc(userName(t.assigneeId))}</span>
-          ${prioBadge(t.priority)}
-          ${t.due?`<span class="due-tag ${dc}">${fmtDate(t.due)}</span>`:''}
-        </div>
-      </div>
-      ${canEdit||t.assigneeId===currentUser.id?`<select class="task-select" onchange="setStatus(${origI},this.value)">
-        <option ${t.status==='待辦'?'selected':''}>待辦</option>
-        <option ${t.status==='進行中'?'selected':''}>進行中</option>
-        <option ${t.status==='已完成'?'selected':''}>已完成</option>
-      </select>`:''}
-    </div>`;
+  var todayStr = today();
+  var filtered = sorted.filter(function(t) {
+    if (_taskFilter === 'mine')    return t.assigneeId === currentUser.id;
+    if (_taskFilter === 'todo')    return t.status !== '已完成';
+    if (_taskFilter === 'overdue') return t.status !== '已完成' && t.due && t.due < todayStr;
+    return true;
+  });
+
+  var filterDefs = [
+    {k:'all',     l:'全部',  n: sorted.length},
+    {k:'mine',    l:'我的',  n: sorted.filter(function(t){ return t.assigneeId === currentUser.id; }).length},
+    {k:'todo',    l:'未完成',n: sorted.filter(function(t){ return t.status !== '已完成'; }).length},
+    {k:'overdue', l:'逾期',  n: sorted.filter(function(t){ return t.status !== '已完成' && t.due && t.due < todayStr; }).length}
+  ];
+  var filterHtml = '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
+    + filterDefs.map(function(fd) {
+      var active = _taskFilter === fd.k;
+      return '<button onclick="setTaskFilter(\'' + fd.k + '\')" style="padding:4px 11px;border-radius:99px;border:1.5px solid ' + (active ? 'var(--primary)' : 'var(--b2)') + ';background:' + (active ? 'var(--primary)' : 'transparent') + ';color:' + (active ? 'white' : 'var(--muted)') + ';font-size:11px;font-family:inherit;cursor:pointer;font-weight:' + (active ? '600' : '400') + ';transition:all .12s">'
+        + fd.l + (fd.n ? ' ' + fd.n : '') + '</button>';
+    }).join('')
+    + '</div>';
+
+  var rows = filtered.map(function(t) {
+    var origI = m.tasks.indexOf(t);
+    var isDone = t.status === '已完成', isIP = t.status === '進行中';
+    var dc = dueClass(t.due, t.status);
+    var cardClass = t.priority === 'critical' && !isDone ? 't-critical' : t.priority === 'urgent' && !isDone ? 't-urgent' : '';
+    return '<div class="task-card ' + cardClass + '">'
+      + '<div class="status-dot ' + (isDone ? 'done' : isIP ? 'in-progress' : '') + '" onclick="' + (canEdit || t.assigneeId === currentUser.id ? 'cycleStatus(' + origI + ')' : 'void(0)') + '" title="點擊切換">'
+      + (isDone ? '✓' : isIP ? '◑' : '') + '</div>'
+      + '<div class="task-body">'
+      + '<div class="task-text ' + (isDone ? 'done-text' : '') + '">' + esc(t.text) + '</div>'
+      + '<div class="task-meta">' + avatarEl(t.assigneeId, 18) + '<span class="task-assignee">' + esc(userName(t.assigneeId)) + '</span>'
+      + prioBadge(t.priority)
+      + (t.due ? '<span class="due-tag ' + dc + '">' + fmtDate(t.due) + '</span>' : '')
+      + '</div></div>'
+      + (canEdit || t.assigneeId === currentUser.id
+        ? '<select class="task-select" onchange="setStatus(' + origI + ',this.value)">'
+          + '<option ' + (t.status === '待辦'   ? 'selected' : '') + '>待辦</option>'
+          + '<option ' + (t.status === '進行中' ? 'selected' : '') + '>進行中</option>'
+          + '<option ' + (t.status === '已完成' ? 'selected' : '') + '>已完成</option>'
+          + '</select>' : '')
+      + (canEdit ? '<button onclick="deleteTask(' + origI + ')" title="刪除" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--faint);padding:0 4px;line-height:1;flex-shrink:0;opacity:.4;transition:all .12s" onmouseover="this.style.opacity=1;this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=.4;this.style.color=\'var(--faint)\'">×</button>' : '')
+      + '</div>';
   }).join('');
-  c.innerHTML=`<div class="sec-label">任務清單（${m.tasks.length}項）</div>
-    ${rows||'<div style="text-align:center;padding:30px;color:var(--faint);font-size:13px">尚無任務</div>'}
-    ${canEdit?`<div class="add-task-area">
-      <input class="input-task" id="newTask" placeholder="輸入任務..." onkeydown="if(event.key==='Enter')addTask()">
-      <select id="newAssignee">${m.attendeeIds.map(u=>`<option value="${u}">${esc(userName(u))}</option>`).join('')}</select>
-      <select id="newPrio"><option value="normal">一般</option><option value="urgent">急件</option><option value="critical">緊急</option></select>
-      <input id="newDue" type="date" style="width:130px">
-      <button class="btn-add" onclick="addTask()">新增</button>
-    </div>`:''}`;
+
+  c.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    + '<div class="sec-label" style="margin:0">任務清單（' + m.tasks.length + '項）</div></div>'
+    + filterHtml
+    + (rows || '<div style="text-align:center;padding:30px;color:var(--faint);font-size:13px">沒有符合條件的任務</div>')
+    + (canEdit ? '<div class="add-task-area">'
+      + '<input class="input-task" id="newTask" placeholder="輸入任務..." onkeydown="if(event.key===\'Enter\')addTask()">'
+      + '<select id="newAssignee">' + m.attendeeIds.map(function(u) { return '<option value="' + u + '">' + esc(userName(u)) + '</option>'; }).join('') + '</select>'
+      + '<select id="newPrio"><option value="normal">一般</option><option value="urgent">急件</option><option value="critical">緊急</option></select>'
+      + '<input id="newDue" type="date" style="width:130px">'
+      + '<button class="btn-add" onclick="addTask()">新增</button>'
+      + '</div>' : '');
 }
 
-// ── Progress ──
+function setTaskFilter(f) { _taskFilter = f; renderTab(); }
+
+function deleteTask(origI) {
+  var m = store.meetings.find(function(x) { return x.id === currentMeetingId; });
+  if (!m) return;
+  if (!confirm('確定刪除此任務？')) return;
+  m.tasks.splice(origI, 1);
+  saveStore(); renderSidebar(); renderMeetingMain();
+}
+
+// ── 聊天（全新設計）──
 function renderProgress(c,m){
   c.style.cssText='';
   const people={};
@@ -605,32 +776,66 @@ function renderProgress(c,m){
 }
 
 // ── Chat ──
-function renderChat(c,m){
-  if(!m.chat)m.chat=[];
-  const msgs=m.chat.map(msg=>`<div class="chat-msg">
-    <div class="chat-avatar ${getAv(msg.userId)}" style="width:30px;height:30px;font-size:10px">${initials(userName(msg.userId))}</div>
-    <div class="chat-content">
-      <div class="chat-name">${esc(userName(msg.userId))}<span style="font-size:10px;color:var(--faint)">${esc(userTitle(msg.userId))}</span><span class="chat-time">${msg.time}</span></div>
-      <div class="chat-bubble">${esc(msg.text)}</div>
-    </div>
-  </div>`).join('');
-  c.style.cssText='padding:14px 20px 0';
-  c.innerHTML=`<div class="chat-messages" id="chatMsgs">${msgs||'<div style="text-align:center;padding:30px;font-size:12px;color:var(--faint)">尚無訊息</div>'}</div>
-    <div class="chat-input-wrap">
-      <textarea class="chat-input" id="chatInput" rows="1" placeholder="輸入訊息（Enter 送出）" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-      <button class="btn-send" onclick="sendChat()">送出</button>
-    </div>`;
-  const box=document.getElementById('chatMsgs');if(box)box.scrollTop=box.scrollHeight;
-}
-function sendChat(){
-  const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;
-  const text=document.getElementById('chatInput').value.trim();if(!text)return;
-  if(!m.chat)m.chat=[];
-  m.chat.push({id:uid(),userId:currentUser.id,text,time:nowTime()});
-  saveStore();renderTab();
+function renderChat(c, m) {
+  if (!m.chat) m.chat = [];
+  var prevUserId = null;
+  var prevDate   = null;
+  var rows = m.chat.map(function(msg) {
+    var isMine  = msg.userId === currentUser.id;
+    var msgDate = msg.date || '';
+    var dateSep = '';
+    if (msgDate && msgDate !== prevDate) {
+      var dl = msgDate === today() ? '今天' : fmtDate(msgDate);
+      dateSep = '<div class="chat-date-sep"><span>' + dl + '</span></div>';
+      prevDate = msgDate;
+    }
+    var isFirst = msg.userId !== prevUserId;
+    prevUserId = msg.userId;
+
+    var timeHtml = '<span class="chat-time-inline">' + (msg.time || '') + '</span>';
+    var row;
+    if (isMine) {
+      row = '<div class="chat-row mine">'
+        + '<div class="chat-bubble-mine">' + esc(msg.text) + timeHtml + '</div>'
+        + '</div>';
+    } else {
+      row = '<div class="chat-row other">'
+        + '<div class="chat-other-avatar">'
+        + (isFirst ? avatarEl(msg.userId, 30) : '<div style="width:30px;flex-shrink:0"></div>')
+        + '</div>'
+        + '<div class="chat-other-body">'
+        + (isFirst ? '<div class="chat-other-name">' + esc(userName(msg.userId)) + '</div>' : '')
+        + '<div class="chat-bubble-other">' + esc(msg.text) + timeHtml + '</div>'
+        + '</div></div>';
+    }
+    return dateSep + row;
+  }).join('');
+
+  c.style.cssText = 'padding:0;display:flex;flex-direction:column;height:calc(100vh - 260px);min-height:320px';
+  c.innerHTML = '<div class="chat-wrap2">'
+    + '<div class="chat-messages2" id="chatMsgs">'
+    + (rows || '<div class="chat-empty"><div style="font-size:38px;margin-bottom:10px">💬</div><div>開始討論吧</div></div>')
+    + '</div>'
+    + '<div class="chat-input-wrap2">'
+    + '<textarea class="chat-input2" id="chatInput" rows="1" placeholder="輸入訊息… (Enter 送出，Shift+Enter 換行)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>'
+    + '<button class="btn-send2" onclick="sendChat()">送出</button>'
+    + '</div></div>';
+
+  var box = document.getElementById('chatMsgs');
+  if (box) box.scrollTop = box.scrollHeight;
 }
 
-// ── Votes ──
+function sendChat() {
+  var m = store.meetings.find(function(x) { return x.id === currentMeetingId; });
+  if (!m) return;
+  var inp = document.getElementById('chatInput');
+  var text = inp ? inp.value.trim() : '';
+  if (!text) return;
+  if (!m.chat) m.chat = [];
+  m.chat.push({id: uid(), userId: currentUser.id, text: text, time: nowTime(), date: today()});
+  if (inp) inp.value = '';
+  saveStore(); renderTab();
+}
 function renderVotes(c,m){
   if(!m.votes)m.votes=[];
   c.style.cssText='';
@@ -2080,6 +2285,18 @@ function renderNotifPanel(){
   // 簽核結果通知
   (store.formNotifs||[]).filter(n=>n.toUserId===currentUser.id).forEach(n=>{
     items.push({icon:n.title.startsWith('✓')?'✅':'❌',title:n.title,body:n.body||'',time:n.time||'',unread:!n.read,act:()=>{n.read=true;saveStore();setPage('form');closeNotifPanel();renderNotifPanel();}});
+  });
+  // 任務到期提醒
+  const todayStr=today();
+  (store.meetings||[]).forEach(mtg=>{
+    (mtg.tasks||[]).forEach(tsk=>{
+      if(tsk.assigneeId!==currentUser.id||tsk.status==='已完成'||!tsk.due)return;
+      const isOverdue=tsk.due<todayStr,isDueToday=tsk.due===todayStr;
+      if(isOverdue||isDueToday){
+        const mtgId=mtg.id;
+        items.push({icon:isOverdue?'⚠️':'🔔',title:isOverdue?'任務已逾期':'任務今天到期',body:tsk.text+'（'+esc(mtg.title)+'）',time:tsk.due,unread:true,act:()=>{selectMeeting(mtgId);currentTab='tasks';closeNotifPanel();renderMeetingMain();}});
+      }
+    });
   });
   // 依時間排序，未讀優先
   items.sort((a,b)=>(b.unread-a.unread)||b.time.localeCompare(a.time));
