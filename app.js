@@ -324,7 +324,7 @@ function initApp(){
     document.getElementById('navUsers').style.display='flex';
   }
   updateNavUser();updateAnnBadge();updateIrBadge();updateCalBadge();updateNotifBadge((store.announcements||[]).filter(a=>!a.reads[currentUser&&currentUser.id]).length);
-  renderSidebar();setPage('meetings');
+  renderSidebar();setPage('home');
   checkPendingEmergency();
   startClock();
   startPresence();
@@ -391,6 +391,7 @@ function setPage(page){
     else if(page==='duty'){hideSidebar();renderPageInMain(renderDutyPage);}
     else if(page==='journal'){hideSidebar();renderPageInMain(renderJournalPage);}
     else if(page==='edu'){hideSidebar();renderPageInMain(renderEduPage);}
+    else if(page==='home'){hideSidebar();renderPageInMain(renderHomePage);}
   }
 }
 function renderPageInMain(fn){
@@ -471,7 +472,7 @@ function renderMeetingMain(){
       <div class="header-actions">
         ${crit>0?`<span class="btn-sm urgent-btn">⚡ ${crit} 項緊急任務</span>`:''}
         ${isAdmin()?`<button class="btn-sm" onclick="openEditMeeting()">編輯</button>`:''}
-        ${isAdmin()?`<button class="btn-sm danger" onclick="deleteMeeting()">刪除</button>`:''}
+        ${isAdmin()?`<button class="btn-sm danger" onclick="deleteMeeting()">刪除</button><button class="btn-sm" onclick="exportMeetingText()">📄 匯出</button>`:''}
       </div>
     </div>
     <div class="stats-bar">
@@ -1883,4 +1884,220 @@ function updateNotifBadge(n){
 function toggleMobileSidebar(){
   const sb=document.getElementById('sidebar');if(!sb)return;
   sb.classList.toggle('mobile-open');
+}
+
+
+// ════════════════════════════════════════════════════════
+// ① 離線提示
+// ════════════════════════════════════════════════════════
+(function(){
+  function setBanner(offline){
+    var b=document.getElementById('offlineBanner');
+    if(b)b.style.display=offline?'block':'none';
+  }
+  window.addEventListener('online',function(){setBanner(false);showToast('已重新連線','資料同步中…','✅');});
+  window.addEventListener('offline',function(){setBanner(true);showToast('網路已中斷','資料暫時無法更新','⚠️');});
+  var _chk=setInterval(function(){
+    if(typeof fbDb!=='undefined'&&fbDb){
+      clearInterval(_chk);
+      fbDb.ref('.info/connected').on('value',function(s){setBanner(!s.val());});
+    }
+  },500);
+})();
+
+// ════════════════════════════════════════════════════════
+// ② 鍵盤快捷鍵
+// ════════════════════════════════════════════════════════
+(function(){
+  var pageKeys={'1':'home','2':'meetings','3':'shift','4':'announcements',
+    '5':'incident','6':'calendar','7':'baby','8':'delivery','9':'duty'};
+  document.addEventListener('keydown',function(e){
+    if(!currentUser)return;
+    var tag=(e.target.tagName||'').toUpperCase();
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.key==='?'){openShortcuts();return;}
+    if(e.key==='Escape'){closeShortcuts();return;}
+    if(e.key==='d'||e.key==='D'){toggleDark();return;}
+    if(e.key==='h'||e.key==='H'){setPage('home');return;}
+    if(e.key==='n'||e.key==='N'){triggerNewAction();return;}
+    if(pageKeys[e.key]){setPage(pageKeys[e.key]);return;}
+  });
+})();
+function openShortcuts(){
+  var p=document.getElementById('shortcutsPanel');
+  var b=document.getElementById('shortcutsBackdrop');
+  if(p){p.style.display='flex';if(b)b.style.display='block';}
+}
+function closeShortcuts(){
+  var p=document.getElementById('shortcutsPanel');
+  var b=document.getElementById('shortcutsBackdrop');
+  if(p){p.style.display='none';if(b)b.style.display='none';}
+}
+function triggerNewAction(){
+  if(currentPage==='meetings')openNewMeeting();
+  else if(currentPage==='announcements')openAddAnn();
+  else{var menu=document.getElementById('fabMenu');if(menu&&menu.style.display==='none')toggleFab();}
+}
+
+// ════════════════════════════════════════════════════════
+// ③ 空狀態設計
+// ════════════════════════════════════════════════════════
+function emptyState(icon,title,desc,btnLabel,btnFn){
+  var btn=btnLabel?('<button class="empty-state-btn" onclick="'+btnFn+'">'+btnLabel+'</button>'):'';
+  return '<div class="empty-state stagger-item"><div class="empty-state-icon">'+icon+'</div><div class="empty-state-title">'+title+'</div><div class="empty-state-desc">'+desc+'</div>'+btn+'</div>';
+}
+
+// ════════════════════════════════════════════════════════
+// ④ 個人化首頁
+// ════════════════════════════════════════════════════════
+function renderHomePage(c){
+  if(!currentUser){c.innerHTML='';return;}
+  var hr=new Date().getHours();
+  var greet='繼續加油 💪';
+  if(hr>=6&&hr<12)greet='早安 ☀️';
+  else if(hr>=12&&hr<18)greet='午安 🌤️';
+  else if(hr>=18&&hr<22)greet='晚安 🌙';
+  else greet='夜深了，注意休息 🌛';
+  var todayStr=today();
+  var unreadAnn=(store.announcements||[]).filter(function(a){return !a.reads[currentUser.id];}).length;
+  var allTasks=(store.meetings||[]).flatMap(function(m){return m.tasks||[];});
+  var myTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';}).length;
+  var newBabies=(store.babies||[]).filter(function(b){return b.admDate===todayStr;}).length;
+  var deliveries=(store.rooms||[]).filter(function(r){return r.status&&r.status!=='空床';}).length;
+  var myShift=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][todayStr])||'';
+  var shiftBg={'日班':'var(--amber-bg)','小夜':'var(--blue-bg)','大夜':'var(--purple-bg)'};
+  var shiftFg={'日班':'var(--amber)','小夜':'var(--blue)','大夜':'var(--purple)'};
+  var sc=shiftBg[myShift]||'var(--s2)';
+  var stc=shiftFg[myShift]||'var(--faint)';
+  var cards=[
+    {icon:'📢',num:unreadAnn,label:'未讀公告',page:'announcements',color:'#c4527a'},
+    {icon:'✅',num:myTasks,label:'我的待辦',page:'meetings',color:'var(--amber)'},
+    {icon:'🍼',num:newBabies,label:'今日新生兒',page:'baby',color:'var(--teal)'},
+    {icon:'🛏️',num:deliveries,label:'使用中床位',page:'delivery',color:'var(--blue)'},
+  ];
+  var cardsHtml=cards.map(function(card,i){
+    return '<div class="home-card stagger-item" style="animation-delay:'+(i*0.07)+'s" onclick="setPage(\''+card.page+'\')">'
+      +'<div class="home-card-icon">'+card.icon+'</div>'
+      +'<div class="home-card-num" style="color:'+card.color+'">'+card.num+'</div>'
+      +'<div class="home-card-label">'+card.label+'</div>'
+      +'<div class="home-card-action">點擊查看 →</div></div>';
+  }).join('');
+  var quickDefs=[
+    {icon:'📋',label:'新增會議',fn:"setPage('meetings');setTimeout(openNewMeeting,80)"},
+    {icon:'📢',label:'發布公告',fn:"setPage('announcements');setTimeout(openAddAnn,80)"},
+    {icon:'⌨️',label:'快捷鍵',fn:'openShortcuts()'},
+    {icon:'🖨️',label:'列印頁面',fn:'printPage()'},
+  ];
+  var quickHtml=quickDefs.map(function(b){
+    return '<button class="home-quick-btn" onclick="'+b.fn+'"><span>'+b.icon+'</span>'+b.label+'</button>';
+  }).join('');
+  c.innerHTML='<div class="home-wrap">'
+    +'<div class="home-greeting">嗨，'+esc(currentUser.name)+' '+greet+'</div>'
+    +'<div class="home-sub">今天是 '+todayStr
+    +'<span class="home-duty-badge" style="background:'+sc+';color:'+stc+';margin-left:10px">'+(myShift||'未排班')+'</span></div>'
+    +'<div class="home-section">今日概覽</div>'
+    +'<div class="home-grid">'+cardsHtml+'</div>'
+    +'<div class="home-section">快速操作</div>'
+    +'<div class="home-quick">'+quickHtml+'</div>'
+    +'<div id="chartsSection"></div>'
+    +'</div>';
+  setTimeout(function(){animateNumbers(c);renderCharts(c);},60);
+}
+
+// ════════════════════════════════════════════════════════
+// ⑤ SVG 圖表
+// ════════════════════════════════════════════════════════
+function svgLineChart(data,color,h){
+  h=h||120;var w=400;
+  if(!data||data.length<2)return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">資料不足</div>';
+  var max=Math.max.apply(null,data.map(function(d){return d.v;}))||1;
+  var pts=data.map(function(d,i){
+    var x=Math.round(i/(data.length-1)*(w-40))+20;
+    var y=Math.round(h-12-(d.v/max*(h-24)));
+    return {x:x,y:y,v:d.v,l:d.l};
+  });
+  var path=pts.map(function(p,i){return(i?'L':'M')+p.x+' '+p.y;}).join(' ');
+  var area=path+' L'+pts[pts.length-1].x+' '+(h-12)+' L'+pts[0].x+' '+(h-12)+' Z';
+  var gid='lg'+Math.random().toString(36).slice(2,6);
+  var dots=pts.map(function(p){
+    return '<circle class="chart-dot" cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+color+'" stroke="var(--surface)" stroke-width="2"><title>'+p.l+': '+p.v+'</title></circle>';
+  }).join('');
+  var labels=pts.filter(function(_,i){return i%Math.ceil(pts.length/6)===0||i===pts.length-1;}).map(function(p){
+    return '<text class="chart-label" x="'+p.x+'" y="'+h+'" text-anchor="middle">'+p.l+'</text>';
+  }).join('');
+  return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'
+    +'<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0%" stop-color="'+color+'" stop-opacity=".25"/>'
+    +'<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'
+    +'</linearGradient></defs>'
+    +'<path d="'+area+'" fill="url(#'+gid+')" />'
+    +'<path class="chart-line" d="'+path+'" stroke="'+color+'" />'
+    +dots+labels+'</svg>';
+}
+function svgBarChart(data,color,h){
+  h=h||120;var w=400;
+  if(!data||!data.length)return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">暫無資料</div>';
+  var max=Math.max.apply(null,data.map(function(d){return d.v;}))||1;
+  var gap=(w-40)/data.length;
+  var bw=Math.floor(gap*0.65);
+  var bars=data.map(function(d,i){
+    var bh=Math.round(d.v/max*(h-28));if(bh<2)bh=2;
+    var x=Math.round(i*gap+20+gap*0.175);
+    var y=h-14-bh;
+    return '<rect class="chart-bar" x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="'+color+'" opacity=".85">'
+      +'<title>'+d.l+': '+d.v+'</title></rect>'
+      +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+h+'" text-anchor="middle">'+d.l.slice(0,4)+'</text>'
+      +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" style="font-weight:700;fill:var(--text)">'+d.v+'</text>';
+  }).join('');
+  return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'+bars+'</svg>';
+}
+function renderCharts(c){
+  var wrap=document.getElementById('chartsSection');if(!wrap)return;
+  var days=[];
+  for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}
+  var babyData=days.map(function(d){
+    return{l:d.slice(5),v:(store.babies||[]).filter(function(b){return b.admDate===d;}).length};
+  });
+  var taskData=store.users.slice(0,8).map(function(u){
+    var n=(store.meetings||[]).flatMap(function(m){return m.tasks||[];})
+      .filter(function(t){return t.assigneeId===u.id&&t.status!=='已完成';}).length;
+    return{l:u.name.slice(0,3),v:n};
+  }).filter(function(d){return d.v>0;});
+  wrap.innerHTML='<div class="home-section" style="margin-top:28px">趨勢圖表</div>'
+    +'<div class="chart-wrap stagger-item"><div class="chart-title">📈 近 7 天新生兒入院趨勢</div>'+svgLineChart(babyData,'#c4527a')+'</div>'
+    +'<div class="chart-wrap stagger-item" style="animation-delay:.08s"><div class="chart-title">📊 人員待辦任務分布</div>'
+    +(taskData.length?svgBarChart(taskData,'#5b9cf6'):emptyState('🎉','全部完成！','目前所有人員的任務都已完成','',''))+'</div>';
+}
+
+// ════════════════════════════════════════════════════════
+// ⑥ 列印 / 匯出
+// ════════════════════════════════════════════════════════
+function printPage(){window.print();}
+function exportMeetingText(){
+  var m=store.meetings.find(function(x){return x.id===currentMeetingId;});
+  if(!m){showToast('請先選擇一場會議','','ℹ️');return;}
+  var lines=['=== '+m.title+' ===','日期：'+m.date,'','【議程/備忘】',m.notes||'（無）','','【任務清單】'];
+  (m.tasks||[]).forEach(function(t){lines.push('・'+t.text+' ／ '+userName(t.assigneeId)+' ／ '+t.status);});
+  lines.push('','【出席人員】');
+  (m.attendeeIds||[]).forEach(function(id){lines.push('・'+userName(id));});
+  var blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=m.title+'_'+m.date+'.txt';a.click();
+  showToast('已匯出',m.title,'📄');
+}
+function exportDutyCSV(){
+  var weeks=[];var dt=new Date();dt.setDate(dt.getDate()-dt.getDay()+1);
+  for(var i=0;i<14;i++){var d=new Date(dt);d.setDate(dt.getDate()+i);weeks.push(d.toISOString().split('T')[0]);}
+  var rows=[['姓名'].concat(weeks)];
+  store.users.forEach(function(u){
+    var row=[u.name];
+    weeks.forEach(function(d){row.push((store.dutySchedule&&store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'');});
+    rows.push(row);
+  });
+  var csv=rows.map(function(r){return r.map(function(x){return '"'+x+'"';}).join(',');}).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='排班表_'+today()+'.csv';a.click();
+  showToast('排班表已匯出','CSV 格式，可用 Excel 開啟','📊');
 }
