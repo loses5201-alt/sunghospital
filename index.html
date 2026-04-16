@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>宋俊宏婦幼醫院 — 協作管理平台</title>
+<meta name="theme-color" content="#c4527a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="婦幼醫院">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="stylesheet" href="style.css">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -171,5 +177,17 @@
 <script src="app.js"></script>
 <div id="nocBadge" style="position:fixed;bottom:16px;right:16px;z-index:999;background:linear-gradient(135deg,rgba(58,13,32,0.92),rgba(107,32,64,0.92));border:1px solid rgba(212,175,55,0.35);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,0.2)"><div style="width:5px;height:5px;border-radius:50%;background:#d4af37;box-shadow:0 0 6px rgba(212,175,55,0.8)"></div><span style="font-size:10px;color:rgba(212,175,55,0.85);font-weight:700;letter-spacing:.1em;font-family:'Nunito',sans-serif">Noc</span></div>
 </div>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sunghospital/sw.js').then(function(reg){
+      console.log('[SW] registered:', reg.scope);
+    }).catch(function(err){
+      console.warn('[SW] registration failed:', err);
+    });
+  });
+}
+</script>
 </body>
 </html>

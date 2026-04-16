@@ -696,7 +696,7 @@ function openNewMeeting(){
   editingMeetingId=null;showModal('新增會議',meetingForm(null),saveMeeting);
 }
 function openEditMeeting(){editingMeetingId=currentMeetingId;const m=store.meetings.find(x=>x.id===currentMeetingId);showModal('編輯會議',meetingForm(m),saveMeeting);}
-function deleteMeeting(){if(!confirm('確定刪除這場會議？'))return;store.meetings=store.meetings.filter(x=>x.id!==currentMeetingId);currentMeetingId=null;saveStore();renderSidebar();renderEmptyMain();}
+function deleteMeeting(){if(!confirm('確定刪除這場會議？'))return;const dm=store.meetings.find(x=>x.id===currentMeetingId);store.meetings=store.meetings.filter(x=>x.id!==currentMeetingId);logAudit('刪除會議', dm?dm.title:'');currentMeetingId=null;saveStore();renderSidebar();renderEmptyMain();}
 function meetingForm(m){
   const allUsers=store.users.filter(u=>u.role!=='admin'||u.id===currentUser.id);
   const checks=store.users.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;cursor:pointer">
@@ -717,12 +717,12 @@ function saveMeeting(){
     const m=store.meetings.find(x=>x.id===editingMeetingId);
     m.title=title;m.date=date;m.notes=notes;m.attendeeIds=attendeeIds;
     attendeeIds.forEach(u=>{if(!m.reads[u])m.reads[u]={read:false,time:null};});
-    closeModal();saveStore();renderSidebar();renderMeetingMain();
+    logAudit('編輯會議', title);closeModal();saveStore();renderSidebar();renderMeetingMain();
   } else {
     const id=uid();const reads={};
     attendeeIds.forEach(u=>{reads[u]={read:u===currentUser.id,time:u===currentUser.id?nowTime():null};});
     store.meetings.push({id,title,date,attendeeIds,notes,tasks:[],chat:[],votes:[],reads});
-    closeModal();saveStore();renderSidebar();selectMeeting(id);
+    logAudit('新增會議', title);closeModal();saveStore();renderSidebar();selectMeeting(id);
   }
 }
 
@@ -907,11 +907,12 @@ function saveAnn(){
     time:today()+' '+nowTime(),pinned:document.getElementById('annPinned').checked,
     category:document.getElementById('annCat').value,
     infectionLevel:document.getElementById('annInf').value,reads});
+  logAudit('發布公告', document.getElementById('annTitle').value.trim());
   saveStore();closeModal();renderAnnList();updateAnnBadge();updateMarquee();
 }
 function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a)a.reads[currentUser.id]=true;saveStore();renderAnnList();updateAnnBadge();}
 function togglePin(id){const a=store.announcements.find(x=>x.id===id);if(a)a.pinned=!a.pinned;saveStore();renderAnnList();}
-function deleteAnn(id){if(!confirm('確定刪除？'))return;store.announcements=store.announcements.filter(x=>x.id!==id);saveStore();renderAnnList();updateMarquee();}
+function deleteAnn(id){if(!confirm('確定刪除？'))return;const da=store.announcements.find(x=>x.id===id);store.announcements=store.announcements.filter(x=>x.id!==id);logAudit('刪除公告', da?da.title:'');saveStore();renderAnnList();updateMarquee();}
 
 // ══════════════════════════════════════════
 // EMERGENCY BROADCAST
@@ -1255,9 +1256,9 @@ function renderDeptContent(){
   }).join('');
   c.innerHTML=`<div class="sec-label">科別列表（${store.departments.length}）</div><div class="card-grid">${cards}</div>`;
 }
-function openAddDept(){showModal('新增科別',`<div class="form-row"><label>科別名稱</label><input id="deptName" placeholder="例：內科部"></div>`,()=>{const n=document.getElementById('deptName').value.trim();if(!n)return;store.departments.push({id:uid(),name:n});saveStore();closeModal();renderDeptContent();});}
-function openEditDept(id){const d=store.departments.find(x=>x.id===id);showModal('編輯科別',`<div class="form-row"><label>科別名稱</label><input id="deptName" value="${esc(d.name)}"></div>`,()=>{const n=document.getElementById('deptName').value.trim();if(!n)return;d.name=n;saveStore();closeModal();renderDeptContent();});}
-function deleteDept(id){const m=store.users.filter(u=>u.deptId===id);if(m.length&&!confirm(`此科別有 ${m.length} 位成員，確定刪除？`))return;store.departments=store.departments.filter(x=>x.id!==id);store.users.forEach(u=>{if(u.deptId===id)u.deptId='';});saveStore();renderDeptContent();}
+function openAddDept(){showModal('新增科別',`<div class="form-row"><label>科別名稱</label><input id="deptName" placeholder="例：內科部"></div>`,()=>{const n=document.getElementById('deptName').value.trim();if(!n)return;store.departments.push({id:uid(),name:n});logAudit('新增科別', n);saveStore();closeModal();renderDeptContent();});}
+function openEditDept(id){const d=store.departments.find(x=>x.id===id);showModal('編輯科別',`<div class="form-row"><label>科別名稱</label><input id="deptName" value="${esc(d.name)}"></div>`,()=>{const n=document.getElementById('deptName').value.trim();if(!n)return;d.name=n;logAudit('編輯科別', n);saveStore();closeModal();renderDeptContent();});}
+function deleteDept(id){const m=store.users.filter(u=>u.deptId===id);if(m.length&&!confirm(`此科別有 ${m.length} 位成員，確定刪除？`))return;const dd=store.departments.find(x=>x.id===id);store.departments=store.departments.filter(x=>x.id!==id);store.users.forEach(u=>{if(u.deptId===id)u.deptId='';});logAudit('刪除科別', dd?dd.name:'');saveStore();renderDeptContent();}
 
 function renderUsersPage(c){
   c.innerHTML=`<div class="admin-layout">
@@ -1270,9 +1271,11 @@ function renderUsersPage(c){
     </div>
     <div class="admin-content" id="userContent"></div>
     <div id="backupLog" style="padding:0 20px 20px"></div>
+    <div id="auditLog" style="padding:0 20px 20px"></div>
   </div>`;
   renderUserContent();
   renderBackupLog();
+  renderAuditLog();
 }
 function renderUserContent(){
   const c=document.getElementById('userContent');if(!c)return;
@@ -1319,10 +1322,13 @@ function saveUser(){
   } else {
     if(!password){alert('請設定密碼');return;}
     store.users.push({id:uid(),...data,password});
+    logAudit('新增人員', data.name + '（@' + data.username + '）');
+  } else {
+    logAudit('編輯人員', data.name + '（@' + data.username + '）');
   }
   saveStore();closeModal();renderUserContent();
 }
-function deleteUser(id){if(!confirm('確定刪除此人員？'))return;store.users=store.users.filter(x=>x.id!==id);saveStore();renderUserContent();}
+function deleteUser(id){if(!confirm('確定刪除此人員？'))return;const du=store.users.find(x=>x.id===id);store.users=store.users.filter(x=>x.id!==id);logAudit('刪除人員', du?du.name:'');saveStore();renderUserContent();}
 
 // ══════════════════════════════════════════
 // CHANGE PASSWORD
@@ -1505,8 +1511,8 @@ function rnForms(){
   const pend=all.filter(f=>f.status==='pending'&&isApp(f));
   c.innerHTML=(pend.length?'<div class="sec-label">待我審核（'+pend.length+'）</div>'+pend.map(rCard).join('')+'<div class="sec-label">全部申請</div>':'<div class="sec-label">全部申請</div>')+all.map(rCard).join('');
 }
-function appF(id){const f=store.formRequests.find(x=>x.id===id);if(!f)return;const i=f.approvers.indexOf(currentUser.id);if(i<0)return;f.statuses[i]='approved';if(f.statuses.every(s=>s==='approved'))f.status='approved';saveStore();rnForms();}
-function rejF(id){const f=store.formRequests.find(x=>x.id===id);if(!f)return;const i=f.approvers.indexOf(currentUser.id);if(i<0)return;f.statuses[i]='rejected';f.status='rejected';saveStore();rnForms();}
+function appF(id){const f=store.formRequests.find(x=>x.id===id);if(!f)return;const i=f.approvers.indexOf(currentUser.id);if(i<0)return;f.statuses[i]='approved';if(f.statuses.every(s=>s==='approved'))f.status='approved';logAudit('審核通過', f.title||f.type||'表單');saveStore();rnForms();}
+function rejF(id){const f=store.formRequests.find(x=>x.id===id);if(!f)return;const i=f.approvers.indexOf(currentUser.id);if(i<0)return;f.statuses[i]='rejected';f.status='rejected';logAudit('審核退回', f.title||f.type||'表單');saveStore();rnForms();}
 function openNewFrm(){
   _pendingAttachment=null;
   const aOpts=store.users.filter(u=>u.id!==currentUser.id).map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');
@@ -2220,5 +2226,53 @@ function renderBackupLog(){
     }).join('');
     wrap.innerHTML = '<div style="font-size:11px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">備份紀錄（最近 10 筆）</div>'
       + '<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>大小</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  });
+}
+
+
+// ══════════════════════════════════════════
+// AUDIT LOG 稽核日誌
+// ══════════════════════════════════════════
+function logAudit(action, detail){
+  if(!fbDb) return;
+  fbDb.ref('auditLog').push({
+    at: new Date().toISOString(),
+    by: currentUser ? currentUser.name : 'unknown',
+    userId: currentUser ? currentUser.id : '',
+    action: action,
+    detail: detail || ''
+  });
+}
+
+function renderAuditLog(){
+  var wrap = document.getElementById('auditLog');
+  if(!wrap || !fbDb){ return; }
+  fbDb.ref('auditLog').orderByKey().limitToLast(50).once('value').then(function(snap){
+    var logs = [];
+    snap.forEach(function(child){ logs.push(child.val()); });
+    logs.reverse();
+    if(!logs.length){
+      wrap.innerHTML = '<div style="font-size:12px;color:var(--faint);padding:8px 0">尚無操作紀錄</div>';
+      return;
+    }
+    var ACTION_COLOR = {
+      '新增': '#2196F3', '編輯': '#FF9800', '刪除': '#F44336',
+      '發布': '#4CAF50', '審核': '#9C27B0', '備份': '#607D8B', '還原': '#E91E63'
+    };
+    function getColor(action){
+      for(var k in ACTION_COLOR){ if(action.indexOf(k) > -1) return ACTION_COLOR[k]; }
+      return 'var(--muted)';
+    }
+    var rows = logs.map(function(l){
+      var color = getColor(l.action || '');
+      return '<tr>'
+        + '<td style="font-size:12px;white-space:nowrap">' + (l.at||'').slice(0,16).replace('T',' ') + '</td>'
+        + '<td style="font-size:12px">' + esc(l.by||'') + '</td>'
+        + '<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:' + color + '22;color:' + color + '">' + esc(l.action||'') + '</span></td>'
+        + '<td style="font-size:12px;color:var(--muted)">' + esc(l.detail||'') + '</td>'
+        + '</tr>';
+    }).join('');
+    wrap.innerHTML = '<div style="font-size:11px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">稽核日誌（最近 50 筆）</div>'
+      + '<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>說明</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   });
 }
