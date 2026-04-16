@@ -1319,12 +1319,11 @@ function saveUser(){
     const u=store.users.find(x=>x.id===editingUserId);
     Object.assign(u,data);if(password)u.password=password;
     if(u.id===currentUser.id){currentUser=u;updateNavUser();}
+    logAudit('編輯人員', data.name + '（@' + data.username + '）');
   } else {
     if(!password){alert('請設定密碼');return;}
     store.users.push({id:uid(),...data,password});
     logAudit('新增人員', data.name + '（@' + data.username + '）');
-  } else {
-    logAudit('編輯人員', data.name + '（@' + data.username + '）');
   }
   saveStore();closeModal();renderUserContent();
 }
@@ -2146,9 +2145,7 @@ function backupData(){
 
 // ── 還原備份 ──
 function restoreData(){
-  if(!confirm('⚠️ 還原備份將會覆蓋目前所有資料，確定繼續？
-
-建議先下載一份最新備份再還原。')){return;}
+  if(!confirm('⚠️ 還原備份將會覆蓋目前所有資料，確定繼續？\n\n建議先下載一份最新備份再還原。')){return;}
   var input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json,application/json';
@@ -2159,28 +2156,19 @@ function restoreData(){
     reader.onload = function(ev){
       try{
         var data = JSON.parse(ev.target.result);
-        // 基本驗證：必須有 users 陣列
-        if(!data.users || !Array.isArray(data.users) || data.users.length === 0){
-          alert('❌ 備份檔格式不正確或已損毀，還原取消。');
+        if(!data || !data.users || !Array.isArray(data.users)){
+          alert('❌ 類型不符，請確認是備份檔案');
           return;
         }
-        var backupDate = data._backupAt ? data._backupAt.slice(0,10) : '未知';
-        var backupBy = data._backupBy || '未知';
-        if(!confirm('確認還原此備份？
-
-備份時間：' + backupDate + '
-備份者：' + backupBy + '
-人員數：' + data.users.length + ' 人
-
-還原後頁面將自動重新整理。')){return;}
-        // 移除備份 metadata 欄位再寫入
+        var backupDate = (data._backupAt || '').slice(0,16).replace('T',' ');
+        var backupBy = data._backupBy || 'unknown';
+        var msg = '確認還原此備份？\n\n備份時間：' + backupDate + '\n備份者：' + backupBy + '\n人員數：' + data.users.length + ' 人\n\n還原後頁面將自動重新整理。';
+        if(!confirm(msg)){return;}
         delete data._backupAt;
         delete data._backupBy;
         store = normalizeStore(data);
-        // 寫回 Firebase
         if(fbDb){
           fbDb.ref('store').set(store).then(function(){
-            // 記錄還原操作
             fbDb.ref('backupLog').push({
               at: new Date().toISOString(),
               by: currentUser ? currentUser.name : 'unknown',
@@ -2206,7 +2194,6 @@ function restoreData(){
   input.click();
 }
 
-// ── 備份紀錄 ──
 function renderBackupLog(){
   var wrap = document.getElementById('backupLog');
   if(!wrap || !fbDb){return;}
