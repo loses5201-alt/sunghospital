@@ -323,7 +323,7 @@ function initApp(){
     document.getElementById('navDepts').style.display='flex';
     document.getElementById('navUsers').style.display='flex';
   }
-  updateNavUser();updateAnnBadge();updateIrBadge();updateCalBadge();
+  updateNavUser();updateAnnBadge();updateIrBadge();updateCalBadge();updateNotifBadge((store.announcements||[]).filter(a=>!a.reads[currentUser&&currentUser.id]).length);
   renderSidebar();setPage('meetings');
   checkPendingEmergency();
   startClock();
@@ -1681,4 +1681,170 @@ function toggleDark(){
     btn.innerHTML='<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 2a1 1 0 011 1v1a1 1 0 01-2 0V3a1 1 0 011-1zm4.22 1.78a1 1 0 011.42 1.42l-.71.7a1 1 0 01-1.42-1.41l.71-.71zM18 9h-1a1 1 0 010-2h1a1 1 0 010 2zm-1.78 5.22a1 1 0 010 1.42l-.71.71a1 1 0 01-1.42-1.42l.71-.71a1 1 0 011.42 0zM10 15a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zm-5.22-.78a1 1 0 01-1.42 1.42l-.7-.71a1 1 0 011.41-1.42l.71.71zM4 9H3a1 1 0 010-2h1a1 1 0 010 2zm1.78-5.22a1 1 0 010 1.42l-.71.71A1 1 0 013.66 4.5l.71-.71a1 1 0 011.41 0zM10 6a4 4 0 100 8 4 4 0 000-8z"/></svg>';
     btn.title='切換深色模式';
   }
+}
+
+// ══════════════════════════════════════════
+// 全站搜尋
+// ══════════════════════════════════════════
+function openSearch(){
+  const ov=document.getElementById('searchOverlay');
+  if(!ov)return;
+  ov.style.display='flex';
+  setTimeout(()=>{const inp=document.getElementById('searchInput2');if(inp)inp.focus();},50);
+  doSearch('');
+}
+function closeSearch(e){
+  if(e&&e.target!==document.getElementById('searchOverlay'))return;
+  document.getElementById('searchOverlay').style.display='none';
+}
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openSearch();}
+  if(e.key==='Escape'){const ov=document.getElementById('searchOverlay');if(ov&&ov.style.display!=='none')ov.style.display='none';}
+});
+function doSearch(q){
+  const res=document.getElementById('searchResults');if(!res)return;
+  q=(q||'').trim().toLowerCase();
+  if(!q){res.innerHTML='<div class="search-empty">輸入關鍵字開始搜尋<br><small style="font-size:11px;margin-top:4px;display:block">支援：會議、公告、寶寶、日誌、衛教</small></div>';return;}
+  const hits=[];
+  // 會議
+  (store.meetings||[]).forEach(m=>{
+    if(m.title.toLowerCase().includes(q)||(m.notes||'').toLowerCase().includes(q))
+      hits.push({icon:'📋',cat:'會議',title:m.title,sub:m.date,act:()=>{selectMeeting(m.id);setPage('meetings');}});
+  });
+  // 公告
+  (store.announcements||[]).forEach(a=>{
+    if(a.title.toLowerCase().includes(q)||(a.body||'').toLowerCase().includes(q))
+      hits.push({icon:'📢',cat:'公告',title:a.title,sub:a.time,act:()=>{openAnnFromMarquee(a.id);}});
+  });
+  // 寶寶
+  (store.babies||[]).forEach(b=>{
+    if((b.name||'').toLowerCase().includes(q)||(b.motherName||'').toLowerCase().includes(q))
+      hits.push({icon:'🍼',cat:'新生兒',title:b.name||'(未命名)',sub:'母：'+(b.motherName||''),act:()=>{setPage('baby');}});
+  });
+  // 日誌
+  (store.journals||[]).forEach(j=>{
+    if((j.content||'').toLowerCase().includes(q))
+      hits.push({icon:'📝',cat:'工作日誌',title:(j.content||'').slice(0,40)+'…',sub:j.date,act:()=>{setPage('journal');}});
+  });
+  // 衛教
+  (store.eduItems||[]).forEach(e=>{
+    if((e.title||'').toLowerCase().includes(q)||(e.desc||'').toLowerCase().includes(q))
+      hits.push({icon:'📚',cat:'衛教',title:e.title,sub:e.desc||'',act:()=>{setPage('edu');}});
+  });
+  if(!hits.length){res.innerHTML='<div class="search-empty">找不到「'+esc(q)+'」的相關結果</div>';return;}
+  // 依 cat 分組
+  const groups={};hits.forEach(h=>{if(!groups[h.cat])groups[h.cat]=[];groups[h.cat].push(h);});
+  let html='';
+  Object.entries(groups).forEach(([cat,items])=>{
+    html+=`<div class="search-group">${cat}</div>`;
+    items.slice(0,5).forEach((item,i)=>{
+      html+=`<div class="search-item" onclick="searchGo(${JSON.stringify(cat)},${i})">
+        <div class="search-item-icon">${item.icon}</div>
+        <div><div class="search-item-title">${esc(item.title)}</div><div class="search-item-sub">${esc(item.sub)}</div></div>
+      </div>`;
+    });
+  });
+  res.innerHTML=html;
+  // 把 act functions 存起來
+  res._hits=groups;
+}
+function searchGo(cat,i){
+  const res=document.getElementById('searchResults');
+  if(!res||!res._hits||!res._hits[cat])return;
+  res._hits[cat][i].act();
+  document.getElementById('searchOverlay').style.display='none';
+}
+
+// ══════════════════════════════════════════
+// FAB 快捷鍵
+// ══════════════════════════════════════════
+function toggleFab(){
+  const menu=document.getElementById('fabMenu');
+  const btn=document.getElementById('fabBtn');
+  if(!menu)return;
+  const open=menu.style.display==='none';
+  menu.style.display=open?'flex':'none';
+  btn.classList.toggle('open',open);
+}
+function fabAct(type){
+  toggleFab();
+  if(type==='ann'){setPage('announcements');setTimeout(openAddAnn,80);}
+  else if(type==='meeting'){setPage('meetings');setTimeout(openNewMeeting,80);}
+  else if(type==='journal'){setPage('journal');setTimeout(function(){const b=document.querySelector('[onclick="openNewJournal()"]');if(b)b.click();},80);}
+  else if(type==='incident'){setPage('incident');setTimeout(function(){const b=document.querySelector('[onclick="openNewIR()"]');if(b)b.click();},80);}
+}
+document.addEventListener('click',function(e){
+  const fab=document.getElementById('fab');
+  if(fab&&!fab.contains(e.target)){
+    const menu=document.getElementById('fabMenu');
+    if(menu&&menu.style.display!=='none'){
+      menu.style.display='none';
+      document.getElementById('fabBtn').classList.remove('open');
+    }
+  }
+});
+
+// ══════════════════════════════════════════
+// 通知中心
+// ══════════════════════════════════════════
+function openNotifPanel(){
+  renderNotifPanel();
+  const p=document.getElementById('notifPanel');
+  const b=document.getElementById('notifBackdrop');
+  if(!p)return;
+  p.style.display='flex';b.style.display='block';
+  requestAnimationFrame(()=>p.classList.add('open'));
+}
+function closeNotifPanel(){
+  const p=document.getElementById('notifPanel');
+  const b=document.getElementById('notifBackdrop');
+  if(!p)return;
+  p.classList.remove('open');
+  b.style.display='none';
+  setTimeout(()=>{p.style.display='none';},260);
+}
+function renderNotifPanel(){
+  const list=document.getElementById('notifList');if(!list||!currentUser)return;
+  const items=[];
+  // 未讀公告
+  (store.announcements||[]).forEach(a=>{
+    const unread=!a.reads[currentUser.id];
+    items.push({icon:'📢',title:a.title,body:a.body,time:a.time,unread,act:()=>{openAnnFromMarquee(a.id);closeNotifPanel();}});
+  });
+  // 未讀事件
+  (store.incidents||[]).forEach(ir=>{
+    const unread=!(ir.reads&&ir.reads[currentUser.id]);
+    items.push({icon:'🚨',title:ir.title,body:ir.desc||'',time:ir.time||ir.date||'',unread,act:()=>{setPage('incident');closeNotifPanel();}});
+  });
+  // 依時間排序，未讀優先
+  items.sort((a,b)=>(b.unread-a.unread)||b.time.localeCompare(a.time));
+  updateNotifBadge(items.filter(x=>x.unread).length);
+  if(!items.length){list.innerHTML='<div class="notif-empty">目前沒有通知</div>';return;}
+  list.innerHTML=items.map((it,i)=>`
+    <div class="notif-item${it.unread?' notif-unread':''}" onclick="notifGo(${i})">
+      <div class="notif-item-head">
+        <span class="notif-item-icon">${it.icon}</span>
+        <span class="notif-item-title">${esc(it.title)}</span>
+        <span class="notif-item-time">${(it.time||'').slice(0,10)}</span>
+      </div>
+      <div class="notif-item-body">${esc((it.body||'').slice(0,60))}${(it.body||'').length>60?'…':''}</div>
+    </div>`).join('');
+  list._acts=items.map(x=>x.act);
+}
+function notifGo(i){
+  const list=document.getElementById('notifList');
+  if(list&&list._acts&&list._acts[i])list._acts[i]();
+}
+function updateNotifBadge(n){
+  const b=document.getElementById('notifBadge');if(!b)return;
+  if(n>0){b.textContent=n>9?'9+':n;b.style.display='flex';}
+  else b.style.display='none';
+}
+
+// ══════════════════════════════════════════
+// RWD 側欄漢堡選單
+// ══════════════════════════════════════════
+function toggleMobileSidebar(){
+  const sb=document.getElementById('sidebar');if(!sb)return;
+  sb.classList.toggle('mobile-open');
 }
