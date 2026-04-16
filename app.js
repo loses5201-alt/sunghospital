@@ -103,7 +103,7 @@ function startFirebaseSync() {
       // 雲端有資料，以雲端為準
       store = normalizeStore(cloudData);
       try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
-      mergeNew();
+      mergeNewLocal();
       renderSidebar();
       updateAnnBadge();
       updateIrBadge();
@@ -131,7 +131,7 @@ function startFirebaseSync() {
         if (d && d.users && Array.isArray(d.users) && d.users.length > 0) {
           store = normalizeStore(d);
           try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(ex) {}
-          mergeNew();
+          mergeNewLocal();
           // 更新當前頁面
           if (currentPage === 'meetings' || !currentPage) {
             renderSidebar();
