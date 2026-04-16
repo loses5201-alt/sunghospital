@@ -107,6 +107,7 @@ function startFirebaseSync() {
       renderSidebar();
       updateAnnBadge();
       updateIrBadge();
+      updateMarquee();
     } else {
       // 雲端是空的，把本地資料推上去
       fbDb.ref('store').set(store).catch(function() {});
@@ -139,6 +140,7 @@ function startFirebaseSync() {
           }
           updateAnnBadge();
           updateIrBadge();
+          updateMarquee();
         }
       });
     });
@@ -786,6 +788,16 @@ function saveShift(){
 // ══════════════════════════════════════════
 // ANNOUNCEMENTS
 // ══════════════════════════════════════════
+function updateMarquee(){
+  const el=document.getElementById('marqueeText');
+  if(!el)return;
+  const anns=(store.announcements||[]).slice(0,15).map(a=>a.title);
+  if(!anns.length){el.textContent='';return;}
+  const sep='　　　✦　　　';
+  const txt=anns.join(sep)+sep;
+  // 複製一次讓動畫無縫循環
+  el.textContent=txt+txt;
+}
 function updateAnnBadge(){
   if(!currentUser)return;
   const n=store.announcements.filter(a=>!a.reads[currentUser.id]).length;
@@ -861,11 +873,11 @@ function saveAnn(){
     time:today()+' '+nowTime(),pinned:document.getElementById('annPinned').checked,
     category:document.getElementById('annCat').value,
     infectionLevel:document.getElementById('annInf').value,reads});
-  saveStore();closeModal();renderAnnList();updateAnnBadge();
+  saveStore();closeModal();renderAnnList();updateAnnBadge();updateMarquee();
 }
 function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a)a.reads[currentUser.id]=true;saveStore();renderAnnList();updateAnnBadge();}
 function togglePin(id){const a=store.announcements.find(x=>x.id===id);if(a)a.pinned=!a.pinned;saveStore();renderAnnList();}
-function deleteAnn(id){if(!confirm('確定刪除？'))return;store.announcements=store.announcements.filter(x=>x.id!==id);saveStore();renderAnnList();}
+function deleteAnn(id){if(!confirm('確定刪除？'))return;store.announcements=store.announcements.filter(x=>x.id!==id);saveStore();renderAnnList();updateMarquee();}
 
 // ══════════════════════════════════════════
 // EMERGENCY BROADCAST
