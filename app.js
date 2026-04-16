@@ -2215,7 +2215,6 @@ function renderHomePage(c){
     {icon:'📋',label:'新增會議',fn:"setPage('meetings');setTimeout(openNewMeeting,80)"},
     {icon:'📢',label:'發布公告',fn:"setPage('announcements');setTimeout(openAddAnn,80)"},
     {icon:'⌨️',label:'快捷鍵',fn:'openShortcuts()'},
-    {icon:'🖨️',label:'列印頁面',fn:'printPage()'},
   ];
   var quickHtml=quickDefs.map(function(b){
     return '<button class="home-quick-btn" onclick="'+b.fn+'"><span>'+b.icon+'</span>'+b.label+'</button>';
