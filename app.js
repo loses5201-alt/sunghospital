@@ -290,6 +290,7 @@ function dueClass(due,status){
 function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,5);}
 function isAdmin(){return currentUser&&currentUser.role==='admin';}
+function hasPerm(p){return isAdmin()||!!(currentUser&&currentUser.permissions&&currentUser.permissions[p]);}
 function prioBadge(p){
   if(p==='critical')return`<span class="prio prio-critical"><span class="prio-dot"></span>緊急</span>`;
   if(p==='urgent')return`<span class="prio prio-urgent"><span class="prio-dot"></span>急件</span>`;
@@ -1058,8 +1059,8 @@ function renderAnnouncementsPage(c){
     <div class="main-header">
       <div><h1>公告牆</h1><div class="main-header-meta">全院公告 · 感染管控警示</div></div>
       <div class="header-actions">
-        ${isAdmin()?`<button class="btn-sm danger" onclick="openEmergencyBroadcast()">⚡ 緊急廣播</button>`:''}
-        <button class="btn-sm primary" onclick="openAddAnn()">＋ 發布公告</button>
+        ${hasPerm('publishAnn')?`<button class="btn-sm danger" onclick="openEmergencyBroadcast()">⚡ 緊急廣播</button>`:''}
+        ${hasPerm('publishAnn')?`<button class="btn-sm primary" onclick="openAddAnn()">＋ 發布公告</button>`:''}
       </div>
     </div>
     <div class="admin-content" id="annList"></div>
@@ -1096,7 +1097,7 @@ function renderAnnList(){
       <div class="ann-read-list">${readList}</div>
       <div class="ann-actions">
         ${!myRead?`<button class="btn-sm" onclick="readAnn('${a.id}')">✓ 標示已讀</button>`:'<span style="font-size:11px;color:var(--green)">✓ 已讀</span>'}
-        ${isAdmin()?`<button class="btn-sm" onclick="togglePin('${a.id}')">${a.pinned?'取消置頂':'📌 置頂'}</button>
+        ${hasPerm('publishAnn')?`<button class="btn-sm" onclick="togglePin('${a.id}')">${a.pinned?'取消置頂':'📌 置頂'}</button>
         <button class="btn-sm danger" onclick="deleteAnn('${a.id}')">刪除</button>`:''}
       </div>
     </div>`;
@@ -1228,7 +1229,7 @@ function renderIRList(){
           <span class="ir-level ${lv.cls}">${lv.label}</span>${st}
           <span style="font-size:11px;color:var(--faint)">${fmtDate(ir.date)} · ${esc(userDept(ir.reporterId))}</span>
         </div>
-        ${isAdmin()?`<select class="task-select" onchange="updateIRStatus('${ir.id}',this.value)">
+        ${hasPerm('manageIR')?`<select class="task-select" onchange="updateIRStatus('${ir.id}',this.value)">
           <option ${ir.status==='new'?'selected':''} value="new">新通報</option>
           <option ${ir.status==='processing'?'selected':''} value="processing">處理中</option>
           <option ${ir.status==='closed'?'selected':''} value="closed">已結案</option>
@@ -1518,26 +1519,44 @@ function renderUserContent(){
     <td><div style="display:flex;align-items:center;gap:9px">${avatarEl(u.id,28)}<div><div style="font-size:13px;font-weight:500">${esc(u.name)}</div><div style="font-size:11px;color:var(--faint)">@${esc(u.username)}</div></div></div></td>
     <td>${u.deptId?`<span class="dept-chip">${esc(userDept(u.id))}</span>`:'—'}</td>
     <td>${u.title?`<span class="title-chip">${esc(u.title)}</span>`:'—'}</td>
-    <td><span class="role-badge ${u.role==='admin'?'rb-admin':'rb-member'}">${u.role==='admin'?'管理員':'一般'}</span></td>
+    <td><span class="role-badge ${u.role==='admin'?'rb-admin':'rb-member'}">${u.role==='admin'?'管理員':'一般'}</span>${u.role!=='admin'&&u.permissions?[['approveForm','簽核'],['manageSchedule','排班'],['publishAnn','公告'],['manageIR','事件']].filter(([k])=>u.permissions[k]).map(([,l])=>`<span class="perm-tag">${l}</span>`).join(''):''}</td>
     <td><div style="display:flex;gap:6px">
       <button class="btn-sm" onclick="openEditUser('${u.id}')">編輯</button>
       ${u.id!==currentUser.id?`<button class="btn-sm danger" onclick="deleteUser('${u.id}')">刪除</button>`:'<span style="font-size:11px;color:var(--faint);padding:5px 6px">本人</span>'}
     </div></td>
   </tr>`).join('');
-  c.innerHTML=`<div class="table-wrap"><table><thead><tr><th>姓名/帳號</th><th>科別</th><th>職稱</th><th>角色</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  c.innerHTML=`<div class="table-wrap"><table><thead><tr><th>姓名/帳號</th><th>科別</th><th>職稱</th><th>角色 / 權限</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function userFormHtml(u){
   const dOpts=store.departments.map(d=>`<option value="${d.id}" ${u&&u.deptId===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
   const tOpts=store.titles.map(t=>`<option ${u&&u.title===t?'selected':''}>${esc(t)}</option>`).join('');
-  const avOpts=AVCOLORS.map((av,i)=>`<option value="${av}" ${u&&u.avatar===av?'selected':''}>顏色 ${i+1}</option>`).join('');
+  const avOpts=AVCOLORS.map((av,i)=>`<option value="${av}" ${u&&u.avatar===av?'selected':''}>\u984f\u8272 ${i+1}</option>`).join('');
+  const p=u&&u.permissions?u.permissions:{};
+  const permDefs=[
+    {k:'approveForm', l:'\u5be9\u6838\u7c3d\u6838\u55ae', desc:'\u53ef\u6838\u51c6\u6216\u99b3\u56de\u4ed6\u4eba\u7684\u7533\u8acb\u55ae\uff0c\u4e26\u51fa\u73fe\u5728\u7c3d\u6838\u4eba\u9078\u55ae\u4e2d'},
+    {k:'manageSchedule', l:'\u7ba1\u7406\u6392\u73ed', desc:'\u53ef\u7de8\u8f2f\u5024\u73ed\u8868\u53ca\u8655\u7406\u63db\u73ed\u7533\u8acb'},
+    {k:'publishAnn', l:'\u767c\u5e03/\u7ba1\u7406\u516c\u544a', desc:'\u53ef\u65b0\u589e\u3001\u522a\u9664\u3001\u7f6e\u9802\u516c\u544a\u53ca\u767c\u51fa\u7dca\u6025\u5ee3\u64ad'},
+    {k:'manageIR', l:'\u7ba1\u7406\u4e8b\u4ef6\u901a\u5831', desc:'\u53ef\u66f4\u65b0\u4e8b\u4ef6\u901a\u5831\u7684\u8655\u7406\u72c0\u614b'},
+  ];
+  const permHtml=permDefs.map(pd=>
+    `<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--b1);cursor:pointer;background:var(--surface)">
+      <input type="checkbox" id="perm_${pd.k}" ${p[pd.k]?'checked':''} style="margin-top:2px;accent-color:#c4527a;width:15px;height:15px;flex-shrink:0">
+      <div><div style="font-size:13px;font-weight:600">${pd.l}</div><div style="font-size:11px;color:var(--faint);margin-top:1px">${pd.desc}</div></div>
+    </label>`
+  ).join('');
   return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <div class="form-row"><label>姓名</label><input id="uName" value="${esc(u?.name||'')}"></div>
-    <div class="form-row"><label>帳號</label><input id="uUsername" value="${esc(u?.username||'')}"></div>
-    <div class="form-row"><label>密碼 ${u?'（留空不改）':''}</label><input id="uPassword" type="password" placeholder="${u?'留空維持':'設定密碼'}"></div>
-    <div class="form-row"><label>頭像顏色</label><select id="uAvatar">${avOpts}</select></div>
-    <div class="form-row"><label>科別</label><select id="uDept"><option value="">（無）</option>${dOpts}</select></div>
-    <div class="form-row"><label>職稱</label><select id="uTitle"><option value="">（無）</option>${tOpts}</select></div>
-    <div class="form-row"><label>角色</label><select id="uRole"><option value="member" ${u?.role==='member'?'selected':''}>一般成員</option><option value="admin" ${u?.role==='admin'?'selected':''}>管理員</option></select></div>
+    <div class="form-row"><label>\u59d3\u540d</label><input id="uName" value="${esc(u?.name||'')}"></div>
+    <div class="form-row"><label>\u5e33\u865f</label><input id="uUsername" value="${esc(u?.username||'')}"></div>
+    <div class="form-row"><label>\u5bc6\u78bc ${u?'\uff08\u7559\u7a7a\u4e0d\u6539\uff09':''}</label><input id="uPassword" type="password" placeholder="${u?'\u7559\u7a7a\u7dad\u6301':'\u8a2d\u5b9a\u5bc6\u78bc'}"></div>
+    <div class="form-row"><label>\u982d\u50cf\u984f\u8272</label><select id="uAvatar">${avOpts}</select></div>
+    <div class="form-row"><label>\u79d1\u5225</label><select id="uDept"><option value="">\uff08\u7121\uff09</option>${dOpts}</select></div>
+    <div class="form-row"><label>\u8077\u7a31</label><select id="uTitle"><option value="">\uff08\u7121\uff09</option>${tOpts}</select></div>
+    <div class="form-row"><label>\u89d2\u8272</label><select id="uRole"><option value="member" ${u?.role==='member'?'selected':''}>\u4e00\u822c\u6210\u54e1</option><option value="admin" ${u?.role==='admin'?'selected':''}>\u7ba1\u7406\u54e1</option></select></div>
+  </div>
+  <div style="margin-top:14px">
+    <div style="font-size:12px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">\u529f\u80fd\u6b0a\u9650</div>
+    <div style="display:flex;flex-direction:column;gap:7px">${permHtml}</div>
+    <div style="font-size:11px;color:var(--faint);margin-top:8px">\u7ba1\u7406\u54e1\u81ea\u52d5\u64c1\u6709\u5168\u90e8\u6b0a\u9650\uff0c\u4ee5\u4e0b\u8a2d\u5b9a\u50c5\u9069\u7528\u4e00\u822c\u6210\u54e1</div>
   </div>`;
 }
 let editingUserId=null;
@@ -1549,7 +1568,8 @@ function saveUser(){
   const password=document.getElementById('uPassword').value;
   if(!name||!username){alert('姓名和帳號為必填');return;}
   if(store.users.find(u=>u.username===username&&u.id!==editingUserId)){alert('帳號已被使用');return;}
-  const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value};
+  const perms={approveForm:!!document.getElementById('perm_approveForm')?.checked,manageSchedule:!!document.getElementById('perm_manageSchedule')?.checked,publishAnn:!!document.getElementById('perm_publishAnn')?.checked,manageIR:!!document.getElementById('perm_manageIR')?.checked};
+  const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value,permissions:perms};
   if(editingUserId){
     const u=store.users.find(x=>x.id===editingUserId);
     Object.assign(u,data);if(password)u.password=password;
@@ -1679,6 +1699,7 @@ function mergeNewLocal(){
   if(!store.journals)store.journals=dJournals();
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
+  store.users.forEach(function(u){if(!u.permissions)u.permissions={};});
   try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
 }
 // mergeNew：補足欄位後同步到 Firebase
@@ -1692,6 +1713,7 @@ function mergeNew(){
   if(!store.journals)store.journals=dJournals();
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
+  store.users.forEach(function(u){if(!u.permissions)u.permissions={};});
   saveStore();
 }
 
@@ -1940,7 +1962,10 @@ function rnForms(){
 }
 function openNewFrm(){
   _pendingAttachment=null;
-  const aOpts=store.users.filter(u=>u.id!==currentUser.id).map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');
+  const approvers=store.users.filter(u=>u.id!==currentUser.id&&(u.role==='admin'||(u.permissions&&u.permissions.approveForm)));
+  const aOpts=approvers.length
+    ?approvers.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('')
+    :'<option value="">（尚未設定可審核人員）</option>';
   showModal('新增申請單',
     '<div class="form-row"><label>類型</label><select id="fty"><option value="leave">請假</option><option value="overtime">加班</option><option value="supply">物品申請</option><option value="other">其他</option></select></div>'+
     '<div class="form-row"><label>標題</label><input id="ftit" placeholder="例：特休假申請 4/20"></div>'+
@@ -1970,7 +1995,7 @@ function getWk(){const d=[];const dt=new Date();dt.setDate(dt.getDate()-dt.getDa
 const SHINFO={morning:{l:'早班',c:'sh-m'},afternoon:{l:'午班',c:'sh-a'},night:{l:'夜班',c:'sh-n'},off:{l:'休假',c:'sh-off'}};
 const DLBLS=['一','二','三','四','五','六','日'];
 function renderDutyPage(c){
-  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📅 值班表</h1><div class="main-header-meta">本週排班 · 換班申請</div></div>'+(isAdmin()?'<button class="btn-sm primary" onclick="openDA()">✏️ 編輯</button>':'')+'</div><div class="admin-content" id="dutyC"></div></div>';
+  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📅 值班表</h1><div class="main-header-meta">本週排班 · 換班申請</div></div>'+(hasPerm('manageSchedule')?'<button class="btn-sm primary" onclick="openDA()">✏️ 編輯</button>':'')+'</div><div class="admin-content" id="dutyC"></div></div>';
   rnDuty();
 }
 function rnDuty(){
@@ -1980,7 +2005,7 @@ function rnDuty(){
   const wk=getWk();
   const nurses=store.users.filter(u=>u.deptId==='d3'||u.deptId==='d5');
   const hdr=wk.map((d,i)=>'<div class="dcell dc-hd">'+DLBLS[i]+'<br><span style="font-size:10px;font-weight:400">'+fmtDate(d).slice(5)+'</span></div>').join('');
-  const rows=nurses.map(u=>{const cells=wk.map(d=>{const sh=(store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'off';const s=SHINFO[sh]||SHINFO.off;return'<div class="dcell" style="'+(d===today()?'background:#fff0f5':'')+'" onclick="'+(isAdmin()?'editDC(\''+u.id+'\',\''+d+'\')':'void(0)')+'" ><span class="'+s.c+'">'+s.l+'</span></div>';}).join('');return'<div class="dcell dc-rl">'+avatarEl(u.id,18)+'<span style="margin-left:4px">'+esc(u.name)+'</span></div>'+cells;}).join('');
+  const rows=nurses.map(u=>{const cells=wk.map(d=>{const sh=(store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'off';const s=SHINFO[sh]||SHINFO.off;return'<div class="dcell" style="'+(d===today()?'background:#fff0f5':'')+'" onclick="'+(hasPerm('manageSchedule')?'editDC(\''+u.id+'\',\''+d+'\')':'void(0)')+'" ><span class="'+s.c+'">'+s.l+'</span></div>';}).join('');return'<div class="dcell dc-rl">'+avatarEl(u.id,18)+'<span style="margin-left:4px">'+esc(u.name)+'</span></div>'+cells;}).join('');
   const pSw=store.swapRequests.filter(s=>s.status==='pending');
   const swCards=store.swapRequests.map(s=>'<div class="swcard"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(userName(s.fromId))+' → '+esc(userName(s.toId))+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(s.fromDate)+' '+(SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+' ⇄ '+fmtDate(s.toDate)+' '+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+'</div>'+(s.reason?'<div style="font-size:11px;color:var(--faint)">'+esc(s.reason)+'</div>':'')+'</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;background:'+(s.status==='approved'?'#e8f7f0':'#fdf0dc')+';color:'+(s.status==='approved'?'#2e7d5a':'#8f5208')+'">'+(s.status==='approved'?'✓ 核准':'待審')+'</span>'+(isAdmin()&&s.status==='pending'?'<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejectSw(\''+s.id+'\')">拒絕</button><button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appSw(\''+s.id+'\')">核准</button>':'')+'</div>').join('');
   c.innerHTML='<div class="sec-label">本週排班</div><div style="overflow-x:auto;margin-bottom:18px"><div class="duty-grid" style="min-width:560px"><div class="dcell dc-hd">姓名</div>'+hdr+rows+'</div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="sec-label" style="margin:0">換班申請 '+(pSw.length?'<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:1px 6px;border-radius:99px">'+pSw.length+'</span>':'')+'</div><button class="btn-sm" onclick="openNewSw()">+ 申請換班</button></div>'+(swCards||'<div style="text-align:center;padding:18px;color:var(--faint);font-size:13px">尚無換班申請</div>');
