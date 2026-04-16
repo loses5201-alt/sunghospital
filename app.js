@@ -2455,3 +2455,76 @@ function renderShiftCalView(){
     +headers+cells
     +'</div></div>';
 }
+
+// ══════════════════════════════════════════
+// VISUAL UPGRADE: progress bar + skeleton
+// ══════════════════════════════════════════
+
+// ── Nav progress bar ──
+(function(){
+  var bar = document.createElement('div');
+  bar.id = 'navProgress';
+  document.body.appendChild(bar);
+})();
+
+function navProgressStart(){
+  var b = document.getElementById('navProgress');
+  if(!b) return;
+  b.style.width = '0';
+  b.style.opacity = '1';
+  b.style.transition = 'width .25s ease';
+  requestAnimationFrame(function(){ b.style.width = '70%'; });
+}
+function navProgressDone(){
+  var b = document.getElementById('navProgress');
+  if(!b) return;
+  b.style.width = '100%';
+  setTimeout(function(){ b.style.opacity = '0'; setTimeout(function(){ b.style.width = '0'; b.style.opacity = '1'; }, 200); }, 200);
+}
+
+// ── Skeleton helpers ──
+function skelCard(lines){
+  lines = lines || 3;
+  var inner = '<div class="skel skel-title"></div>';
+  for(var i=0;i<lines;i++){
+    inner += '<div class="skel skel-line-lg" style="width:'+(100-i*8)+'%"></div>';
+  }
+  return '<div class="skel-card">'+inner+'</div>';
+}
+function skelListPage(){
+  var cards = '';
+  for(var i=0;i<4;i++) cards += skelCard(3);
+  return '<div class="admin-layout"><div style="padding:20px 22px 0">'
+    +'<div class="skel skel-block" style="height:36px;width:180px;margin-bottom:0"></div></div>'
+    +'<div class="admin-content">'+cards+'</div></div>';
+}
+
+// ── Override renderPageInMain with progress bar + skeleton ──
+var _origRenderPageInMain = renderPageInMain;
+renderPageInMain = function(fn){
+  var c = document.getElementById('pageContainer');
+  if(!c) return;
+  navProgressStart();
+  // Show skeleton immediately
+  c.innerHTML = skelListPage();
+  c.classList.remove('page-enter');
+  void c.offsetWidth;
+  c.classList.add('page-enter');
+  // Render actual content after one frame
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      c.innerHTML = '';
+      fn(c);
+      c.classList.remove('page-enter');
+      void c.offsetWidth;
+      c.classList.add('page-enter');
+      // stagger cards
+      setTimeout(function(){
+        c.querySelectorAll('.card,.task-card,.ann-card,.baby-card,.meeting-item,.person-card,.stat-card,.handover-card,.home-card').forEach(function(el){
+          el.classList.add('stagger-item');
+        });
+      }, 10);
+      navProgressDone();
+    });
+  });
+};

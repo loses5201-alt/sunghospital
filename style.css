@@ -699,3 +699,107 @@ body.dark .home-greeting{background:linear-gradient(135deg,#e8eaf0,#e07898);-web
   .print-hide{display:none!important}
   .print-show{display:block!important}
 }
+
+/* ══════════════════════════════════════════
+   VISUAL & MOTION UPGRADE
+   ══════════════════════════════════════════ */
+
+/* ── 1. Page slide-in transition (replaces fade-up) ── */
+@keyframes pageSlide{
+  from{opacity:0;transform:translateX(18px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.page-enter{animation:pageSlide .26s cubic-bezier(.25,.8,.25,1) !important}
+
+/* ── Page nav progress bar ── */
+#navProgress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,#c4527a,#e07898,#c4527a);
+  background-size:200% 100%;
+  z-index:9999;pointer-events:none;
+  transition:width .25s ease;
+  animation:navBarShimmer 1.4s linear infinite;
+}
+@keyframes navBarShimmer{
+  0%{background-position:100% 0}
+  100%{background-position:-100% 0}
+}
+
+/* ── 2. Hover micro-interactions ── */
+.card{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease !important}
+.card:hover{transform:translateY(-3px) !important;box-shadow:0 8px 28px rgba(0,0,0,0.10) !important;border-color:var(--b2) !important}
+.card:active{transform:translateY(0px) !important}
+
+.ann-card{transition:transform .18s ease,box-shadow .18s ease !important}
+.ann-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.09) !important}
+
+.handover-card{transition:transform .18s ease,box-shadow .18s ease !important}
+.handover-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.09) !important}
+
+.stat-card{transition:transform .18s ease,box-shadow .18s ease !important}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.09) !important}
+
+.baby-card{transition:transform .18s ease,box-shadow .18s ease !important}
+.baby-card:hover{transform:translateY(-3px) !important;box-shadow:0 8px 28px rgba(196,82,122,0.15) !important}
+
+.metric-box{transition:transform .18s ease,box-shadow .18s ease,background .18s !important}
+.metric-box:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(196,82,122,0.12) !important;background:var(--surface) !important;border:1px solid var(--b2)}
+
+/* Button press effect */
+.btn-sm:active{transform:scale(.96) !important;transition:transform .08s !important}
+.btn-sm.primary:active{transform:scale(.96) translateY(0) !important;box-shadow:0 1px 4px rgba(196,82,122,0.2) !important}
+
+/* ── 3. Gradient accents ── */
+/* Banner gradient strip */
+.banner{
+  background:linear-gradient(135deg,var(--surface) 0%,color-mix(in srgb,var(--surface) 92%,#c4527a 8%) 100%) !important;
+  border-bottom:1px solid var(--b1);
+}
+body.dark .banner{
+  background:linear-gradient(135deg,var(--surface) 0%,color-mix(in srgb,var(--surface) 88%,#c4527a 12%) 100%) !important;
+}
+
+/* Metric box gradient by position */
+.metric-grid .metric-box:nth-child(1){background:linear-gradient(135deg,var(--s2),color-mix(in srgb,var(--s2) 80%,#c4527a 20%)) !important}
+.metric-grid .metric-box:nth-child(2){background:linear-gradient(135deg,var(--s2),color-mix(in srgb,var(--s2) 80%,#3b82f6 20%)) !important}
+.metric-grid .metric-box:nth-child(3){background:linear-gradient(135deg,var(--s2),color-mix(in srgb,var(--s2) 80%,#f59e0b 20%)) !important}
+
+/* stat-card title accent line */
+.stat-card-title{
+  padding-left:10px;
+  border-left:3px solid var(--primary);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--surface) 85%,#c4527a 15%),transparent);
+  border-radius:0 4px 4px 0;
+  padding-top:4px;padding-bottom:4px;
+  margin-bottom:14px;
+}
+
+/* home-card gradient hover glow */
+.home-card{transition:transform .2s ease,box-shadow .2s ease !important}
+.home-card:hover{transform:translateY(-4px) scale(1.01) !important;box-shadow:0 10px 32px rgba(196,82,122,0.15) !important}
+
+/* ── 4. Skeleton loading ── */
+@keyframes skelShimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+.skel{
+  background:linear-gradient(90deg,var(--s2) 25%,var(--b1) 50%,var(--s2) 75%);
+  background-size:200% 100%;
+  animation:skelShimmer 1.4s ease-in-out infinite;
+  border-radius:6px;
+}
+.skel-line{height:13px;margin-bottom:10px;border-radius:6px}
+.skel-block{border-radius:var(--radius);margin-bottom:12px}
+.skel-card{
+  background:var(--surface);border:1px solid var(--b1);
+  border-radius:var(--radius);padding:18px;margin-bottom:10px;
+}
+.skel-title{height:20px;width:40%;margin-bottom:16px}
+.skel-line-lg{height:14px;margin-bottom:8px}
+.skel-line-sm{height:11px;width:70%;margin-bottom:6px}
+.skel-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0}
+
+/* font size overrides from settings */
+body.font-sm{font-size:13px !important}
+body.font-lg{font-size:17px !important}
