@@ -1153,81 +1153,101 @@ function animateNumbers(container){
 }
 
 function renderStatsPage(c){
-  const allTasks=store.meetings.flatMap(m=>m.tasks);
-  const doneTasks=allTasks.filter(t=>t.status==='已完成').length;
-  const overdueTasks=allTasks.filter(t=>t.status!=='已完成'&&t.due&&t.due<today()).length;
-  const critTasks=allTasks.filter(t=>t.priority==='critical').length;
-  const taskRate=allTasks.length?Math.round(doneTasks/allTasks.length*100):0;
-  const irOpen=store.incidents.filter(i=>i.status!=='closed').length;
-  const annReadRates=store.announcements.map(a=>{
-    const total=store.users.length;
-    const read=Object.values(a.reads).filter(Boolean).length;
-    return{title:a.title,pct:total?Math.round(read/total*100):0};
+  var allTasks = store.meetings.flatMap(function(m){ return m.tasks; });
+  var doneTasks = allTasks.filter(function(t){ return t.status==='\u5df2\u5b8c\u6210'; }).length;
+  var overdueTasks = allTasks.filter(function(t){ return t.status!=='\u5df2\u5b8c\u6210'&&t.due&&t.due<today(); }).length;
+  var critTasks = allTasks.filter(function(t){ return t.priority==='critical'; }).length;
+  var taskRate = allTasks.length ? Math.round(doneTasks/allTasks.length*100) : 0;
+  var irOpen = store.incidents.filter(function(i){ return i.status!=='closed'; }).length;
+
+  var days7 = [];
+  for(var i=6;i>=0;i--){
+    var d = new Date(); d.setDate(d.getDate()-i);
+    var ds = d.toISOString().slice(0,10);
+    days7.push({ label:(d.getMonth()+1)+'/'+(d.getDate()), count:store.incidents.filter(function(ir){ return ir.date===ds; }).length });
+  }
+  var maxIR = Math.max(1, Math.max.apply(null, days7.map(function(d){ return d.count; })));
+
+  var shiftCounts = {morning:0,afternoon:0,night:0,off:0};
+  if(store.dutySchedule){
+    Object.values(store.dutySchedule).forEach(function(ud){ Object.values(ud).forEach(function(sh){ if(shiftCounts[sh]!==undefined) shiftCounts[sh]++; }); });
+  }
+  var totalShifts = shiftCounts.morning+shiftCounts.afternoon+shiftCounts.night||1;
+
+  var deptStats = store.departments.map(function(d){
+    return {name:d.name, count:store.users.filter(function(u){ return u.deptId===d.id; }).length};
+  }).filter(function(d){ return d.count>0; }).sort(function(a,b){ return b.count-a.count; });
+  var maxDept = Math.max(1, Math.max.apply(null, deptStats.map(function(d){ return d.count; })));
+
+  var userTaskStats = store.users.map(function(u){
+    var assigned = allTasks.filter(function(t){ return t.assigneeId===u.id; });
+    var done = assigned.filter(function(t){ return t.status==='\u5df2\u5b8c\u6210'; }).length;
+    return {name:u.name, total:assigned.length, done:done, pct:assigned.length?Math.round(done/assigned.length*100):0};
+  }).filter(function(u){ return u.total>0; }).sort(function(a,b){ return b.pct-a.pct; });
+
+  var annReadRates = store.announcements.slice(0,6).map(function(a){
+    var total = store.users.length;
+    var read = Object.values(a.reads).filter(Boolean).length;
+    return {title:a.title, pct:total?Math.round(read/total*100):0};
   });
-  const meetingReadRates=store.meetings.map(m=>{
-    const total=m.attendeeIds.length;
-    const read=Object.values(m.reads||{}).filter(r=>r.read).length;
-    return{title:m.title,pct:total?Math.round(read/total*100):0};
+
+  var babies = store.babies||[];
+  var boys = babies.filter(function(b){ return b.gender==='boy'; }).length;
+  var girls = babies.filter(function(b){ return b.gender==='girl'; }).length;
+
+  var irLvCnt = ['1','2','3','4'].map(function(lv){
+    return {lv:lv, label:irLevels[lv]?irLevels[lv].label:'L'+lv, cnt:store.incidents.filter(function(ir){ return ir.level===lv; }).length};
   });
-  const userTaskStats=store.users.map(u=>{
-    const assigned=allTasks.filter(t=>t.assigneeId===u.id);
-    const done=assigned.filter(t=>t.status==='已完成').length;
-    return{name:u.name,uid:u.id,total:assigned.length,done,pct:assigned.length?Math.round(done/assigned.length*100):0};
-  }).filter(u=>u.total>0).sort((a,b)=>b.pct-a.pct);
 
-  c.innerHTML=`<div class="admin-layout">
-    <div class="main-header"><div><h1>統計報表</h1><div class="main-header-meta">任務完成率 · 公告閱讀率 · 事件統計</div></div></div>
-    <div class="admin-content">
-      <div class="metric-grid">
-        <div class="metric-box"><div class="metric-num" style="color:var(--green)">${taskRate}%</div><div class="metric-lbl">任務完成率</div></div>
-        <div class="metric-box"><div class="metric-num">${allTasks.length}</div><div class="metric-lbl">總任務數</div></div>
-        <div class="metric-box"><div class="metric-num" style="color:var(--red)">${overdueTasks}</div><div class="metric-lbl">逾期任務</div></div>
-        <div class="metric-box"><div class="metric-num" style="color:var(--red)">${critTasks}</div><div class="metric-lbl">緊急任務</div></div>
-        <div class="metric-box"><div class="metric-num">${store.meetings.length}</div><div class="metric-lbl">會議總數</div></div>
-        <div class="metric-box"><div class="metric-num" style="color:${irOpen>0?'var(--red)':'var(--green)'}">${irOpen}</div><div class="metric-lbl">未結案通報</div></div>
-      </div>
+  var barsRow = function(label, pct, cnt, clr){
+    return '<div class="bar-row"><div class="bar-label">'+label+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+clr+'"></div></div><div class="bar-pct">'+cnt+'</div></div>';
+  };
 
-      <div class="stat-card">
-        <div class="stat-card-title">成員任務完成率</div>
-        ${userTaskStats.map(u=>`<div class="bar-row">
-          <div class="bar-label">${esc(u.name)}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${u.pct}%;background:${u.pct===100?'var(--green)':u.pct>50?'var(--amber)':'var(--red)'}"></div></div>
-          <div class="bar-pct">${u.pct}%</div>
-        </div>`).join('')||'<div style="color:var(--faint);font-size:13px">尚無任務資料</div>'}
-      </div>
+  var trendBars = days7.map(function(d){
+    var h = Math.round((d.count/maxIR)*70)+4;
+    var clr = d.count===0 ? 'var(--b2)' : d.count>=3 ? 'var(--red)' : 'var(--amber)';
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'
+      +'<div style="font-size:10px;color:var(--faint)">'+d.count+'</div>'
+      +'<div style="width:100%;height:'+h+'px;background:'+clr+';border-radius:4px 4px 0 0"></div>'
+      +'<div style="font-size:9px;color:var(--faint)">'+d.label+'</div></div>';
+  }).join('');
 
-      <div class="stat-card">
-        <div class="stat-card-title">公告閱讀率</div>
-        ${annReadRates.slice(0,6).map(a=>`<div class="bar-row">
-          <div class="bar-label">${esc(a.title.slice(0,8))}...</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${a.pct}%;background:var(--blue)"></div></div>
-          <div class="bar-pct">${a.pct}%</div>
-        </div>`).join('')||'<div style="color:var(--faint);font-size:13px">尚無公告</div>'}
-      </div>
+  c.innerHTML = '<div class="admin-layout">'
+    +'<div class="main-header"><div><h1>\u7d71\u8a08\u5831\u8868</h1><div class="main-header-meta">\u4efb\u52d9 \xb7 \u516c\u544a \xb7 \u4e8b\u4ef6 \xb7 \u6392\u73ed \xb7 \u4eba\u54e1</div></div></div>'
+    +'<div class="admin-content">'
+    +'<div class="metric-grid">'
+    +'<div class="metric-box"><div class="metric-num" style="color:var(--green)" data-target="'+taskRate+'">0%</div><div class="metric-lbl">\u4efb\u52d9\u5b8c\u6210\u7387</div></div>'
+    +'<div class="metric-box"><div class="metric-num" data-target="'+allTasks.length+'">0</div><div class="metric-lbl">\u7e3d\u4efb\u52d9\u6578</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+overdueTasks+'">0</div><div class="metric-lbl">\u903e\u671f\u4efb\u52d9</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+critTasks+'">0</div><div class="metric-lbl">\u7dca\u6025\u4efb\u52d9</div></div>'
+    +'<div class="metric-box"><div class="metric-num" data-target="'+store.meetings.length+'">0</div><div class="metric-lbl">\u6703\u8b70\u7e3d\u6578</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:'+(irOpen>0?'var(--red)':'var(--green)')+'" data-target="'+irOpen+'">0</div><div class="metric-lbl">\u672a\u7d50\u6848\u901a\u5831</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:#5ba5e0" data-target="'+boys+'">0</div><div class="metric-lbl">\ud83c\udf7c \u7537\u5bf6</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:#e07ca0" data-target="'+girls+'">0</div><div class="metric-lbl">\ud83c\udf38 \u5973\u5bf6</div></div>'
+    +'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">\u8fd17 \u5929\u7570\u5e38\u4e8b\u4ef6\u8da8\u52e2</div>'
+    +'<div style="display:flex;align-items:flex-end;gap:6px;height:84px;padding:0 4px">'+trendBars+'</div></div>'
+    +'<div class="stat-card"><div class="stat-card-title">\u73ed\u5225\u5206\u4f48\uff08\u6392\u73ed\u7d00\u9304\uff09</div>'
+    +[{k:'morning',l:'\ud83c\udf05 \u65e9\u73ed',c:'var(--amber)'},{k:'afternoon',l:'\u2600\ufe0f \u5348\u73ed',c:'var(--blue)'},{k:'night',l:'\ud83c\udf19 \u591c\u73ed',c:'#5c6bc0'}]
+      .map(function(sh){ var pct=Math.round(shiftCounts[sh.k]/totalShifts*100); return barsRow(sh.l,pct,shiftCounts[sh.k]+' \u6b21',''+sh.c); }).join('')+'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">\u79d1\u5225\u4eba\u54e1\u5206\u4f48</div>'
+    +(deptStats.length ? deptStats.map(function(d){ return barsRow(esc(d.name),Math.round(d.count/maxDept*100),d.count+' \u4eba','var(--primary)'); }).join('') : '<div style="color:var(--faint);font-size:13px">\u5c1a\u7121\u8cc7\u6599</div>')
+    +'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">\u6210\u54e1\u4efb\u52d9\u5b8c\u6210\u7387</div>'
+    +(userTaskStats.length ? userTaskStats.map(function(u){ var clr=u.pct===100?'var(--green)':u.pct>50?'var(--amber)':'var(--red)'; return barsRow(esc(u.name),u.pct,u.pct+'%',clr); }).join('') : '<div style="color:var(--faint);font-size:13px">\u5c1a\u7121\u4efb\u52d9\u8cc7\u6599</div>')
+    +'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">\u516c\u544a\u95b1\u8b80\u7387</div>'
+    +(annReadRates.length ? annReadRates.map(function(a){ return barsRow(esc(a.title.slice(0,10)),a.pct,a.pct+'%','var(--blue)'); }).join('') : '<div style="color:var(--faint);font-size:13px">\u5c1a\u7121\u516c\u544a</div>')
+    +'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">\u7570\u5e38\u4e8b\u4ef6\u7b49\u7d1a\u7d71\u8a08</div>'
+    +'<div class="metric-grid" style="grid-template-columns:repeat(4,1fr)">'
+    +irLvCnt.map(function(x){ return '<div class="metric-box"><div class="metric-num">'+x.cnt+'</div><div class="metric-lbl">'+esc(x.label)+'</div></div>'; }).join('')
+    +'</div></div>'
+    +'</div></div>';
 
-      <div class="stat-card">
-        <div class="stat-card-title">會議紀錄閱讀率</div>
-        ${meetingReadRates.slice(0,6).map(m=>`<div class="bar-row">
-          <div class="bar-label">${esc(m.title.slice(0,8))}...</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${m.pct}%;background:var(--teal)"></div></div>
-          <div class="bar-pct">${m.pct}%</div>
-        </div>`).join('')||'<div style="color:var(--faint);font-size:13px">尚無資料</div>'}
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-card-title">異常事件統計</div>
-        <div class="metric-grid" style="grid-template-columns:repeat(4,1fr)">
-          ${['1','2','3','4'].map(lv=>{
-            const cnt=store.incidents.filter(i=>i.level===lv).length;
-            const l=irLevels[lv];
-            return`<div class="metric-box"><div class="metric-num">${cnt}</div><div class="metric-lbl">${l.label}</div></div>`;
-
-  setTimeout(function(){animateNumbers(c);},50);          }).join('')}
-        </div>
-      </div>
-    </div>
-  </div>`;
+  setTimeout(function(){ animateNumbers(c); }, 80);
 }
+
 
 // ══════════════════════════════════════════
 // DEPARTMENTS & USERS
