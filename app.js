@@ -789,14 +789,21 @@ function saveShift(){
 // ANNOUNCEMENTS
 // ══════════════════════════════════════════
 function updateMarquee(){
-  const el=document.getElementById('marqueeText');
-  if(!el)return;
-  const anns=(store.announcements||[]).slice(0,15).map(a=>a.title);
-  if(!anns.length){el.textContent='';return;}
-  const sep='　　　✦　　　';
-  const txt=anns.join(sep)+sep;
-  // 複製一次讓動畫無縫循環
-  el.textContent=txt+txt;
+  const inner=document.getElementById('marqueeInner');
+  if(!inner)return;
+  const anns=(store.announcements||[]).slice(0,15);
+  if(!anns.length){inner.innerHTML='';return;}
+  const sep='<span class="marquee-sep">✦</span>';
+  const items=anns.map(a=>`<span class="marquee-item" onclick="openAnnFromMarquee('${a.id}')">${esc(a.title)}</span>${sep}`).join('');
+  // 複製一份讓 translateX(-50%) 動畫無縫循環
+  inner.innerHTML=items+items;
+}
+function openAnnFromMarquee(id){
+  setPage('announcements');
+  setTimeout(function(){
+    const el=document.querySelector('[data-ann-id="'+id+'"]');
+    if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='2px solid #d4af37';setTimeout(function(){el.style.outline='';},1800);}
+  },120);
 }
 function updateAnnBadge(){
   if(!currentUser)return;
@@ -839,7 +846,7 @@ function renderAnnList(){
     const badge=a.infectionLevel?infLevelBadge(a.infectionLevel):(a.pinned?infLevelBadge('pinned'):'');
     const readList=allIds.map(uid=>`<span class="ann-read-chip ${a.reads[uid]?'arc-read':'arc-unread'}">${a.reads[uid]?'✓':''} ${esc(userName(uid))}</span>`).join('');
     const myRead=a.reads[currentUser.id];
-    return`<div class="ann-card ${infClass}">
+    return`<div class="ann-card ${infClass}" data-ann-id="${a.id}">
       ${badge}
       <div class="ann-header">${avatarEl(a.authorId,26)}<div class="ann-title-text">${esc(a.title)}</div></div>
       <div class="ann-body">${esc(a.body)}</div>
