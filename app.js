@@ -1828,7 +1828,7 @@ function openFormDetail(id){
 // ── 新版 appF：帶意見 ──
 function appF(id){
   showModal('\u5be9\u6838\u610f\u898b\uff08\u9078\u586b\uff09',
-    '<div class="form-row"><label>\u9644\u5e36\u610f\u898b</label><input id="apComment" placeholder="\u9078\u586b\uff0c\u4f8b\uff1a\u540c\u610f\uff0c\u6ce8\u610f\u8865\u73ed\u4e8b\u5b9c"></div>',
+    '<div class="form-row"><label>\u9644\u5e36\u610f\u898b</label><textarea id="apComment" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="\u9078\u586b\uff0c\u4f8b\uff1a\u540c\u610f\uff0c\u8acb\u6ce8\u610f\u8865\u73ed\u4e8b\u5b9c"></textarea></div>',
     function(){
       var comment = document.getElementById('apComment') ? document.getElementById('apComment').value.trim() : '';
       var f = store.formRequests.find(function(x){ return x.id===id; });
@@ -1850,7 +1850,7 @@ function appF(id){
 // ── 新版 rejF：帶意見 ──
 function rejF(id){
   showModal('\u99b3\u56de\u539f\u56e0\uff08\u9078\u586b\uff09',
-    '<div class="form-row"><label>\u99b3\u56de\u539f\u56e0</label><input id="rjComment" placeholder="\u9078\u586b\uff0c\u4f8b\uff1a\u65e5\u671f\u885d\u7a81\uff0c\u8acb\u91cd\u65b0\u7533\u8acb"></div>',
+    '<div class="form-row"><label>\u99b3\u56de\u539f\u56e0</label><textarea id="rjComment" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="\u9078\u586b\uff0c\u4f8b\uff1a\u65e5\u671f\u885d\u7a81\uff0c\u8acb\u91cd\u65b0\u7533\u8acb"></textarea></div>',
     function(){
       var comment = document.getElementById('rjComment') ? document.getElementById('rjComment').value.trim() : '';
       var f = store.formRequests.find(function(x){ return x.id===id; });
