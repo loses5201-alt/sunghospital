@@ -1262,11 +1262,17 @@ function deleteDept(id){const m=store.users.filter(u=>u.deptId===id);if(m.length
 function renderUsersPage(c){
   c.innerHTML=`<div class="admin-layout">
     <div class="main-header"><div><h1>人員管理</h1><div class="main-header-meta">帳號 · 科別 · 職稱 · 角色權限</div></div>
-      <button class="btn-sm primary" onclick="openAddUser()">＋ 新增人員</button>
+      <div class="header-actions">
+        <button class="btn-sm" onclick="backupData()" title="下載資料備份">📥 備份</button>
+        <button class="btn-sm" onclick="restoreData()" title="從備份檔還原">📤 還原</button>
+        <button class="btn-sm primary" onclick="openAddUser()">＋ 新增人員</button>
+      </div>
     </div>
     <div class="admin-content" id="userContent"></div>
+    <div id="backupLog" style="padding:0 20px 20px"></div>
   </div>`;
   renderUserContent();
+  renderBackupLog();
 }
 function renderUserContent(){
   const c=document.getElementById('userContent');if(!c)return;
@@ -2100,4 +2106,119 @@ function exportDutyCSV(){
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='排班表_'+today()+'.csv';a.click();
   showToast('排班表已匯出','CSV 格式，可用 Excel 開啟','📊');
+}
+
+// ════════════════════════════════════════════════════════
+// 資料備份 / 還原
+// ════════════════════════════════════════════════════════
+
+// ── 下載備份 ──
+function backupData(){
+  var snapshot = JSON.parse(JSON.stringify(store)); // deep copy
+  snapshot._backupAt = new Date().toISOString();
+  snapshot._backupBy = currentUser ? currentUser.name : 'unknown';
+  var json = JSON.stringify(snapshot, null, 2);
+  var blob = new Blob([json], {type: 'application/json;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sunghospital_backup_' + today() + '.json';
+  a.click();
+  // 記錄這次備份到 Firebase 獨立路徑（不寫入 store）
+  if(fbDb){
+    fbDb.ref('backupLog').push({
+      at: new Date().toISOString(),
+      by: currentUser ? currentUser.name : 'unknown',
+      size: Math.round(json.length / 1024) + ' KB'
+    }).then(function(){
+      showToast('備份完成', '已下載到本機', '📥');
+      renderBackupLog();
+    });
+  } else {
+    showToast('備份完成', '已下載到本機（離線模式）', '📥');
+  }
+}
+
+// ── 還原備份 ──
+function restoreData(){
+  if(!confirm('⚠️ 還原備份將會覆蓋目前所有資料，確定繼續？
+
+建議先下載一份最新備份再還原。')){return;}
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = function(e){
+    var file = e.target.files[0];
+    if(!file){return;}
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var data = JSON.parse(ev.target.result);
+        // 基本驗證：必須有 users 陣列
+        if(!data.users || !Array.isArray(data.users) || data.users.length === 0){
+          alert('❌ 備份檔格式不正確或已損毀，還原取消。');
+          return;
+        }
+        var backupDate = data._backupAt ? data._backupAt.slice(0,10) : '未知';
+        var backupBy = data._backupBy || '未知';
+        if(!confirm('確認還原此備份？
+
+備份時間：' + backupDate + '
+備份者：' + backupBy + '
+人員數：' + data.users.length + ' 人
+
+還原後頁面將自動重新整理。')){return;}
+        // 移除備份 metadata 欄位再寫入
+        delete data._backupAt;
+        delete data._backupBy;
+        store = normalizeStore(data);
+        // 寫回 Firebase
+        if(fbDb){
+          fbDb.ref('store').set(store).then(function(){
+            // 記錄還原操作
+            fbDb.ref('backupLog').push({
+              at: new Date().toISOString(),
+              by: currentUser ? currentUser.name : 'unknown',
+              action: '還原備份（' + backupDate + '）',
+              size: '-'
+            });
+            try{localStorage.setItem(STORE_KEY, JSON.stringify(store));}catch(ex){}
+            showToast('還原成功', '3 秒後重新整理頁面', '✅');
+            setTimeout(function(){location.reload();}, 3000);
+          }).catch(function(){
+            alert('❌ 寫入 Firebase 失敗，請確認網路連線。');
+          });
+        } else {
+          try{localStorage.setItem(STORE_KEY, JSON.stringify(store));}catch(ex){}
+          showToast('還原成功（離線）', '請重新整理頁面', '✅');
+        }
+      } catch(err){
+        alert('❌ 無法解析備份檔：' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+  input.click();
+}
+
+// ── 備份紀錄 ──
+function renderBackupLog(){
+  var wrap = document.getElementById('backupLog');
+  if(!wrap || !fbDb){return;}
+  fbDb.ref('backupLog').orderByKey().limitToLast(10).once('value').then(function(snap){
+    var logs = [];
+    snap.forEach(function(child){logs.push(child.val());});
+    logs.reverse();
+    if(!logs.length){
+      wrap.innerHTML = '<div style="font-size:12px;color:var(--faint);padding:8px 0">尚無備份紀錄</div>';
+      return;
+    }
+    var rows = logs.map(function(l){
+      return '<tr><td style="font-size:12px">' + (l.at||'').slice(0,16).replace('T',' ')
+        + '</td><td style="font-size:12px">' + esc(l.by||'')
+        + '</td><td style="font-size:12px">' + esc(l.action||'下載備份')
+        + '</td><td style="font-size:12px;color:var(--faint)">' + (l.size||'-') + '</td></tr>';
+    }).join('');
+    wrap.innerHTML = '<div style="font-size:11px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">備份紀錄（最近 10 筆）</div>'
+      + '<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>大小</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  });
 }
