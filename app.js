@@ -130,9 +130,16 @@ function startFirebaseSync() {
       fbDb.ref('store').once('value').then(function(dSnap) {
         var d = dSnap.val();
         if (d && d.users && Array.isArray(d.users) && d.users.length > 0) {
+          var prevAnnLen=(store.announcements||[]).length;
+          var prevIrLen=(store.incidents||[]).length;
           store = normalizeStore(d);
           try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(ex) {}
           mergeNewLocal();
+          // Toast 通知：有新公告或新緊急事件
+          var newAnns=(store.announcements||[]).length-prevAnnLen;
+          var newIrs=(store.incidents||[]).length-prevIrLen;
+          if(newAnns>0){var a=store.announcements[0];showToast('新公告',a?a.title:'','📢');}
+          if(newIrs>0){var ir=store.incidents&&store.incidents[0];showToast('新事件通報',ir?ir.title:'','🚨');}
           // 更新當前頁面
           if (currentPage === 'meetings' || !currentPage) {
             renderSidebar();
@@ -140,6 +147,7 @@ function startFirebaseSync() {
           }
           updateAnnBadge();
           updateIrBadge();
+          updateCalBadge();
           updateMarquee();
         }
       });
@@ -315,9 +323,12 @@ function initApp(){
     document.getElementById('navDepts').style.display='flex';
     document.getElementById('navUsers').style.display='flex';
   }
-  updateNavUser();updateAnnBadge();updateIrBadge();
+  updateNavUser();updateAnnBadge();updateIrBadge();updateCalBadge();
   renderSidebar();setPage('meetings');
   checkPendingEmergency();
+  startClock();
+  startPresence();
+  setInterval(updateShiftCountdown,60000);updateShiftCountdown();
 }
 function updateNavUser(){
   if(!currentUser)return;
@@ -845,12 +856,15 @@ function renderAnnList(){
     const infClass=a.infectionLevel==='red'?'infection-red':a.infectionLevel==='orange'?'infection-orange':a.infectionLevel==='yellow'?'infection-yellow':a.pinned?'pinned':'';
     const badge=a.infectionLevel?infLevelBadge(a.infectionLevel):(a.pinned?infLevelBadge('pinned'):'');
     const readList=allIds.map(uid=>`<span class="ann-read-chip ${a.reads[uid]?'arc-read':'arc-unread'}">${a.reads[uid]?'✓':''} ${esc(userName(uid))}</span>`).join('');
+    const readCount=allIds.filter(uid=>a.reads[uid]).length;
+    const readPct=allIds.length?Math.round(readCount/allIds.length*100):0;
     const myRead=a.reads[currentUser.id];
     return`<div class="ann-card ${infClass}" data-ann-id="${a.id}">
       ${badge}
       <div class="ann-header">${avatarEl(a.authorId,26)}<div class="ann-title-text">${esc(a.title)}</div></div>
       <div class="ann-body">${esc(a.body)}</div>
       <div class="ann-meta">${esc(userName(a.authorId))} · ${a.time}</div>
+      <div class="ann-read-progress"><span class="ann-read-pct">${readCount}/${allIds.length} 人已讀（${readPct}%）</span><div class="ann-read-bar-wrap"><div class="ann-read-bar" style="width:${readPct}%"></div></div></div>
       <div class="ann-read-list">${readList}</div>
       <div class="ann-actions">
         ${!myRead?`<button class="btn-sm" onclick="readAnn('${a.id}')">✓ 標示已讀</button>`:'<span style="font-size:11px;color:var(--green)">✓ 已讀</span>'}
@@ -1552,3 +1566,94 @@ function openNewEdu(){
   ()=>{const t=document.getElementById('eu').value.trim();if(!t)return;if(!store.eduItems)store.eduItems=[];store.eduItems.push({id:uid(),title:t,icon:document.getElementById('ei').value||'📄',tags:document.getElementById('et').value.split(',').map(x=>x.trim()).filter(Boolean),desc:document.getElementById('ed').value,content:document.getElementById('ec').value});saveStore();closeModal();rnEdu();});
 }
 
+
+// ══════════════════════════════════════════
+// 即時時鐘
+// ══════════════════════════════════════════
+function startClock(){
+  const weekMap=['日','一','二','三','四','五','六'];
+  function tick(){
+    const now=new Date();
+    const hh=String(now.getHours()).padStart(2,'0');
+    const mm=String(now.getMinutes()).padStart(2,'0');
+    const ss=String(now.getSeconds()).padStart(2,'0');
+    const ck=document.getElementById('liveClock');
+    const dk=document.getElementById('liveDate');
+    if(ck)ck.textContent=hh+':'+mm+':'+ss;
+    if(dk)dk.textContent=(now.getMonth()+1)+'/'+(now.getDate())+' ('+weekMap[now.getDay()]+')';
+  }
+  tick();
+  setInterval(tick,1000);
+}
+
+// ══════════════════════════════════════════
+// 在線人員 (Firebase: presence/{userId})
+// ══════════════════════════════════════════
+function startPresence(){
+  if(!fbDb||!currentUser)return;
+  const ref=fbDb.ref('presence/'+currentUser.id);
+  ref.set({name:currentUser.name,id:currentUser.id,since:Date.now()});
+  ref.onDisconnect().remove();
+  fbDb.ref('presence').on('value',function(snap){
+    const data=snap.val()||{};
+    const bar=document.getElementById('presenceBar');
+    if(!bar)return;
+    const others=Object.values(data).filter(u=>u.id!==currentUser.id);
+    if(!others.length){bar.innerHTML='<span style="font-size:10px;color:var(--faint);padding:2px 2px">目前只有你在線上</span>';return;}
+    bar.innerHTML=others.map(u=>`<span class="presence-dot">${esc(u.name)}</span>`).join('');
+  });
+}
+
+// ══════════════════════════════════════════
+// Toast 通知
+// ══════════════════════════════════════════
+function showToast(title,body,icon){
+  icon=icon||'💬';
+  const wrap=document.getElementById('toastContainer');if(!wrap)return;
+  const t=document.createElement('div');
+  t.className='toast';
+  t.innerHTML='<div class="toast-icon">'+icon+'</div><div class="toast-body"><div class="toast-title">'+esc(title)+'</div>'+(body?'<div>'+esc(body)+'</div>':'')+'</div>';
+  wrap.appendChild(t);
+  t.addEventListener('click',function(){removeToast(t);});
+  setTimeout(function(){removeToast(t);},5000);
+}
+function removeToast(t){
+  t.classList.add('toast-out');
+  setTimeout(function(){t.remove();},300);
+}
+
+// ══════════════════════════════════════════
+// 行事曆 today badge
+// ══════════════════════════════════════════
+function updateCalBadge(){
+  const td=today();
+  const events=(store.calEvents||[]).filter(e=>e.date===td);
+  const b=document.getElementById('calBadge');
+  if(!b)return;
+  if(events.length){b.textContent=events.length;b.style.display='flex';}
+  else b.style.display='none';
+}
+
+// ══════════════════════════════════════════
+// 值班倒數
+// ══════════════════════════════════════════
+function updateShiftCountdown(){
+  if(!currentUser)return;
+  const el=document.getElementById('shiftCountdown');if(!el)return;
+  const schedule=store.dutySchedule&&store.dutySchedule[currentUser.id]||{};
+  const now=new Date();
+  const todayStr=today();
+  const shift=schedule[todayStr];
+  if(!shift||shift==='off'){el.textContent='';el.style.display='none';return;}
+  // 班別結束時間對應
+  const endMap={'日班':17,'小夜':23,'大夜':7};
+  let endH=endMap[shift];
+  if(!endH){el.style.display='none';return;}
+  let endDate=new Date(now);
+  endDate.setHours(endH,0,0,0);
+  if(endDate<=now)endDate.setDate(endDate.getDate()+1);
+  const diff=Math.floor((endDate-now)/60000);
+  const h=Math.floor(diff/60),m=diff%60;
+  el.style.display='flex';
+  el.textContent='⏱ '+shift+' 還剩 '+h+'h '+m+'m';
+}
