@@ -700,6 +700,9 @@ body.dark .home-greeting{background:linear-gradient(135deg,#e8eaf0,#e07898);-web
 .home-quick-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:99px;border:1px solid var(--b2);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;box-shadow:var(--shadow)}
 .home-quick-btn:hover{background:var(--s2);transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .home-duty-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;font-size:13px;font-weight:700;margin-bottom:8px}
+.home-pend-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.home-pend-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);box-shadow:var(--shadow);transition:border-color .12s}
+.home-pend-row:hover{border-color:var(--b2)}
 
 /* ── SVG Charts ── */
 .chart-wrap{background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}

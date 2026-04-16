@@ -2415,11 +2415,13 @@ function renderHomePage(c){
   var shiftFg={'日班':'var(--amber)','小夜':'var(--blue)','大夜':'var(--purple)'};
   var sc=shiftBg[myShift]||'var(--s2)';
   var stc=shiftFg[myShift]||'var(--faint)';
+  var pendForms=(store.formRequests||[]).filter(function(f){return f.status==='pending'&&isApp(f);});
   var cards=[
     {icon:'📢',num:unreadAnn,label:'未讀公告',page:'announcements',color:'#c4527a'},
     {icon:'✅',num:myTasks,label:'我的待辦',page:'meetings',color:'var(--amber)'},
     {icon:'🍼',num:newBabies,label:'今日新生兒',page:'baby',color:'var(--teal)'},
     {icon:'🛏️',num:deliveries,label:'使用中床位',page:'delivery',color:'var(--blue)'},
+    {icon:'📝',num:pendForms.length,label:'待我簽核',page:'form',color:'var(--red)'},
   ];
   var cardsHtml=cards.map(function(card,i){
     return '<div class="home-card stagger-item" style="animation-delay:'+(i*0.07)+'s" onclick="setPage(\''+card.page+'\')">'
@@ -2436,6 +2438,28 @@ function renderHomePage(c){
   var quickHtml=quickDefs.map(function(b){
     return '<button class="home-quick-btn" onclick="'+b.fn+'"><span>'+b.icon+'</span>'+b.label+'</button>';
   }).join('');
+  // 待簽核清單（只在有待簽單時顯示）
+  var pendHtml='';
+  if(pendForms.length){
+    var rows=pendForms.map(function(f){
+      var ft=FTYPES[f.type]||FTYPES.other;
+      return '<div class="home-pend-row">'
+        +'<span class="ftype '+ft.c+'" style="flex-shrink:0">'+ft.l+'</span>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="setPage(\'form\')" title="'+esc(f.title)+'">'+esc(f.title)+'</div>'
+        +'<div style="font-size:11px;color:var(--faint)">'+esc(userName(f.applicantId))+' · '+fmtDate(f.createdAt)+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:5px;flex-shrink:0">'
+        +'<button class="btn-sm primary" style="font-size:11px;padding:3px 9px" onclick="appF(\''+f.id+'\')">核准</button>'
+        +'<button class="btn-sm danger" style="font-size:11px;padding:3px 9px" onclick="rejF(\''+f.id+'\')">駁回</button>'
+        +'</div></div>';
+    }).join('');
+    pendHtml='<div class="home-section" style="display:flex;align-items:center;justify-content:space-between">'
+      +'<span>待我簽核</span>'
+      +'<span style="font-size:11px;font-weight:400;color:var(--primary);cursor:pointer" onclick="setPage(\'form\')">全部 ›</span>'
+      +'</div>'
+      +'<div class="home-pend-list">'+rows+'</div>';
+  }
   c.innerHTML='<div class="home-wrap">'
     +'<div class="home-greeting">嗨，'+esc(currentUser.name)+' '+greet+'</div>'
     +'<div class="home-sub">今天是 '+todayStr
@@ -2444,6 +2468,7 @@ function renderHomePage(c){
     +'<div class="home-grid">'+cardsHtml+'</div>'
     +'<div class="home-section">快速操作</div>'
     +'<div class="home-quick">'+quickHtml+'</div>'
+    +pendHtml
     +'<div id="chartsSection"></div>'
     +'</div>';
   setTimeout(function(){animateNumbers(c);renderCharts(c);},60);
