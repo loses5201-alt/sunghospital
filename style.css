@@ -735,6 +735,7 @@ body.dark .home-greeting{background:linear-gradient(135deg,#e8eaf0,#e07898);-web
    ══════════════════════════════════════════ */
 
 /* ── 1. Page slide-in transition (replaces fade-up) ── */
+@keyframes lbIn{from{opacity:0}to{opacity:1}}
 @keyframes pageSlide{
   from{opacity:0;transform:translateX(18px)}
   to{opacity:1;transform:translateX(0)}

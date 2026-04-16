@@ -1652,12 +1652,20 @@ function viewAttachment(id){
   const f=id==='__preview__'?{attachment:_pendingAttachment}:store.formRequests.find(x=>x.id===id);
   if(!f||!f.attachment)return;
   const a=f.attachment;
-  if(a.mime.startsWith('image/')){
-    showModal('附件預覽','<div style="text-align:center"><img src="'+a.data+'" style="max-width:100%;max-height:60vh;border-radius:8px"></div><div style="text-align:center;margin-top:8px;font-size:12px;color:var(--muted)">'+esc(a.name)+'</div>',null);
-    document.querySelector('.modal-footer').style.display='none';
-  } else {
+  if(!a.mime.startsWith('image/')){
     const link=document.createElement('a');link.href=a.data;link.download=a.name;link.click();
+    return;
   }
+  // Lightbox
+  const lb=document.createElement('div');
+  lb.id='imgLightbox';
+  lb.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:zoom-out;padding:16px;box-sizing:border-box;animation:lbIn .18s ease';
+  lb.innerHTML='<img src="'+a.data+'" style="max-width:95vw;max-height:88vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6);user-select:none">'
+    +'<div style="margin-top:12px;font-size:12px;color:rgba(255,255,255,.6);pointer-events:none">'+esc(a.name)+'</div>'
+    +'<div style="position:absolute;top:16px;right:20px;color:white;font-size:26px;line-height:1;cursor:pointer;opacity:.7" onclick="document.getElementById(\'imgLightbox\').remove()">×</div>';
+  lb.onclick=function(e){if(e.target===lb||e.target.tagName==='IMG')lb.remove();};
+  document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){lb.remove();document.removeEventListener('keydown',esc);}});
+  document.body.appendChild(lb);
 }
 
 // mergeNewLocal：補足缺少的欄位，只存 localStorage，不推送到 Firebase
