@@ -317,6 +317,7 @@ function doLogin(){
   initApp();
 }
 function initApp(){
+  applySettings();
   mergeNewLocal(); // 只補欄位到 localStorage，不覆蓋 Firebase
   startFirebaseSync(); // 先從雲端讀資料，之後再存回去
   if(isAdmin()){
@@ -344,6 +345,7 @@ function toggleProfileMenu(){
       <div class="pm-role">${esc(userTitle(currentUser.id))} · ${esc(userDept(currentUser.id))}</div>
     </div>
     <div class="pm-item" onclick="openChangePassword()">🔒 修改密碼</div>
+    <div class="pm-item" onclick="openSettings()">⚙️ 個人設定</div>
     <div class="pm-item danger" onclick="logout()">登出</div>`;
   }
 }
@@ -1556,7 +1558,7 @@ function rnDuty(){
   const hdr=wk.map((d,i)=>'<div class="dcell dc-hd">'+DLBLS[i]+'<br><span style="font-size:10px;font-weight:400">'+fmtDate(d).slice(5)+'</span></div>').join('');
   const rows=nurses.map(u=>{const cells=wk.map(d=>{const sh=(store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'off';const s=SHINFO[sh]||SHINFO.off;return'<div class="dcell" style="'+(d===today()?'background:#fff0f5':'')+'" onclick="'+(isAdmin()?'editDC(\''+u.id+'\',\''+d+'\')':'void(0)')+'" ><span class="'+s.c+'">'+s.l+'</span></div>';}).join('');return'<div class="dcell dc-rl">'+avatarEl(u.id,18)+'<span style="margin-left:4px">'+esc(u.name)+'</span></div>'+cells;}).join('');
   const pSw=store.swapRequests.filter(s=>s.status==='pending');
-  const swCards=store.swapRequests.map(s=>'<div class="swcard"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(userName(s.fromId))+' → '+esc(userName(s.toId))+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(s.fromDate)+' '+(SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+' ⇄ '+fmtDate(s.toDate)+' '+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+'</div>'+(s.reason?'<div style="font-size:11px;color:var(--faint)">'+esc(s.reason)+'</div>':'')+'</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;background:'+(s.status==='approved'?'#e8f7f0':'#fdf0dc')+';color:'+(s.status==='approved'?'#2e7d5a':'#8f5208')+'">'+(s.status==='approved'?'✓ 核准':'待審')+'</span>'+(isAdmin()&&s.status==='pending'?'<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appSw(\''+s.id+'\')">核准</button>':'')+'</div>').join('');
+  const swCards=store.swapRequests.map(s=>'<div class="swcard"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(userName(s.fromId))+' → '+esc(userName(s.toId))+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(s.fromDate)+' '+(SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+' ⇄ '+fmtDate(s.toDate)+' '+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+'</div>'+(s.reason?'<div style="font-size:11px;color:var(--faint)">'+esc(s.reason)+'</div>':'')+'</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;background:'+(s.status==='approved'?'#e8f7f0':'#fdf0dc')+';color:'+(s.status==='approved'?'#2e7d5a':'#8f5208')+'">'+(s.status==='approved'?'✓ 核准':'待審')+'</span>'+(isAdmin()&&s.status==='pending'?'<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejectSw(\''+s.id+'\')">拒絕</button><button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appSw(\''+s.id+'\')">核准</button>':'')+'</div>').join('');
   c.innerHTML='<div class="sec-label">本週排班</div><div style="overflow-x:auto;margin-bottom:18px"><div class="duty-grid" style="min-width:560px"><div class="dcell dc-hd">姓名</div>'+hdr+rows+'</div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="sec-label" style="margin:0">換班申請 '+(pSw.length?'<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:1px 6px;border-radius:99px">'+pSw.length+'</span>':'')+'</div><button class="btn-sm" onclick="openNewSw()">+ 申請換班</button></div>'+(swCards||'<div style="text-align:center;padding:18px;color:var(--faint);font-size:13px">尚無換班申請</div>');
 }
 function editDC(uid,date){
@@ -2262,4 +2264,73 @@ function renderAuditLog(){
     wrap.innerHTML = '<div style="font-size:11px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">稽核日誌（最近 50 筆）</div>'
       + '<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>說明</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   });
+}
+
+// ══════════════════════════════════════════
+// PERSONAL SETTINGS 個人設定
+// ══════════════════════════════════════════
+var PREFS_KEY = 'sunghospital_prefs';
+function loadPrefs(){
+  try{ return JSON.parse(localStorage.getItem(PREFS_KEY)||'{}'); }catch(e){ return {}; }
+}
+function savePrefsData(p){
+  try{ localStorage.setItem(PREFS_KEY, JSON.stringify(p)); }catch(e){}
+}
+function applySettings(){
+  var p = loadPrefs();
+  var size = p.fontSize || 'normal';
+  document.body.classList.remove('font-sm','font-lg');
+  if(size === 'small') document.body.classList.add('font-sm');
+  if(size === 'large') document.body.classList.add('font-lg');
+}
+function openSettings(){
+  document.getElementById('profileMenu').classList.remove('open');
+  var p = loadPrefs();
+  var pages = [
+    {v:'home',l:'首頁'},
+    {v:'meetings',l:'會議'},
+    {v:'shift',l:'交班'},
+    {v:'announcements',l:'公告'},
+    {v:'duty',l:'排班'},
+    {v:'journal',l:'日誌'}
+  ];
+  var pageOpts = pages.map(function(x){
+    return '<option value="'+x.v+'"'+(p.defaultPage===x.v?' selected':'')+'>'+x.l+'</option>';
+  }).join('');
+  var sizeOpts = [
+    {v:'small',l:'小'},
+    {v:'normal',l:'標準'},
+    {v:'large',l:'大'}
+  ].map(function(x){
+    return '<option value="'+x.v+'"'+(( p.fontSize||'normal')===x.v?' selected':'')+'>'+x.l+'</option>';
+  }).join('');
+  var html = '<div class="form-row"><label>登入後預設頁面</label><select id="pDefaultPage">'+pageOpts+'</select></div>'
+    + '<div class="form-row"><label>字體大小</label><select id="pFontSize">'+sizeOpts+'</select></div>'
+    + '<div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer">'
+    + '<input type="checkbox" id="pNotifSound"'+(p.notifSound?' checked':'')+'>  通知音效（未來功能）</label></div>';
+  showModal('個人設定', html, function(){
+    var np = {
+      defaultPage: document.getElementById('pDefaultPage').value,
+      fontSize: document.getElementById('pFontSize').value,
+      notifSound: document.getElementById('pNotifSound').checked
+    };
+    savePrefsData(np);
+    applySettings();
+    showToast('設定已儲存', '字體大小將立即套用', '⚙️');
+    closeModal();
+  });
+}
+
+// ══════════════════════════════════════════
+// SWAP REQUEST REJECT 換班拒絕
+// ══════════════════════════════════════════
+function rejectSw(id){
+  if(!confirm('確定拒絕此換班申請？')) return;
+  var s = store.swapRequests.find(function(x){ return x.id===id; });
+  if(!s) return;
+  s.status = 'rejected';
+  logAudit('拒絕換班', userName(s.fromId)+' → '+userName(s.toId));
+  saveStore();
+  rnDuty();
+  showToast('換班申請已拒絕', userName(s.fromId)+' 的換班申請已退回', '❌');
 }
