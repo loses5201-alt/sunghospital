@@ -1657,3 +1657,28 @@ function updateShiftCountdown(){
   el.style.display='flex';
   el.textContent='⏱ '+shift+' 還剩 '+h+'h '+m+'m';
 }
+
+// ══════════════════════════════════════════
+// 深色模式
+// ══════════════════════════════════════════
+(function(){
+  // 頁面一載入就套用（不等登入）
+  if(localStorage.getItem('sunghospital_dark')==='1'){
+    document.body.classList.add('dark');
+    var btn=document.getElementById('darkToggle');
+    if(btn)btn.innerHTML='<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>';
+  }
+})();
+function toggleDark(){
+  var isDark=document.body.classList.toggle('dark');
+  localStorage.setItem('sunghospital_dark',isDark?'1':'0');
+  var btn=document.getElementById('darkToggle');
+  if(!btn)return;
+  if(isDark){
+    btn.innerHTML='<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>';
+    btn.title='切換亮色模式';
+  }else{
+    btn.innerHTML='<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10 2a1 1 0 011 1v1a1 1 0 01-2 0V3a1 1 0 011-1zm4.22 1.78a1 1 0 011.42 1.42l-.71.7a1 1 0 01-1.42-1.41l.71-.71zM18 9h-1a1 1 0 010-2h1a1 1 0 010 2zm-1.78 5.22a1 1 0 010 1.42l-.71.71a1 1 0 01-1.42-1.42l.71-.71a1 1 0 011.42 0zM10 15a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zm-5.22-.78a1 1 0 01-1.42 1.42l-.7-.71a1 1 0 011.41-1.42l.71.71zM4 9H3a1 1 0 010-2h1a1 1 0 010 2zm1.78-5.22a1 1 0 010 1.42l-.71.71A1 1 0 013.66 4.5l.71-.71a1 1 0 011.41 0zM10 6a4 4 0 100 8 4 4 0 000-8z"/></svg>';
+    btn.title='切換深色模式';
+  }
+}
