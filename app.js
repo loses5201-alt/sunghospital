@@ -732,12 +732,20 @@ function saveMeeting(){
 // SHIFT HANDOVER
 // ══════════════════════════════════════════
 function renderShiftPage(c){
+  shiftViewMode = 'list';
   c.innerHTML=`<div class="admin-layout">
     <div class="main-header">
       <div><h1>交班紀錄</h1><div class="main-header-meta">早班 06:00 / 午班 14:00 / 夜班 22:00</div></div>
-      <button class="btn-sm primary" onclick="openNewShift()">＋ 新增交班</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <div style="display:flex;border:1px solid var(--b2);border-radius:var(--radius-sm);overflow:hidden">
+          <button id="svBtnList" class="btn-sm active" style="border:none;border-radius:0;padding:5px 10px" onclick="switchShiftView('list')">列表</button>
+          <button id="svBtnCal"  class="btn-sm"        style="border:none;border-radius:0;padding:5px 10px;border-left:1px solid var(--b2)" onclick="switchShiftView('cal')">月曆</button>
+        </div>
+        <button class="btn-sm primary" onclick="openNewShift()">＋ 新增交班</button>
+      </div>
     </div>
-    <div class="admin-content" id="shiftList"></div>
+    <div id="shiftListWrap"><div class="admin-content" id="shiftList"></div></div>
+    <div id="shiftCalWrap" style="display:none"></div>
   </div>`;
   renderShiftList();
 }
@@ -2353,4 +2361,97 @@ function rejectSw(id){
   saveStore();
   rnDuty();
   showToast('換班申請已拒絕', userName(s.fromId)+' 的換班申請已退回', '❌');
+}
+
+// ══════════════════════════════════════════
+// SHIFT CALENDAR VIEW 班表月曆視圖
+// ══════════════════════════════════════════
+var shiftViewMode = 'list';
+
+function switchShiftView(mode){
+  shiftViewMode = mode;
+  var listWrap = document.getElementById('shiftListWrap');
+  var calWrap  = document.getElementById('shiftCalWrap');
+  var btnList  = document.getElementById('svBtnList');
+  var btnCal   = document.getElementById('svBtnCal');
+  if(!listWrap||!calWrap) return;
+  if(mode === 'list'){
+    listWrap.style.display = '';
+    calWrap.style.display  = 'none';
+    if(btnList){ btnList.classList.add('active'); }
+    if(btnCal){  btnCal.classList.remove('active'); }
+  } else {
+    listWrap.style.display = 'none';
+    calWrap.style.display  = '';
+    if(btnList){ btnList.classList.remove('active'); }
+    if(btnCal){  btnCal.classList.add('active'); }
+    renderShiftCalView();
+  }
+}
+
+function renderShiftCalView(){
+  var wrap = document.getElementById('shiftCalWrap');
+  if(!wrap) return;
+
+  var now   = new Date();
+  var year  = now.getFullYear();
+  var month = now.getMonth();
+
+  var firstDay = new Date(year, month, 1).getDay();
+  var lastDate = new Date(year, month+1, 0).getDate();
+
+  var SHIFT_CLR = { morning:'#f59e0b', afternoon:'#3b82f6', night:'#6366f1', off:'var(--faint)' };
+  var SHIFT_LBL = { morning:'\u65e9', afternoon:'\u5348', night:'\u591c', off:'\u4f11' };
+
+  // Build day cells
+  var cells = '';
+  var dow = ['\u65e5','\u4e00','\u4e8c','\u4e09','\u56db','\u4e94','\u516d'];
+  var headers = dow.map(function(d){
+    return '<div style="font-size:10px;font-weight:700;color:var(--faint);text-align:center;padding:4px 0">'+d+'</div>';
+  }).join('');
+
+  // Empty cells before first day
+  for(var e=0;e<firstDay;e++) cells += '<div></div>';
+
+  for(var dt=1;dt<=lastDate;dt++){
+    var ds = year+'-'+(String(month+1).padStart(2,'0'))+'-'+(String(dt).padStart(2,'0'));
+    var isToday = ds === today();
+
+    // Collect shifts for this day from all users
+    var dayShifts = [];
+    if(store.dutySchedule){
+      store.users.forEach(function(u){
+        var sh = store.dutySchedule[u.id] && store.dutySchedule[u.id][ds];
+        if(sh && sh !== 'off'){
+          dayShifts.push({name:u.name.slice(0,2), sh:sh});
+        }
+      });
+    }
+    // Also check shift handover records
+    var handovers = store.shifts.filter(function(s){ return s.date===ds; });
+
+    var innerShifts = dayShifts.slice(0,3).map(function(x){
+      return '<span style="font-size:9px;padding:1px 3px;border-radius:3px;background:'+SHIFT_CLR[x.sh]+'22;color:'+SHIFT_CLR[x.sh]+';white-space:nowrap">'+esc(x.name)+' '+SHIFT_LBL[x.sh]+'</span>';
+    }).join('');
+    if(dayShifts.length>3) innerShifts += '<span style="font-size:9px;color:var(--faint)">+'+( dayShifts.length-3)+'</span>';
+
+    var handoverDot = handovers.length ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--primary);display:inline-block;margin-left:2px" title="'+handovers.length+'\u7b46\u4ea4\u73ed"></span>' : '';
+
+    cells += '<div style="min-height:60px;padding:4px;border:1px solid var(--b2);border-radius:6px;background:'+(isToday?'var(--primary-bg,#fdf0f5)':'var(--surface)')+';font-size:11px">'
+      +'<div style="font-weight:'+(isToday?'800':'500')+';color:'+(isToday?'var(--primary)':'var(--text)')+';margin-bottom:2px">'+dt+handoverDot+'</div>'
+      +innerShifts
+      +'</div>';
+  }
+
+  var monthName = (month+1)+'\u6708 '+year;
+  wrap.innerHTML = '<div style="padding:16px 20px">'
+    +'<div style="font-size:15px;font-weight:700;margin-bottom:12px;color:var(--text)">'+monthName+'</div>'
+    +'<div style="font-size:11px;color:var(--faint);margin-bottom:8px">'
+    +[{sh:'morning',l:'\ud83c\udf05 \u65e9\u73ed'},{sh:'afternoon',l:'\u2600\ufe0f \u5348\u73ed'},{sh:'night',l:'\ud83c\udf19 \u591c\u73ed'}].map(function(x){
+      return '<span style="margin-right:12px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+SHIFT_CLR[x.sh]+';margin-right:3px"></span>'+x.l+'</span>';
+    }).join('')
+    +'<span style="color:var(--primary)">\u25cf \u6709\u4ea4\u73ed\u7d00\u9304</span></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">'
+    +headers+cells
+    +'</div></div>';
 }
