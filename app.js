@@ -1818,7 +1818,7 @@ function fabAct(type){
   toggleFab();
   if(type==='ann'){setPage('announcements');setTimeout(openAddAnn,80);}
   else if(type==='meeting'){setPage('meetings');setTimeout(openNewMeeting,80);}
-  else if(type==='journal'){setPage('journal');setTimeout(function(){const b=document.querySelector('[onclick="openNewJournal()"]');if(b)b.click();},80);}
+  else if(type==='journal'){setPage('journal');setTimeout(function(){const b=document.querySelector('[onclick="openNewJ()"]');if(b)b.click();},80);}
   else if(type==='incident'){setPage('incident');setTimeout(function(){const b=document.querySelector('[onclick="openNewIR()"]');if(b)b.click();},80);}
 }
 document.addEventListener('click',function(e){
