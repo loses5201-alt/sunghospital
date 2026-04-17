@@ -3485,6 +3485,7 @@ renderPageInMain = function(fn){
 // ① 站內訊息
 // ════════════════════════════════════════════════════════
 var _activeChatRoom = null;
+var _pendingChatFile = null;
 
 function updateMsgBadge(){
   if(!currentUser)return;
@@ -3505,15 +3506,45 @@ function getOrCreateDM(otherId){
   store.chatRooms.push(room);saveStore();return room;
 }
 
-function sendMsg(roomId,text){
-  text=(text||'').trim();if(!text)return;
+function sendMsg(roomId,text,attachment){
+  text=(text||'').trim();
+  if(!text&&!attachment)return;
   var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});if(!room)return;
   var other=room.members.filter(function(id){return id!==currentUser.id;})[0];
   var msg={id:uid(),roomId:roomId,from:currentUser.id,to:other||'',text:text,ts:new Date().toISOString(),reads:{}};
   msg.reads[currentUser.id]=true;
+  if(attachment)msg.attachment=attachment;
   if(!store.messages)store.messages=[];
-  store.messages.push(msg);room.lastMsg=text;room.lastTs=msg.ts;
+  store.messages.push(msg);
+  room.lastMsg=attachment?'📎 '+attachment.name:text;
+  room.lastTs=msg.ts;
   saveStore();renderChatThread(roomId);updateMsgBadge();
+}
+
+function handleChatFile(input){
+  var file=input.files&&input.files[0];
+  if(!file){_pendingChatFile=null;_clearChatFilePreview();return;}
+  if(file.size>819200){alert('檔案請勿超過 800 KB，請壓縮後再上傳');input.value='';return;}
+  var r=new FileReader();
+  r.onload=function(e){
+    _pendingChatFile={name:file.name,mime:file.type,data:e.target.result};
+    var prev=document.getElementById('chatFilePreview');
+    if(!prev)return;
+    prev.style.display='flex';
+    prev.innerHTML=(file.type.startsWith('image/')
+      ?'<img src="'+e.target.result+'" style="max-height:48px;max-width:120px;border-radius:5px;object-fit:cover">'
+      :'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M13 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7z"/><path d="M13 2v5h5"/></svg>')
+      +'<span style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(file.name)+'</span>'
+      +'<button onclick="_clearChatFilePreview()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 2px">×</button>';
+  };
+  r.readAsDataURL(file);
+  input.value='';
+}
+
+function _clearChatFilePreview(){
+  _pendingChatFile=null;
+  var prev=document.getElementById('chatFilePreview');
+  if(prev){prev.style.display='none';prev.innerHTML='';}
 }
 
 function renderMessagesPage(c){
@@ -3557,17 +3588,65 @@ function renderChatThread(roomId){
     var isMine=m.from===currentUser.id;
     var sender=store.users.find(function(u){return u.id===m.from;})||{name:'?',avatar:'av1'};
     var time=m.ts?m.ts.slice(11,16):'';
-    return '<div class="chat-bubble-row '+(isMine?'mine':'')+'">'      +(!isMine?'<div class="'+sender.avatar+'" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+initials(sender.name)+'</div>':'')
-      +'<div class="chat-bubble '+(isMine?'bubble-mine':'bubble-other')+'">'+esc(m.text)+'<span class="bubble-time">'+time+'</span></div></div>';
+    var att='';
+    if(m.attachment){
+      var a=m.attachment;
+      if(a.mime&&a.mime.startsWith('image/')){
+        att='<img src="'+a.data+'" style="max-width:200px;max-height:180px;border-radius:8px;display:block;margin-top:'+(m.text?'6px':'0')+';cursor:zoom-in" onclick="chatImgZoom(\''+m.id+'\')">';
+      } else {
+        att='<a href="'+a.data+'" download="'+esc(a.name)+'" style="display:flex;align-items:center;gap:6px;margin-top:'+(m.text?'6px':'0')+';padding:6px 10px;background:rgba(0,0,0,.12);border-radius:6px;font-size:11px;color:inherit;text-decoration:none">'
+          +'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M13 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7z"/><path d="M13 2v5h5"/></svg>'
+          +esc(a.name)+'</a>';
+      }
+    }
+    return '<div class="chat-bubble-row '+(isMine?'mine':'')+'">'
+      +(!isMine?'<div class="'+sender.avatar+'" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+initials(sender.name)+'</div>':'')
+      +'<div class="chat-bubble '+(isMine?'bubble-mine':'bubble-other')+'">'
+      +(m.text?esc(m.text):'')
+      +att
+      +'<span class="bubble-time">'+time+'</span></div></div>';
   }).join('');
-  main.innerHTML='<div class="chat-header">'    +'<div class="'+other.avatar+'" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(other.name)+'</div>'    +'<div><div style="font-weight:700;font-size:14px">'+esc(other.name)+'</div>'    +'<div style="font-size:11px;color:var(--faint)">'+esc(userDept(otherId))+'</div></div>'    +'</div>'    +'<div id="chatMessages" class="chat-messages">'+bubbles+'</div>'    +'<div class="chat-input-bar">'    +'<input id="chatInput" class="chat-input" placeholder="輸入訊息..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitMsg(\''+roomId+'\');}">'    +'<button class="btn-sm primary" onclick="submitMsg(\''+roomId+'\')">送出</button>'    +'</div>';
+  main.innerHTML='<div class="chat-header">'
+    +'<div class="'+other.avatar+'" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(other.name)+'</div>'
+    +'<div><div style="font-weight:700;font-size:14px">'+esc(other.name)+'</div>'
+    +'<div style="font-size:11px;color:var(--faint)">'+esc(userDept(otherId))+'</div></div>'
+    +'</div>'
+    +'<div id="chatMessages" class="chat-messages">'+bubbles+'</div>'
+    +'<div id="chatFilePreview" class="chat-file-preview" style="display:none"></div>'
+    +'<div class="chat-input-bar">'
+    +'<label class="chat-clip-btn" title="附加檔案（最大800KB）">'
+    +'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M15.172 7l-6.586 6.586a2 2 0 11-2.828-2.828l6.414-6.586a4 4 0 015.656 5.656l-6.415 6.585a6 6 0 11-8.486-8.486L9.5 3.5"/></svg>'
+    +'<input type="file" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onchange="handleChatFile(this)">'
+    +'</label>'
+    +'<input id="chatInput" class="chat-input" placeholder="輸入訊息..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitMsg(\''+roomId+'\');}">'
+    +'<button class="btn-sm primary" onclick="submitMsg(\''+roomId+'\')">送出</button>'
+    +'</div>';
   var cm=document.getElementById('chatMessages');if(cm)cm.scrollTop=cm.scrollHeight;
   var ci=document.getElementById('chatInput');if(ci)ci.focus();
 }
 
 function submitMsg(roomId){
   var input=document.getElementById('chatInput');if(!input)return;
-  var text=input.value.trim();if(!text)return;input.value='';sendMsg(roomId,text);
+  var text=input.value.trim();
+  if(!text&&!_pendingChatFile)return;
+  input.value='';
+  var att=_pendingChatFile;
+  _clearChatFilePreview();
+  sendMsg(roomId,text,att);
+}
+
+function chatImgZoom(msgId){
+  var msg=null;
+  (store.chatRooms||[]).forEach(function(r){(r.messages||[]).forEach(function(m){if(m.id===msgId)msg=m;});});
+  if(!msg||!msg.attachment)return;
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  overlay.onclick=function(){document.body.removeChild(overlay);};
+  var img=document.createElement('img');
+  img.src=msg.attachment.data;
+  img.style.cssText='max-width:92vw;max-height:90vh;border-radius:10px;box-shadow:0 4px 32px #000a';
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
 }
 
 // ════════════════════════════════════════════════════════
