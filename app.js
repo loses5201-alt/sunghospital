@@ -436,7 +436,7 @@ function logout(){
 // ══════════════════════════════════════════
 
 // ── Nav group definitions ──────────────────
-var _navExpanded = (localStorage.getItem('navExpanded')==='1');
+var _navExpanded = (localStorage.getItem('navExpanded')!=='0');
 var _navGroupCollapsed = JSON.parse(localStorage.getItem('navGroupCollapsed')||'{}');
 
 var NAV_GROUPS = [
