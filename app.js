@@ -401,7 +401,10 @@ function initApp(){
 function updateNavUser(){
   if(!currentUser)return;
   const el=document.getElementById('navUser');
-  if(el){el.textContent=initials(currentUser.name);el.className='nav-user '+currentUser.avatar;}
+  if(!el)return;
+  el.className='nav-user '+currentUser.avatar;
+  el.innerHTML='<span style="flex-shrink:0">'+initials(currentUser.name)+'</span>'
+    +'<span class="nav-user-name">'+esc(currentUser.name)+'</span>';
 }
 function toggleProfileMenu(){
   const m=document.getElementById('profileMenu');
