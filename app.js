@@ -3559,10 +3559,20 @@ function renderMessagesPage(c){
     return '<div class="chat-room-item '+active+'" onclick="openChatRoom(\''+r.id+'\')">'      +'<div class="chat-room-av '+other.avatar+'">'+initials(other.name)+'</div>'      +'<div class="chat-room-info"><div class="chat-room-name">'+esc(other.name)+'</div>'      +'<div class="chat-room-last">'+esc((r.lastMsg||'').slice(0,24)||'點擊開始對話')+'</div></div>'      +(unread?'<span class="chat-unread-dot">'+unread+'</span>':'')+'</div>';
   }).join('')||'<div style="padding:24px;text-align:center;color:var(--faint);font-size:13px">尚無對話<br>點擊下方人員開始聊天</div>';
   var userBtns=activeUsers.map(function(u){
-    return '<button class="btn-sm" style="flex-shrink:0" onclick="startDM(\''+u.id+'\')">'+esc(u.name)+'</button>';
+    return '<button class="dm-start-btn" onclick="startDM(\''+u.id+'\')">'+esc(u.name)+'</button>';
   }).join('');
-  c.innerHTML='<div class="admin-layout" style="flex-direction:row;height:100%;overflow:hidden">'    +'<div class="msg-sidebar"><div style="padding:14px 14px 10px;border-bottom:1px solid var(--b1)"><h2 style="font-size:16px;font-weight:800">💬 站內訊息</h2></div>'    +'<div style="padding:8px 10px;border-bottom:1px solid var(--b1);display:flex;flex-wrap:wrap;gap:6px">'+userBtns+'</div>'    +'<div id="roomList" style="flex:1;overflow-y:auto;padding:6px">'+roomList+'</div></div>'    +'<div id="chatMain" class="msg-main">'    +(_activeChatRoom?''
-      :'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--faint)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg><div>選擇聯絡人開始對話</div></div>')
+  c.innerHTML='<div class="admin-layout" style="flex-direction:row;height:100%;overflow:hidden">'
+    +'<div class="msg-sidebar">'
+    +'<div class="msg-sidebar-hdr"><h2>💬 站內訊息</h2></div>'
+    +'<div style="padding:10px 10px 8px;border-bottom:1px solid rgba(196,82,122,.1);display:flex;flex-wrap:wrap;gap:6px">'+userBtns+'</div>'
+    +'<div id="roomList" style="flex:1;overflow-y:auto;padding:6px">'+roomList+'</div>'
+    +'</div>'
+    +'<div id="chatMain" class="msg-main">'
+    +(_activeChatRoom?''
+      :'<div class="chat-empty-ph">'
+      +'<svg viewBox="0 0 48 48" fill="none" width="64" height="64"><circle cx="24" cy="24" r="22" fill="rgba(196,82,122,.1)"/><path d="M14 20h20M14 27h13" stroke="#c4527a" stroke-width="2.2" stroke-linecap="round"/><path d="M34 14H14a3 3 0 00-3 3v14a3 3 0 003 3h3l3 4 3-4h11a3 3 0 003-3V17a3 3 0 00-3-3z" stroke="#c4527a" stroke-width="2" fill="rgba(196,82,122,.05)"/></svg>'
+      +'<p>選個人開始聊天吧 ✨<br><span style="font-size:11px">點上方名字或左側對話</span></p>'
+      +'</div>')
     +'</div></div>';
   if(_activeChatRoom)renderChatThread(_activeChatRoom);
 }
@@ -3607,9 +3617,12 @@ function renderChatThread(roomId){
       +'<span class="bubble-time">'+time+'</span></div></div>';
   }).join('');
   main.innerHTML='<div class="chat-header">'
-    +'<div class="'+other.avatar+'" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(other.name)+'</div>'
-    +'<div><div style="font-weight:700;font-size:14px">'+esc(other.name)+'</div>'
-    +'<div style="font-size:11px;color:var(--faint)">'+esc(userDept(otherId))+'</div></div>'
+    +'<div class="'+other.avatar+'" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px rgba(196,82,122,.25)">'+initials(other.name)+'</div>'
+    +'<div style="flex:1;min-width:0">'
+    +'<div class="chat-header-name">'+esc(other.name)+'</div>'
+    +'<div class="chat-header-dept">'+esc(userDept(otherId))+'</div>'
+    +'</div>'
+    +'<svg viewBox="0 0 20 20" fill="none" stroke="rgba(196,82,122,.4)" stroke-width="1.5" width="18" height="18"><path d="M2 5a2 2 0 012-2h11a2 2 0 012 2v7a2 2 0 01-2 2H9l-4 3V14H4a2 2 0 01-2-2V5z"/></svg>'
     +'</div>'
     +'<div id="chatMessages" class="chat-messages">'+bubbles+'</div>'
     +'<div id="chatFilePreview" class="chat-file-preview" style="display:none"></div>'
@@ -3618,8 +3631,10 @@ function renderChatThread(roomId){
     +'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M15.172 7l-6.586 6.586a2 2 0 11-2.828-2.828l6.414-6.586a4 4 0 015.656 5.656l-6.415 6.585a6 6 0 11-8.486-8.486L9.5 3.5"/></svg>'
     +'<input type="file" style="display:none" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onchange="handleChatFile(this)">'
     +'</label>'
-    +'<input id="chatInput" class="chat-input" placeholder="輸入訊息..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitMsg(\''+roomId+'\');}">'
-    +'<button class="btn-sm primary" onclick="submitMsg(\''+roomId+'\')">送出</button>'
+    +'<input id="chatInput" class="chat-input" placeholder="說點什麼吧 ✨" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitMsg(\''+roomId+'\');}">'
+    +'<button class="chat-send-btn" onclick="submitMsg(\''+roomId+'\')" title="送出">'
+    +'<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>'
+    +'</button>'
     +'</div>';
   var cm=document.getElementById('chatMessages');if(cm)cm.scrollTop=cm.scrollHeight;
   var ci=document.getElementById('chatInput');if(ci)ci.focus();
