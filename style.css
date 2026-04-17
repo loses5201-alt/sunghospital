@@ -21,7 +21,7 @@
   --t-med:.22s cubic-bezier(.4,0,.2,1);
   --t-spring:.3s cubic-bezier(.34,1.56,.64,1);
 }
-body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;height:100vh;overflow:hidden}
+body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 
 /* ── Dark Mode ── */
 body.dark{
@@ -379,7 +379,7 @@ body.dark .ann-card.infection-red{background:var(--red-bg)}
 .stat-card{background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:16px;margin-bottom:12px}
 .stat-card-title{font-size:13px;font-weight:600;margin-bottom:14px}
 .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.bar-label{font-size:12px;color:var(--muted);width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.bar-label{font-size:12px;color:var(--muted);width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
 .bar-track{flex:1;height:8px;background:var(--s2);border-radius:99px;overflow:hidden}
 .bar-fill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .bar-pct{font-size:11px;color:var(--muted);width:36px;text-align:right;flex-shrink:0}
@@ -722,7 +722,7 @@ body.dark .home-greeting{background:linear-gradient(135deg,#e8eaf0,#e07898);-web
 .chart-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .chart-dot{transition:r .15s}
 .chart-dot:hover{r:6}
-.chart-label{font-size:10px;fill:var(--faint);font-family:'Nunito',sans-serif}
+.chart-label{font-size:10px;fill:var(--muted);font-family:'Nunito','Noto Sans TC',sans-serif}
 .chart-bar{transition:opacity .15s}
 .chart-bar:hover{opacity:.8}
 

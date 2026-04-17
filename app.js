@@ -1497,47 +1497,71 @@ function renderStatsPage(c){
     return {lv:lv, label:irLevels[lv]?irLevels[lv].label:'L'+lv, cnt:store.incidents.filter(function(ir){ return ir.level===lv; }).length};
   });
 
-  var barsRow = function(label, pct, cnt, clr){
-    return '<div class="bar-row"><div class="bar-label">'+label+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+clr+'"></div></div><div class="bar-pct">'+cnt+'</div></div>';
-  };
+  // SVG chart data
+  var irChartData = days7.map(function(d){ return {l:d.label,v:d.count}; });
+  var irColors = days7.map(function(d){ return d.count===0?'var(--b2)':d.count>=3?'var(--red)':'var(--amber)'; });
 
-  var trendBars = days7.map(function(d){
-    var h = Math.round((d.count/maxIR)*70)+4;
-    var clr = d.count===0 ? 'var(--b2)' : d.count>=3 ? 'var(--red)' : 'var(--amber)';
-    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'
-      +'<div style="font-size:10px;color:var(--faint)">'+d.count+'</div>'
-      +'<div style="width:100%;height:'+h+'px;background:'+clr+';border-radius:4px 4px 0 0"></div>'
-      +'<div style="font-size:9px;color:var(--faint)">'+d.label+'</div></div>';
-  }).join('');
+  var deptChartData = deptStats.map(function(d){ return {l:d.name,v:d.count}; });
+  var shiftChartData = [
+    {l:'早班',v:shiftCounts.morning},
+    {l:'午班',v:shiftCounts.afternoon},
+    {l:'夜班',v:shiftCounts.night}
+  ];
+  var userTaskChartData = userTaskStats.slice(0,10).map(function(u){ return {l:u.name,v:u.pct}; });
+  var annChartData = annReadRates.map(function(a){ return {l:a.title,v:a.pct}; });
+
+  // Multi-color bar chart for incidents
+  function svgMultiBarChart(data,colors,h){
+    h=h||140;var w=400;
+    if(!data||!data.length)return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">暫無資料</div>';
+    var max=Math.max.apply(null,data.map(function(d){return d.v;}))||1;
+    var gap=(w-40)/data.length;
+    var bw=Math.max(8,Math.floor(gap*0.6));
+    var gridLines=[0.25,0.5,0.75,1].map(function(f){
+      var y=Math.round(h-18-f*(h-32));
+      return '<line x1="10" y1="'+y+'" x2="'+(w-10)+'" y2="'+y+'" stroke="var(--b1)" stroke-width="1"/>';
+    }).join('');
+    var bars=data.map(function(d,i){
+      var bh=Math.round(d.v/max*(h-32));if(bh<2)bh=2;
+      var x=Math.round(i*gap+20+(gap-bw)/2);
+      var y=h-18-bh;
+      var clr=colors&&colors[i]?colors[i]:'var(--primary)';
+      var lbl=d.l.length>5?d.l.slice(0,5)+'…':d.l;
+      return '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="'+clr+'" opacity=".85"><title>'+d.l+': '+d.v+'</title></rect>'
+        +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(h-2)+'" text-anchor="middle">'+lbl+'</text>'
+        +(d.v>0?'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" style="font-weight:700;fill:var(--text)">'+d.v+'</text>':'');
+    }).join('');
+    return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'+gridLines+bars+'</svg>';
+  }
 
   c.innerHTML = '<div class="admin-layout">'
-    +'<div class="main-header"><div><h1>\u7d71\u8a08\u5831\u8868</h1><div class="main-header-meta">\u4efb\u52d9 \xb7 \u516c\u544a \xb7 \u4e8b\u4ef6 \xb7 \u6392\u73ed \xb7 \u4eba\u54e1</div></div></div>'
+    +'<div class="main-header"><div><h1>統計報表</h1><div class="main-header-meta">任務 · 公告 · 事件 · 排班 · 人員</div></div></div>'
     +'<div class="admin-content">'
     +'<div class="metric-grid">'
-    +'<div class="metric-box"><div class="metric-num" style="color:var(--green)" data-target="'+taskRate+'">0%</div><div class="metric-lbl">\u4efb\u52d9\u5b8c\u6210\u7387</div></div>'
-    +'<div class="metric-box"><div class="metric-num" data-target="'+allTasks.length+'">0</div><div class="metric-lbl">\u7e3d\u4efb\u52d9\u6578</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+overdueTasks+'">0</div><div class="metric-lbl">\u903e\u671f\u4efb\u52d9</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+critTasks+'">0</div><div class="metric-lbl">\u7dca\u6025\u4efb\u52d9</div></div>'
-    +'<div class="metric-box"><div class="metric-num" data-target="'+store.meetings.length+'">0</div><div class="metric-lbl">\u6703\u8b70\u7e3d\u6578</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:'+(irOpen>0?'var(--red)':'var(--green)')+'" data-target="'+irOpen+'">0</div><div class="metric-lbl">\u672a\u7d50\u6848\u901a\u5831</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:#5ba5e0" data-target="'+boys+'">0</div><div class="metric-lbl">\ud83c\udf7c \u7537\u5bf6</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:#e07ca0" data-target="'+girls+'">0</div><div class="metric-lbl">\ud83c\udf38 \u5973\u5bf6</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:var(--green)" data-target="'+taskRate+'">0%</div><div class="metric-lbl">任務完成率</div></div>'
+    +'<div class="metric-box"><div class="metric-num" data-target="'+allTasks.length+'">0</div><div class="metric-lbl">總任務數</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+overdueTasks+'">0</div><div class="metric-lbl">逾期任務</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+critTasks+'">0</div><div class="metric-lbl">緊急任務</div></div>'
+    +'<div class="metric-box"><div class="metric-num" data-target="'+store.meetings.length+'">0</div><div class="metric-lbl">會議總數</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:'+(irOpen>0?'var(--red)':'var(--green)')+'" data-target="'+irOpen+'">0</div><div class="metric-lbl">未結案通報</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:#5ba5e0" data-target="'+boys+'">0</div><div class="metric-lbl">🍼 男寶</div></div>'
+    +'<div class="metric-box"><div class="metric-num" style="color:#e07ca0" data-target="'+girls+'">0</div><div class="metric-lbl">🌸 女寶</div></div>'
     +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">\u8fd17 \u5929\u7570\u5e38\u4e8b\u4ef6\u8da8\u52e2</div>'
-    +'<div style="display:flex;align-items:flex-end;gap:6px;height:84px;padding:0 4px">'+trendBars+'</div></div>'
-    +'<div class="stat-card"><div class="stat-card-title">\u73ed\u5225\u5206\u4f48\uff08\u6392\u73ed\u7d00\u9304\uff09</div>'
-    +[{k:'morning',l:'\ud83c\udf05 \u65e9\u73ed',c:'var(--amber)'},{k:'afternoon',l:'\u2600\ufe0f \u5348\u73ed',c:'var(--blue)'},{k:'night',l:'\ud83c\udf19 \u591c\u73ed',c:'#5c6bc0'}]
-      .map(function(sh){ var pct=Math.round(shiftCounts[sh.k]/totalShifts*100); return barsRow(sh.l,pct,shiftCounts[sh.k]+' \u6b21',''+sh.c); }).join('')+'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">\u79d1\u5225\u4eba\u54e1\u5206\u4f48</div>'
-    +(deptStats.length ? deptStats.map(function(d){ return barsRow(esc(d.name),Math.round(d.count/maxDept*100),d.count+' \u4eba','var(--primary)'); }).join('') : '<div style="color:var(--faint);font-size:13px">\u5c1a\u7121\u8cc7\u6599</div>')
+    +'<div class="stat-card"><div class="stat-card-title">📈 近 7 天異常事件趨勢</div>'
+    +svgMultiBarChart(irChartData,irColors,140)+'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">🗓 班別分布（排班紀錄）</div>'
+    +(shiftChartData.some(function(d){return d.v>0;})?svgBarChart(shiftChartData,'var(--amber)',140):'<div style="color:var(--faint);font-size:13px">尚無排班資料</div>')
     +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">\u6210\u54e1\u4efb\u52d9\u5b8c\u6210\u7387</div>'
-    +(userTaskStats.length ? userTaskStats.map(function(u){ var clr=u.pct===100?'var(--green)':u.pct>50?'var(--amber)':'var(--red)'; return barsRow(esc(u.name),u.pct,u.pct+'%',clr); }).join('') : '<div style="color:var(--faint);font-size:13px">\u5c1a\u7121\u4efb\u52d9\u8cc7\u6599</div>')
+    +'<div class="stat-card"><div class="stat-card-title">🏥 科別人員分布</div>'
+    +(deptChartData.length?svgBarChart(deptChartData,'var(--primary)',140):'<div style="color:var(--faint);font-size:13px">尚無資料</div>')
     +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">\u516c\u544a\u95b1\u8b80\u7387</div>'
-    +(annReadRates.length ? annReadRates.map(function(a){ return barsRow(esc(a.title.slice(0,10)),a.pct,a.pct+'%','var(--blue)'); }).join('') : '<div style="color:var(--faint);font-size:13px">\u5c1a\u7121\u516c\u544a</div>')
+    +'<div class="stat-card"><div class="stat-card-title">✅ 成員任務完成率（%）</div>'
+    +(userTaskChartData.length?svgBarChart(userTaskChartData,'var(--green)',140):'<div style="color:var(--faint);font-size:13px">尚無任務資料</div>')
     +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">\u7570\u5e38\u4e8b\u4ef6\u7b49\u7d1a\u7d71\u8a08</div>'
+    +'<div class="stat-card"><div class="stat-card-title">📢 公告閱讀率（%）</div>'
+    +(annChartData.length?svgBarChart(annChartData,'var(--blue)',140):'<div style="color:var(--faint);font-size:13px">尚無公告</div>')
+    +'</div>'
+    +'<div class="stat-card"><div class="stat-card-title">⚠️ 異常事件等級統計</div>'
     +'<div class="metric-grid" style="grid-template-columns:repeat(4,1fr)">'
     +irLvCnt.map(function(x){ return '<div class="metric-box"><div class="metric-num">'+x.cnt+'</div><div class="metric-lbl">'+esc(x.label)+'</div></div>'; }).join('')
     +'</div></div>'
@@ -2843,21 +2867,27 @@ function svgLineChart(data,color,h){
     +dots+labels+'</svg>';
 }
 function svgBarChart(data,color,h){
-  h=h||120;var w=400;
+  h=h||140;var w=400;
   if(!data||!data.length)return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">暫無資料</div>';
   var max=Math.max.apply(null,data.map(function(d){return d.v;}))||1;
   var gap=(w-40)/data.length;
-  var bw=Math.floor(gap*0.65);
-  var bars=data.map(function(d,i){
-    var bh=Math.round(d.v/max*(h-28));if(bh<2)bh=2;
-    var x=Math.round(i*gap+20+gap*0.175);
-    var y=h-14-bh;
-    return '<rect class="chart-bar" x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="4" fill="'+color+'" opacity=".85">'
-      +'<title>'+d.l+': '+d.v+'</title></rect>'
-      +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+h+'" text-anchor="middle">'+d.l.slice(0,4)+'</text>'
-      +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" style="font-weight:700;fill:var(--text)">'+d.v+'</text>';
+  var bw=Math.max(8,Math.floor(gap*0.6));
+  // gridlines
+  var gridLines=[0.25,0.5,0.75,1].map(function(f){
+    var y=Math.round(h-18-f*(h-32));
+    return '<line x1="10" y1="'+y+'" x2="'+(w-10)+'" y2="'+y+'" stroke="var(--b1)" stroke-width="1"/>';
   }).join('');
-  return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'+bars+'</svg>';
+  var bars=data.map(function(d,i){
+    var bh=Math.round(d.v/max*(h-32));if(bh<2)bh=2;
+    var x=Math.round(i*gap+20+(gap-bw)/2);
+    var y=h-18-bh;
+    var lbl=d.l.length>5?d.l.slice(0,5)+'…':d.l;
+    return '<rect class="chart-bar" x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="'+color+'" opacity=".85">'
+      +'<title>'+d.l+': '+d.v+'</title></rect>'
+      +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(h-2)+'" text-anchor="middle">'+lbl+'</text>'
+      +(d.v>0?'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" style="font-weight:700;fill:var(--text)">'+d.v+'</text>':'');
+  }).join('');
+  return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'+gridLines+bars+'</svg>';
 }
 function renderCharts(c){
   var wrap=document.getElementById('chartsSection');if(!wrap)return;
@@ -2892,21 +2922,6 @@ function exportMeetingText(){
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=m.title+'_'+m.date+'.txt';a.click();
   showToast('已匯出',m.title,'📄');
-}
-function exportDutyCSV(){
-  var weeks=[];var dt=new Date();dt.setDate(dt.getDate()-dt.getDay()+1);
-  for(var i=0;i<14;i++){var d=new Date(dt);d.setDate(dt.getDate()+i);weeks.push(d.toISOString().split('T')[0]);}
-  var rows=[['姓名'].concat(weeks)];
-  store.users.forEach(function(u){
-    var row=[u.name];
-    weeks.forEach(function(d){row.push((store.dutySchedule&&store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'');});
-    rows.push(row);
-  });
-  var csv=rows.map(function(r){return r.map(function(x){return '"'+x+'"';}).join(',');}).join('\n');
-  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='排班表_'+today()+'.csv';a.click();
-  showToast('排班表已匯出','CSV 格式，可用 Excel 開啟','📊');
 }
 
 // ════════════════════════════════════════════════════════
