@@ -1001,3 +1001,38 @@ input:focus,textarea:focus,select:focus{
 .sw-step-pend{border-left:3px solid var(--amber)}
 .sw-arrow{font-size:14px;color:var(--primary);font-weight:700}
 
+/* ── Baby discharge ── */
+.badge-discharged{font-size:10px;background:#e8e8e8;color:#888;padding:2px 7px;border-radius:99px;font-weight:600}
+.baby-card.discharged{opacity:.65}
+
+/* ── Handover checklist ── */
+.cl-list{display:flex;flex-direction:column;gap:5px;margin-top:6px;padding:8px 10px;background:var(--s2);border-radius:var(--radius-sm)}
+.cl-item{display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;line-height:1.4}
+.cl-item.cl-done{color:var(--faint);text-decoration:line-through}
+
+/* ── Users tab bar ── */
+.users-tab-bar{display:flex;gap:0;border-bottom:2px solid var(--b1);margin-bottom:0;padding:0 20px}
+.users-tab{padding:10px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color var(--t-fast),border-color var(--t-fast)}
+.users-tab:hover{color:var(--text)}
+.users-tab.active{border-bottom-color:var(--primary);color:var(--primary);font-weight:700}
+
+/* ── User status badges ── */
+.ustatus-active{font-size:10px;padding:2px 7px;border-radius:99px;background:#e8f7f0;color:#2e7d5a;font-weight:600}
+.ustatus-disabled{font-size:10px;padding:2px 7px;border-radius:99px;background:#e8e8e8;color:#888;font-weight:600}
+.ustatus-resigned{font-size:10px;padding:2px 7px;border-radius:99px;background:#fce8e8;color:#b03050;font-weight:600}
+.ujobtype-badge{font-size:10px;padding:2px 7px;border-radius:6px;background:var(--s2);color:var(--muted);font-weight:500;margin-left:4px;border:1px solid var(--b1)}
+
+/* ── Homepage enrichment ── */
+.home-admin-bar{display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;background:linear-gradient(135deg,#fde8f0,#fff0f5);border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;border:1px solid rgba(196,82,122,.15)}
+.home-admin-bar span{color:var(--muted)}
+.home-admin-bar strong{color:var(--text)}
+.home-week-strip{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px}
+.home-week-cell{text-align:center;min-width:50px;padding:8px 6px;border-radius:var(--radius-sm);border:1px solid var(--b1);background:var(--surface);flex-shrink:0;transition:all var(--t-fast)}
+.home-week-cell.today-cell{border-color:var(--primary);background:linear-gradient(135deg,#fde8f0,#fff0f5)}
+.home-task-row{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm);font-size:12px}
+.home-streak{font-size:12px;padding:7px 14px;background:var(--amber-bg);color:var(--amber);border-radius:99px;display:inline-block;font-weight:600}
+
+/* ── Calendar event types ── */
+.cal-event-duty{background:var(--amber-bg);color:var(--amber);font-size:10px;padding:1px 5px;border-radius:3px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
+.cal-event-leave{background:#fce8e8;color:#b03050;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
+

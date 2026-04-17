@@ -24,7 +24,7 @@ function normalizeStore(s) {
   if (!s) return s;
   ['meetings','users','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
-   'eduItems','titles'].forEach(function(f) {
+   'eduItems','titles','formNotifs'].forEach(function(f) {
     s[f] = normalizeArr(s[f]);
   });
   s.meetings.forEach(function(m) {
@@ -57,6 +57,73 @@ function setSyncDot(ok) {
   if (!el) return;
   el.style.background = ok ? '#2e7d5a' : '#b8909a';
   el.title = ok ? '雲端同步中' : '本機模式';
+}
+
+// ══════════════════════════════════════════
+// UTILITY: CSV Export
+// ══════════════════════════════════════════
+function exportCSV(rows,filename){
+  var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c===null||c===undefined?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+function exportFormsCSV(){
+  var rows=[['ID','標題','類型','申請人','開始日期','結束日期','原因','狀態','建立時間']];
+  (store.formRequests||[]).forEach(function(f){
+    rows.push([f.id||'',f.title||'',f.type||'',userName(f.applicantId||''),f.startDate||'',f.endDate||'',f.reason||'',f.status||'',f.createdAt||'']);
+  });
+  exportCSV(rows,'表單申請_'+today()+'.csv');
+}
+function exportDutyCSV(){
+  var wk=getWk();
+  var rows=[['姓名'].concat(wk.map(fmtDate))];
+  store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';}).forEach(function(u){
+    rows.push([u.name].concat(wk.map(function(d){return(store.dutySchedule&&store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'off';})));
+  });
+  exportCSV(rows,'值班表_'+today()+'.csv');
+}
+
+// ══════════════════════════════════════════
+// UTILITY: Browser Notifications
+// ══════════════════════════════════════════
+var _seenNotifIds=new Set();
+function initBrowserNotifications(){
+  if('Notification' in window&&Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+  _seenNotifIds=new Set();
+  (store.formNotifs||[]).forEach(function(n){_seenNotifIds.add(n.id);});
+}
+function checkNewNotifs(){
+  if(!currentUser) return;
+  (store.formNotifs||[]).forEach(function(n){
+    if(!_seenNotifIds.has(n.id)){
+      _seenNotifIds.add(n.id);
+      if(n.toUserId===currentUser.id) pushBrowserNotif(n.title,n.body||'');
+    }
+  });
+}
+function pushBrowserNotif(title,body){
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{new Notification(title,{body:body||''});}catch(e){}
+  }
+}
+
+// ══════════════════════════════════════════
+// UTILITY: Journal Streak
+// ══════════════════════════════════════════
+function calcJournalStreak(userId){
+  var dates=(store.journals||[]).filter(function(j){return j.userId===userId;}).map(function(j){return j.date;});
+  if(!dates.length) return 0;
+  var unique=Array.from(new Set(dates)).sort().reverse();
+  var streak=0;
+  for(var i=0;i<60;i++){
+    var d=new Date(today());d.setDate(d.getDate()-i);
+    var ds=d.toISOString().split('T')[0];
+    if(unique.indexOf(ds)>=0) streak++;
+    else break;
+  }
+  return streak;
 }
 
 // Google Login
@@ -330,6 +397,7 @@ function initApp(){
   checkPendingEmergency();
   startClock();
   startPresence();
+  initBrowserNotifications();
   setInterval(updateShiftCountdown,60000);updateShiftCountdown();
 }
 function updateNavUser(){
@@ -978,6 +1046,7 @@ function renderShiftList(){
         <div class="handover-field"><label>待辦事項</label><p>${esc(s.pending)}</p></div>
         <div class="handover-field"><label>用藥注意</label><p>${esc(s.meds)}</p></div>
       </div>
+      ${(s.checklist&&s.checklist.length)?`<div class="handover-field" style="margin-top:8px"><label>待辦清單 ${s.checklist.every(i=>i.done)?'<span class="sign-chip sign-done" style="font-size:10px">全部完成 ✓</span>':'<span style="font-size:10px;color:var(--faint)">('+s.checklist.filter(i=>i.done).length+'/'+s.checklist.length+')</span>'}</label><div class="cl-list">${s.checklist.map(item=>`<label class="cl-item${item.done?' cl-done':''}"><input type="checkbox" ${item.done?'checked':''} onchange="toggleChecklistItem('${s.id}','${item.id}',this.checked)" style="accent-color:#c4527a"> ${esc(item.text)}</label>`).join('')}</div></div>`:''}
       <div class="sign-row">
         <span style="font-size:12px;color:var(--muted)">交班：</span>${avatarEl(s.fromUserId,20)}<span style="font-size:12px">${esc(userName(s.fromUserId))}</span>
         <span class="sign-chip ${s.fromSigned?'sign-done':'sign-pending'}"><span class="sign-dot"></span>${s.fromSigned?'已簽收':'待簽'}</span>
@@ -994,7 +1063,7 @@ function signShift(id){
   s.toSigned=true;saveStore();renderShiftList();
 }
 function openNewShift(){
-  const nurseOpts=store.users.map(u=>`<option value="${u.id}">${esc(u.name)} (${esc(userDept(u.id))})</option>`).join('');
+  const nurseOpts=store.users.filter(u=>u.status!=='disabled'&&u.status!=='resigned').map(u=>`<option value="${u.id}">${esc(u.name)} (${esc(userDept(u.id))})</option>`).join('');
   showModal('新增交班紀錄',`
     <div class="form-row"><label>病房/單位</label><input id="shUnit" placeholder="例：內科 3A 病房"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1006,11 +1075,14 @@ function openNewShift(){
     <div class="form-row"><label>病患狀況</label><textarea id="shPatients" placeholder="目前收治人數、特殊狀況..."></textarea></div>
     <div class="form-row"><label>本班重要事件</label><textarea id="shEvents" placeholder="異常事件、病患警示..."></textarea></div>
     <div class="form-row"><label>待辦事項</label><textarea id="shPending" placeholder="未完成項目、需交接事項..."></textarea></div>
-    <div class="form-row"><label>用藥注意</label><input id="shMeds" placeholder="藥物異常、庫存不足...">
+    <div class="form-row"><label>用藥注意</label><input id="shMeds" placeholder="藥物異常、庫存不足..."></div>
+    <div class="form-row"><label>待辦清單 <span style="font-weight:400;color:var(--faint)">（每行一項，接班人可逐項勾選）</span></label><textarea id="shChecklist" style="min-height:80px" placeholder="每行輸入一個待辦項目&#10;例：床位 312 換藥&#10;例：檢查胰島素庫存"></textarea></div>
   </div>`,saveShift);
 }
 function saveShift(){
   const unit=document.getElementById('shUnit').value.trim();if(!unit)return;
+  const clRaw=(document.getElementById('shChecklist').value||'').split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  const checklist=clRaw.map(function(text){return{id:uid(),text:text,done:false};});
   store.shifts.unshift({
     id:uid(),unit,date:document.getElementById('shDate').value,
     shift:document.getElementById('shShift').value,
@@ -1020,9 +1092,15 @@ function saveShift(){
     keyEvents:document.getElementById('shEvents').value,
     pending:document.getElementById('shPending').value,
     meds:document.getElementById('shMeds').value,
+    checklist:checklist,
     fromSigned:true,toSigned:false,createdAt:today()+' '+nowTime()
   });
   saveStore();closeModal();renderShiftList();
+}
+function toggleChecklistItem(shiftId,itemId,done){
+  const s=store.shifts.find(function(x){return x.id===shiftId;});if(!s||!s.checklist)return;
+  const item=s.checklist.find(function(x){return x.id===itemId;});if(item)item.done=done;
+  saveStore();renderShiftList();
 }
 
 // ══════════════════════════════════════════
@@ -1314,9 +1392,13 @@ function renderCalendar(){
     const isToday=ds===today();
     const meetings=store.meetings.filter(m=>m.date===ds);
     const shifts=store.shifts.filter(s=>s.date===ds);
+    const myDuty=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][ds])||'';
+    const leaveReqs=(store.formRequests||[]).filter(f=>f.type==='leave'&&f.status==='approved'&&f.startDate<=ds&&(!f.endDate||f.endDate>=ds));
     const events=[
       ...meetings.map(m=>`<div class="cal-event cal-event-meeting" onclick="event.stopPropagation();selectMeeting('${m.id}');setPage('meetings')" title="${esc(m.title)}">${esc(m.title)}</div>`),
-      ...shifts.map(s=>`<div class="cal-event cal-event-shift" title="${esc(s.unit)}">${s.shift==='morning'?'早':s.shift==='afternoon'?'午':'夜'} ${esc(s.unit)}</div>`)
+      ...shifts.map(s=>`<div class="cal-event cal-event-shift" title="${esc(s.unit)}">${s.shift==='morning'?'早':s.shift==='afternoon'?'午':'夜'} ${esc(s.unit)}</div>`),
+      ...(myDuty&&myDuty!=='off'?[`<div class="cal-event cal-event-duty" title="我的班別">${(SHINFO[myDuty]||{l:myDuty}).l}</div>`]:[]),
+      ...leaveReqs.map(f=>`<div class="cal-event cal-event-leave" title="${esc(userName(f.applicantId))} 請假">${esc(userName(f.applicantId).slice(0,2))} 休</div>`)
     ].join('');
     return`<div class="cal-cell ${isToday?'today':''} ${!cell.current?'other-month':''}">
       <div class="cal-date-num">${cell.date.getDate()}</div>${events}
@@ -1336,6 +1418,8 @@ function renderCalendar(){
   <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
     <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--blue-bg);border-radius:2px;display:inline-block"></span>會議</span>
     <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--green-bg);border-radius:2px;display:inline-block"></span>交班</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--amber-bg);border-radius:2px;display:inline-block"></span>我的班別</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:#fce8e8;border-radius:2px;display:inline-block"></span>核准假單</span>
   </div>`;
 }
 function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
@@ -1496,36 +1580,88 @@ function openAddDept(){showModal('新增科別',`<div class="form-row"><label>�
 function openEditDept(id){const d=store.departments.find(x=>x.id===id);showModal('編輯科別',`<div class="form-row"><label>科別名稱</label><input id="deptName" value="${esc(d.name)}"></div>`,()=>{const n=document.getElementById('deptName').value.trim();if(!n)return;d.name=n;logAudit('編輯科別', n);saveStore();closeModal();renderDeptContent();});}
 function deleteDept(id){const m=store.users.filter(u=>u.deptId===id);if(m.length&&!confirm(`此科別有 ${m.length} 位成員，確定刪除？`))return;const dd=store.departments.find(x=>x.id===id);store.departments=store.departments.filter(x=>x.id!==id);store.users.forEach(u=>{if(u.deptId===id)u.deptId='';});logAudit('刪除科別', dd?dd.name:'');saveStore();renderDeptContent();}
 
+var usersTabState='users';
 function renderUsersPage(c){
   c.innerHTML=`<div class="admin-layout">
-    <div class="main-header"><div><h1>人員管理</h1><div class="main-header-meta">帳號 · 科別 · 職稱 · 角色權限</div></div>
+    <div class="main-header">
+      <div><h1>⚙️ 系統管理</h1><div class="main-header-meta">人員 · 稽核日誌 · 系統統計</div></div>
       <div class="header-actions">
         <button class="btn-sm" onclick="backupData()" title="下載資料備份">📥 備份</button>
         <button class="btn-sm" onclick="restoreData()" title="從備份檔還原">📤 還原</button>
         <button class="btn-sm primary" onclick="openAddUser()">＋ 新增人員</button>
       </div>
     </div>
-    <div class="admin-content" id="userContent"></div>
+    <div class="users-tab-bar">
+      <div class="users-tab" id="utab-users" onclick="switchUsersTab('users')">👥 人員管理</div>
+      <div class="users-tab" id="utab-audit" onclick="switchUsersTab('audit')">📋 稽核日誌</div>
+      <div class="users-tab" id="utab-stats" onclick="switchUsersTab('stats')">📊 系統統計</div>
+    </div>
+    <div class="admin-content" id="usersTabContent"></div>
     <div id="backupLog" style="padding:0 20px 20px"></div>
-    <div id="auditLog" style="padding:0 20px 20px"></div>
   </div>`;
-  renderUserContent();
-  renderBackupLog();
-  renderAuditLog();
+  switchUsersTab(usersTabState);
 }
+function switchUsersTab(tab){
+  usersTabState=tab;
+  document.querySelectorAll('.users-tab').forEach(function(t){t.classList.remove('active');});
+  var el=document.getElementById('utab-'+tab);if(el)el.classList.add('active');
+  var c=document.getElementById('usersTabContent');if(!c)return;
+  if(tab==='users'){renderUserContent();}
+  else if(tab==='audit'){renderAuditTab(c);}
+  else if(tab==='stats'){renderUserStats(c);}
+}
+var userFilter={q:'',dept:'',status:'',jobType:''};
+const JOBTYPES={nurse:'護理師',doctor:'醫師',admin:'行政',it:'IT',other:'其他','':('')};
+const STATUSLBLS={active:'在職',disabled:'停用',resigned:'離職'};
 function renderUserContent(){
-  const c=document.getElementById('userContent');if(!c)return;
-  const rows=store.users.map(u=>`<tr>
-    <td><div style="display:flex;align-items:center;gap:9px">${avatarEl(u.id,28)}<div><div style="font-size:13px;font-weight:500">${esc(u.name)}</div><div style="font-size:11px;color:var(--faint)">@${esc(u.username)}</div></div></div></td>
-    <td>${u.deptId?`<span class="dept-chip">${esc(userDept(u.id))}</span>`:'—'}</td>
-    <td>${u.title?`<span class="title-chip">${esc(u.title)}</span>`:'—'}</td>
-    <td><span class="role-badge ${u.role==='admin'?'rb-admin':'rb-member'}">${u.role==='admin'?'管理員':'一般'}</span>${u.role!=='admin'&&u.permissions?[['approveForm','簽核'],['manageSchedule','排班'],['publishAnn','公告'],['manageIR','事件']].filter(([k])=>u.permissions[k]).map(([,l])=>`<span class="perm-tag">${l}</span>`).join(''):''}</td>
-    <td><div style="display:flex;gap:6px">
-      <button class="btn-sm" onclick="openEditUser('${u.id}')">編輯</button>
-      ${u.id!==currentUser.id?`<button class="btn-sm danger" onclick="deleteUser('${u.id}')">刪除</button>`:'<span style="font-size:11px;color:var(--faint);padding:5px 6px">本人</span>'}
-    </div></td>
-  </tr>`).join('');
-  c.innerHTML=`<div class="table-wrap"><table><thead><tr><th>姓名/帳號</th><th>科別</th><th>職稱</th><th>角色 / 權限</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const c=document.getElementById('usersTabContent');if(!c)return;
+  // Filter bar
+  const dOpts='<option value="">全部科別</option>'+store.departments.map(d=>'<option value="'+d.id+'"'+(userFilter.dept===d.id?' selected':'')+'>'+esc(d.name)+'</option>').join('');
+  const stOpts='<option value="">全部狀態</option><option value="active"'+(userFilter.status==='active'?' selected':'')+'>在職</option><option value="disabled"'+(userFilter.status==='disabled'?' selected':'')+'>停用</option><option value="resigned"'+(userFilter.status==='resigned'?' selected':'')+'>離職</option>';
+  const jtOpts='<option value="">全部職類</option><option value="nurse">護理師</option><option value="doctor">醫師</option><option value="admin">行政</option><option value="it">IT</option><option value="other">其他</option>';
+  const filterBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+    <input id="uSearch" placeholder="🔍 搜尋姓名/帳號" oninput="userFilter.q=this.value;renderUserContent()" value="${esc(userFilter.q)}" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit;min-width:150px">
+    <select onchange="userFilter.dept=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${dOpts}</select>
+    <select onchange="userFilter.status=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${stOpts}</select>
+    <select onchange="userFilter.jobType=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${jtOpts}</select>
+    <span style="font-size:11px;color:var(--faint);margin-left:auto">共 ${store.users.filter(u=>u.status!=='disabled'&&u.status!=='resigned').length} 位在職</span>
+  </div>`;
+  let users=[...store.users];
+  if(userFilter.q){const q=userFilter.q.toLowerCase();users=users.filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q));}
+  if(userFilter.dept)users=users.filter(u=>u.deptId===userFilter.dept);
+  if(userFilter.status)users=users.filter(u=>(u.status||'active')===userFilter.status);
+  if(userFilter.jobType)users=users.filter(u=>(u.jobType||'')===userFilter.jobType);
+  const rows=users.map(u=>{
+    const st=u.status||'active';
+    const stBadge=`<span class="ustatus-${st}">${STATUSLBLS[st]||st}</span>`;
+    const jtLabel=JOBTYPES[u.jobType||'']||'';
+    const jtBadge=jtLabel?`<span class="ujobtype-badge">${jtLabel}</span>`:'';
+    const permsHtml=u.role!=='admin'&&u.permissions
+      ?[['approveForm','簽核'],['manageSchedule','排班'],['publishAnn','公告'],['manageIR','事件'],['viewReports','報表'],['exportData','匯出']].filter(([k])=>u.permissions[k]).map(([,l])=>`<span class="perm-tag">${l}</span>`).join(''):'';
+    const btns=u.id===currentUser.id
+      ?'<span style="font-size:11px;color:var(--faint);padding:5px 6px">本人</span>'
+      :`<button class="btn-sm" onclick="openEditUser('${u.id}')">編輯</button>
+        ${st==='active'?`<button class="btn-sm" onclick="setUserStatus('${u.id}','disabled')" title="停用帳號">停用</button>`:`<button class="btn-sm" onclick="setUserStatus('${u.id}','active')" title="重新啟用">啟用</button>`}
+        ${st!=='resigned'?`<button class="btn-sm" onclick="setUserStatus('${u.id}','resigned')" title="標記離職">離職</button>`:''}
+        <button class="btn-sm danger" onclick="deleteUser('${u.id}')">刪除</button>`;
+    return`<tr style="${st!=='active'?'opacity:.55':''}">
+      <td><div style="display:flex;align-items:center;gap:9px">${avatarEl(u.id,28)}<div><div style="font-size:13px;font-weight:500">${esc(u.name)}</div><div style="font-size:11px;color:var(--faint)">@${esc(u.username)}${u.joinDate?' · 到職:'+fmtDate(u.joinDate):''}</div></div></div></td>
+      <td>${u.deptId?`<span class="dept-chip">${esc(userDept(u.id))}</span>`:'—'}${jtBadge}</td>
+      <td>${u.title?`<span class="title-chip">${esc(u.title)}</span>`:'—'}</td>
+      <td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span class="role-badge ${u.role==='admin'?'rb-admin':'rb-member'}">${u.role==='admin'?'管理員':'一般'}</span>${stBadge}${permsHtml}</div></td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">${btns}</div></td>
+    </tr>`;
+  }).join('');
+  c.innerHTML=filterBar+`<div class="table-wrap"><table><thead><tr><th>姓名/帳號</th><th>科別/職類</th><th>職稱</th><th>角色/狀態/權限</th><th>操作</th></tr></thead><tbody>${rows||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--faint)">無符合的人員</td></tr>'}</tbody></table></div>`;
+}
+function setUserStatus(id,status){
+  const u=store.users.find(function(x){return x.id===id;});if(!u)return;
+  const lbls={active:'啟用',disabled:'停用',resigned:'標記離職'};
+  if(!confirm('確定'+lbls[status]+'此帳號？'))return;
+  u.status=status;
+  logAudit('狀態變更',u.name+' → '+STATUSLBLS[status]);
+  saveStore();renderUserContent();
+  showToast(STATUSLBLS[status],u.name,status==='active'?'✅':'⚠️');
 }
 function userFormHtml(u){
   const dOpts=store.departments.map(d=>`<option value="${d.id}" ${u&&u.deptId===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
@@ -1537,6 +1673,8 @@ function userFormHtml(u){
     {k:'manageSchedule', l:'\u7ba1\u7406\u6392\u73ed', desc:'\u53ef\u7de8\u8f2f\u5024\u73ed\u8868\u53ca\u8655\u7406\u63db\u73ed\u7533\u8acb'},
     {k:'publishAnn', l:'\u767c\u5e03/\u7ba1\u7406\u516c\u544a', desc:'\u53ef\u65b0\u589e\u3001\u522a\u9664\u3001\u7f6e\u9802\u516c\u544a\u53ca\u767c\u51fa\u7dca\u6025\u5ee3\u64ad'},
     {k:'manageIR', l:'\u7ba1\u7406\u4e8b\u4ef6\u901a\u5831', desc:'\u53ef\u66f4\u65b0\u4e8b\u4ef6\u901a\u5831\u7684\u8655\u7406\u72c0\u614b'},
+    {k:'viewReports', l:'\u67e5\u770b\u5831\u8868', desc:'\u53ef\u6aa2\u8996\u7d71\u8a08\u5831\u8868\u9801\u9762'},
+    {k:'exportData', l:'\u5319\u51fa\u8cc7\u6599', desc:'\u53ef\u5319\u51fa CSV \u8868\u55ae\u548c\u73ed\u8868'},
   ];
   const permHtml=permDefs.map(pd=>
     `<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--b1);cursor:pointer;background:var(--surface)">
@@ -1552,7 +1690,11 @@ function userFormHtml(u){
     <div class="form-row"><label>\u79d1\u5225</label><select id="uDept"><option value="">\uff08\u7121\uff09</option>${dOpts}</select></div>
     <div class="form-row"><label>\u8077\u7a31</label><select id="uTitle"><option value="">\uff08\u7121\uff09</option>${tOpts}</select></div>
     <div class="form-row"><label>\u89d2\u8272</label><select id="uRole"><option value="member" ${u?.role==='member'?'selected':''}>\u4e00\u822c\u6210\u54e1</option><option value="admin" ${u?.role==='admin'?'selected':''}>\u7ba1\u7406\u54e1</option></select></div>
+    <div class="form-row"><label>\u8077\u985e</label><select id="uJobType"><option value="">（無）</option><option value="nurse" ${u?.jobType==='nurse'?'selected':''}>\u8b77\u7406\u5e2b</option><option value="doctor" ${u?.jobType==='doctor'?'selected':''}>\u91ab\u5e2b</option><option value="admin" ${u?.jobType==='admin'?'selected':''}>\u884c\u653f</option><option value="it" ${u?.jobType==='it'?'selected':''}>IT</option><option value="other" ${u?.jobType==='other'?'selected':''}>\u5176\u4ed6</option></select></div>
+    <div class="form-row"><label>\u5e33\u865f\u72c0\u614b</label><select id="uStatus"><option value="active" ${(u?.status||'active')==='active'?'selected':''}>\u5728\u8077</option><option value="disabled" ${u?.status==='disabled'?'selected':''}>\u505c\u7528</option><option value="resigned" ${u?.status==='resigned'?'selected':''}>\u96e2\u8077</option></select></div>
+    <div class="form-row"><label>\u5230\u8077\u65e5\u671f</label><input id="uJoinDate" type="date" value="${u?.joinDate||''}"></div>
   </div>
+  <div class="form-row"><label>\u5099\u8a3b\uff08IT \u8a3b\u8a18\uff09</label><textarea id="uNote" style="min-height:60px" placeholder="\u5185\u90e8\u5099\u8a3b\u3001\u8a2d\u5099\u5e33\u865f\u7b49...">${esc(u?.note||'')}</textarea></div>
   <div style="margin-top:14px">
     <div style="font-size:12px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">\u529f\u80fd\u6b0a\u9650</div>
     <div style="display:flex;flex-direction:column;gap:7px">${permHtml}</div>
@@ -1568,8 +1710,8 @@ function saveUser(){
   const password=document.getElementById('uPassword').value;
   if(!name||!username){alert('姓名和帳號為必填');return;}
   if(store.users.find(u=>u.username===username&&u.id!==editingUserId)){alert('帳號已被使用');return;}
-  const perms={approveForm:!!document.getElementById('perm_approveForm')?.checked,manageSchedule:!!document.getElementById('perm_manageSchedule')?.checked,publishAnn:!!document.getElementById('perm_publishAnn')?.checked,manageIR:!!document.getElementById('perm_manageIR')?.checked};
-  const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value,permissions:perms};
+  const perms={approveForm:!!document.getElementById('perm_approveForm')?.checked,manageSchedule:!!document.getElementById('perm_manageSchedule')?.checked,publishAnn:!!document.getElementById('perm_publishAnn')?.checked,manageIR:!!document.getElementById('perm_manageIR')?.checked,viewReports:!!document.getElementById('perm_viewReports')?.checked,exportData:!!document.getElementById('perm_exportData')?.checked};
+  const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value,permissions:perms,jobType:document.getElementById('uJobType')?.value||'',status:document.getElementById('uStatus')?.value||'active',joinDate:document.getElementById('uJoinDate')?.value||'',note:document.getElementById('uNote')?.value||''};
   if(editingUserId){
     const u=store.users.find(x=>x.id===editingUserId);
     Object.assign(u,data);if(password)u.password=password;
@@ -1700,7 +1842,20 @@ function mergeNewLocal(){
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
   if(!store.eduReads)store.eduReads={};
-  store.users.forEach(function(u){if(!u.permissions)u.permissions={};});
+  store.users.forEach(function(u){
+    if(!u.permissions)u.permissions={};
+    if(!u.status)u.status='active';
+    if(u.jobType===undefined)u.jobType='';
+    if(!u.joinDate)u.joinDate='';
+    if(!u.note)u.note='';
+    if(u.permissions.viewReports===undefined)u.permissions.viewReports=false;
+    if(u.permissions.exportData===undefined)u.permissions.exportData=false;
+  });
+  (store.babies||[]).forEach(function(b){
+    if(b.discharged===undefined)b.discharged=false;
+    if(!b.dischargeDate)b.dischargeDate='';
+  });
+  (store.shifts||[]).forEach(function(s){if(!s.checklist)s.checklist=[];});
   try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
 }
 // mergeNew：補足欄位後同步到 Firebase
@@ -1715,8 +1870,22 @@ function mergeNew(){
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
   if(!store.eduReads)store.eduReads={};
-  store.users.forEach(function(u){if(!u.permissions)u.permissions={};});
+  store.users.forEach(function(u){
+    if(!u.permissions)u.permissions={};
+    if(!u.status)u.status='active';
+    if(u.jobType===undefined)u.jobType='';
+    if(!u.joinDate)u.joinDate='';
+    if(!u.note)u.note='';
+    if(u.permissions.viewReports===undefined)u.permissions.viewReports=false;
+    if(u.permissions.exportData===undefined)u.permissions.exportData=false;
+  });
+  (store.babies||[]).forEach(function(b){
+    if(b.discharged===undefined)b.discharged=false;
+    if(!b.dischargeDate)b.dischargeDate='';
+  });
+  (store.shifts||[]).forEach(function(s){if(!s.checklist)s.checklist=[];});
   saveStore();
+  checkNewNotifs();
 }
 
 // 寶寶牆
@@ -1724,25 +1893,45 @@ function renderBabyPage(c){
   c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>🍼 寶寶牆</h1><div class="main-header-meta">新生兒出生公告</div></div><button class="btn-sm primary" onclick="openNewBaby()">+ 新增寶寶</button></div><div class="admin-content" id="babyC"></div></div>';
   rnBaby();
 }
-function babyDays(bornStr){
-  if(!bornStr) return 0;
-  const d=new Date(bornStr.split(' ')[0]);
-  const now=new Date(today());
-  const diff=Math.floor((now-d)/(1000*60*60*24));
+var babyShowAll=false;
+function babyDays(b){
+  if(!b||!b.born) return 0;
+  const start=new Date(b.born.split(' ')[0]);
+  const end=b.discharged&&b.dischargeDate?new Date(b.dischargeDate):new Date(today());
+  const diff=Math.floor((end-start)/(1000*60*60*24));
   return diff>=0?diff:0;
+}
+function dischargeBaby(id){
+  const b=store.babies.find(function(x){return x.id===id;});if(!b)return;
+  if(!confirm('確定標記出院？出院後住院天數將停止計算。'))return;
+  b.discharged=true;b.dischargeDate=today();
+  logAudit('寶寶出院',b.name);saveStore();
+  const q=document.getElementById('babySearch');rnBaby(q?q.value:'');
+  showToast('已標記出院',b.name,'🏠');
 }
 function rnBaby(q){
   const c=document.getElementById('babyC');if(!c)return;
   const cnt=store.babies.filter(b=>b.born.startsWith(today().slice(0,7))).length;
+  const activeCnt=store.babies.filter(b=>!b.discharged).length;
   const kw=(q||'').trim().toLowerCase();
-  const list=kw?store.babies.filter(b=>b.name.toLowerCase().includes(kw)||(b.mom||'').toLowerCase().includes(kw)):store.babies;
+  let list=babyShowAll?store.babies:store.babies.filter(b=>!b.discharged);
+  if(kw)list=list.filter(b=>b.name.toLowerCase().includes(kw)||(b.mom||'').toLowerCase().includes(kw));
   const cards=list.map(b=>{
-    const days=babyDays(b.born);
-    const daysLabel=days===0?'<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:2px 7px;border-radius:99px;font-weight:600">今日出生</span>':'<span style="font-size:10px;background:#fdf0dc;color:#8f5208;padding:2px 7px;border-radius:99px;font-weight:600">第 '+days+' 天</span>';
-    return'<div class="baby-card"><div class="baby-ph">'+b.emoji+'</div><div class="baby-info"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div class="baby-name">'+esc(b.name)+'</div><span class="'+(b.gender==='boy'?'bb-b':'bb-g')+'">'+(b.gender==='boy'?'男寶':'女寶')+'</span>'+daysLabel+'</div><div class="baby-meta"><span>⚖ '+esc(b.weight)+'</span><span>📏 '+esc(b.height)+'</span><span>🕐 '+esc(b.born)+'</span></div><div class="baby-meta" style="margin-top:3px"><span>🏥 '+esc(b.mom)+'</span></div>'+(b.note?'<div style="font-size:12px;color:var(--muted);margin-top:5px">'+esc(b.note)+'</div>':'')+'</div></div>';
+    const days=babyDays(b);
+    let daysLabel;
+    if(b.discharged){
+      daysLabel='<span class="badge-discharged">🏠 已出院'+(b.dischargeDate?' · '+fmtDate(b.dischargeDate):'')+'</span>';
+    } else if(days===0){
+      daysLabel='<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:2px 7px;border-radius:99px;font-weight:600">今日出生</span>';
+    } else {
+      daysLabel='<span style="font-size:10px;background:#fdf0dc;color:#8f5208;padding:2px 7px;border-radius:99px;font-weight:600">第 '+days+' 天</span>';
+    }
+    const dischargeBtn=!b.discharged&&isAdmin()?'<button class="btn-sm" style="font-size:10px;padding:2px 8px;margin-top:5px" onclick="dischargeBaby(\''+b.id+'\')">🏠 出院</button>':'';
+    return'<div class="baby-card'+(b.discharged?' discharged':'')+'"><div class="baby-ph">'+b.emoji+'</div><div class="baby-info"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap"><div class="baby-name">'+esc(b.name)+'</div><span class="'+(b.gender==='boy'?'bb-b':'bb-g')+'">'+(b.gender==='boy'?'男寶':'女寶')+'</span>'+daysLabel+'</div><div class="baby-meta"><span>⚖ '+esc(b.weight)+'</span><span>📏 '+esc(b.height)+'</span><span>🕐 '+esc(b.born)+'</span></div><div class="baby-meta" style="margin-top:3px"><span>🏥 '+esc(b.mom)+'</span></div>'+(b.note?'<div style="font-size:12px;color:var(--muted);margin-top:5px">'+esc(b.note)+'</div>':'')+dischargeBtn+'</div></div>';
   }).join('');
-  const searchBar='<div style="display:flex;gap:10px;margin-bottom:14px"><input id="babySearch" class="baby-search-input" placeholder="🔍 搜尋寶寶名稱或床位..." oninput="rnBaby(this.value)" value="'+esc(kw)+'" style="flex:1;padding:8px 12px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit"></div>';
-  c.innerHTML='<div style="text-align:center;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,#fde8f0,#fff0f5);border-radius:var(--radius);border:1px solid rgba(196,82,122,0.15)"><div style="font-size:20px;margin-bottom:3px">本月共迎接 '+cnt+' 位新生命</div><div style="font-size:12px;color:var(--muted)">每個寶寶都是最珍貴的禮物</div></div>'+searchBar+'<div class="baby-grid">'+(cards||'<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--faint);font-size:13px">找不到符合的寶寶 🔍</div>')+'</div>';
+  const filterBtn='<button class="btn-sm'+(babyShowAll?' primary':'')+'" onclick="babyShowAll=!babyShowAll;rnBaby(document.getElementById(\'babySearch\')?document.getElementById(\'babySearch\').value:\'\')">'+(babyShowAll?'全部 ('+store.babies.length+')':'住院中 ('+activeCnt+')')+'</button>';
+  const searchBar='<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center"><input id="babySearch" placeholder="🔍 搜尋寶寶名稱或床位..." oninput="rnBaby(this.value)" value="'+esc(kw)+'" style="flex:1;padding:8px 12px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit">'+filterBtn+'</div>';
+  c.innerHTML='<div style="text-align:center;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,#fde8f0,#fff0f5);border-radius:var(--radius);border:1px solid rgba(196,82,122,0.15)"><div style="font-size:20px;margin-bottom:3px">本月共迎接 '+cnt+' 位新生命</div><div style="font-size:12px;color:var(--muted)">每個寶寶都是最珍貴的禮物 · 住院中 '+activeCnt+' 位</div></div>'+searchBar+'<div class="baby-grid">'+(cards||'<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--faint);font-size:13px">找不到符合的寶寶 🔍</div>')+'</div>';
 }
 function openNewBaby(){
   const nOpts=store.users.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');
@@ -1772,7 +1961,8 @@ function editRoom(i){
 // 表單簽核
 const FTYPES={leave:{l:'請假',c:'ft-lv'},overtime:{l:'加班',c:'ft-ot'},supply:{l:'物品申請',c:'ft-sp'},other:{l:'其他',c:'ft-ot2'}};
 function renderFormsPage(c){
-  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📋 表單簽核</h1><div class="main-header-meta">請假 · 加班 · 物品申請 · 線上審核</div></div><button class="btn-sm primary" onclick="openNewFrm()">+ 新增申請</button></div><div class="admin-content" id="frmC"></div></div>';
+  var exportBtn=(isAdmin()||hasPerm('exportData'))?'<button class="btn-sm" onclick="exportFormsCSV()">📥 匯出CSV</button>':'';
+  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📋 表單簽核</h1><div class="main-header-meta">請假 · 加班 · 物品申請 · 線上審核</div></div><div class="header-actions">'+exportBtn+'<button class="btn-sm primary" onclick="openNewFrm()">+ 新增申請</button></div></div><div class="admin-content" id="frmC"></div></div>';
   rnForms();
 }
 function isApp(f){const i=f.approvers.indexOf(currentUser.id);if(i<0)return false;if(i===0)return f.statuses[0]==='pending';return f.statuses[i-1]==='approved'&&f.statuses[i]==='pending';}
@@ -1978,7 +2168,7 @@ function rnForms(){
 }
 function openNewFrm(){
   _pendingAttachment=null;
-  const approvers=store.users.filter(u=>u.id!==currentUser.id&&(u.role==='admin'||(u.permissions&&u.permissions.approveForm)));
+  const approvers=store.users.filter(u=>u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'&&(u.role==='admin'||(u.permissions&&u.permissions.approveForm)));
   const aOpts=approvers.length
     ?approvers.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('')
     :'<option value="">（尚未設定可審核人員）</option>';
@@ -2011,7 +2201,8 @@ function getWk(){const d=[];const dt=new Date();dt.setDate(dt.getDate()-dt.getDa
 const SHINFO={morning:{l:'早班',c:'sh-m'},afternoon:{l:'午班',c:'sh-a'},night:{l:'夜班',c:'sh-n'},off:{l:'休假',c:'sh-off'}};
 const DLBLS=['一','二','三','四','五','六','日'];
 function renderDutyPage(c){
-  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📅 值班表</h1><div class="main-header-meta">本週排班 · 換班申請</div></div>'+(hasPerm('manageSchedule')?'<button class="btn-sm primary" onclick="openDA()">✏️ 編輯</button>':'')+'</div><div class="admin-content" id="dutyC"></div></div>';
+  var exportBtn=(isAdmin()||hasPerm('exportData'))?'<button class="btn-sm" onclick="exportDutyCSV()">📥 匯出CSV</button>':'';
+  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📅 值班表</h1><div class="main-header-meta">本週排班 · 換班申請</div></div><div class="header-actions">'+exportBtn+(hasPerm('manageSchedule')?'<button class="btn-sm primary" onclick="openDA()">✏️ 編輯</button>':'')+'</div></div><div class="admin-content" id="dutyC"></div></div>';
   rnDuty();
 }
 function rnDuty(){
@@ -2482,20 +2673,19 @@ function renderHomePage(c){
   var unreadAnn=(store.announcements||[]).filter(function(a){return !a.reads[currentUser.id];}).length;
   var allTasks=(store.meetings||[]).flatMap(function(m){return m.tasks||[];});
   var myTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';}).length;
-  var newBabies=(store.babies||[]).filter(function(b){return b.admDate===todayStr;}).length;
+  var newBabies=(store.babies||[]).filter(function(b){return b.born&&b.born.startsWith(todayStr);}).length;
   var deliveries=(store.rooms||[]).filter(function(r){return r.status&&r.status!=='空床';}).length;
   var myShift=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][todayStr])||'';
-  var shiftBg={'日班':'var(--amber-bg)','小夜':'var(--blue-bg)','大夜':'var(--purple-bg)'};
-  var shiftFg={'日班':'var(--amber)','小夜':'var(--blue)','大夜':'var(--purple)'};
-  var sc=shiftBg[myShift]||'var(--s2)';
-  var stc=shiftFg[myShift]||'var(--faint)';
+  var shiftInfo=SHINFO[myShift];
   var pendForms=(store.formRequests||[]).filter(function(f){return f.status==='pending'&&isApp(f);});
+
+  // Stat cards
   var cards=[
     {icon:'📢',num:unreadAnn,label:'未讀公告',page:'announcements',color:'#c4527a'},
     {icon:'✅',num:myTasks,label:'我的待辦',page:'meetings',color:'var(--amber)'},
     {icon:'🍼',num:newBabies,label:'今日新生兒',page:'baby',color:'var(--teal)'},
     {icon:'🛏️',num:deliveries,label:'使用中床位',page:'delivery',color:'var(--blue)'},
-    {icon:'📝',num:pendForms.length,label:'待我簽核',page:'form',color:'var(--red)'},
+    {icon:'📝',num:pendForms.length,label:'待我簽核',page:'forms',color:'var(--red)'},
   ];
   var cardsHtml=cards.map(function(card,i){
     return '<div class="home-card stagger-item" style="animation-delay:'+(i*0.07)+'s" onclick="setPage(\''+card.page+'\')">'
@@ -2504,44 +2694,118 @@ function renderHomePage(c){
       +'<div class="home-card-label">'+card.label+'</div>'
       +'<div class="home-card-action">點擊查看 →</div></div>';
   }).join('');
+
+  // Quick actions
   var quickDefs=[
     {icon:'📋',label:'新增會議',fn:"setPage('meetings');setTimeout(openNewMeeting,80)"},
-    {icon:'📢',label:'發布公告',fn:"setPage('announcements');setTimeout(openAddAnn,80)"},
+    {icon:'📋',label:'申請表單',fn:"setPage('forms');setTimeout(openNewFrm,80)"},
+    {icon:'📝',label:'今日日誌',fn:"setPage('journal');setTimeout(openNewJ,80)"},
     {icon:'⌨️',label:'快捷鍵',fn:'openShortcuts()'},
   ];
   var quickHtml=quickDefs.map(function(b){
     return '<button class="home-quick-btn" onclick="'+b.fn+'"><span>'+b.icon+'</span>'+b.label+'</button>';
   }).join('');
-  // 待簽核清單（只在有待簽單時顯示）
+  if(hasPerm('publishAnn')){quickHtml+='<button class="home-quick-btn" onclick="setPage(\'announcements\');setTimeout(openAddAnn,80)"><span>📢</span>發布公告</button>';}
+
+  // Week duty strip
+  var wk=getWk();
+  var weekHtml=wk.map(function(d,i){
+    var sh=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][d])||'off';
+    var si=SHINFO[sh]||SHINFO.off;
+    var isToday=d===todayStr;
+    var shClr={morning:'#f59e0b',afternoon:'#3b82f6',night:'#6366f1',off:'var(--faint)'};
+    return '<div class="home-week-cell'+(isToday?' today-cell':'')+'">'
+      +'<div style="font-size:10px;color:var(--faint)">'+['一','二','三','四','五','六','日'][i]+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">'+d.slice(5)+'</div>'
+      +'<div style="font-size:11px;font-weight:700;color:'+(sh==='off'?'var(--faint)':shClr[sh]||'var(--primary)')+';margin-top:3px">'+si.l+'</div>'
+      +'</div>';
+  }).join('');
+
+  // My urgent tasks (top 3)
+  var urgentTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';})
+    .sort(function(a,b){
+      var po={critical:0,urgent:1,normal:2};
+      return (po[a.priority]||2)-(po[b.priority]||2)||(a.due||'').localeCompare(b.due||'');
+    }).slice(0,3);
+  var tasksHtml=urgentTasks.map(function(t){
+    var overdue=t.due&&t.due<todayStr;
+    var dueToday=t.due===todayStr;
+    var dueLabel=t.due?('<span style="font-size:10px;color:'+(overdue?'var(--red)':dueToday?'var(--amber)':'var(--faint)')+'">'+( overdue?'已逾期 ':'截止 ')+fmtDate(t.due)+'</span>'):'';
+    var priDot=t.priority==='critical'?'🔴':t.priority==='urgent'?'🟡':'⚪';
+    return '<div class="home-task-row">'+priDot+' <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.text)+'</div>'+dueLabel+'</div></div>';
+  }).join('');
+  var tasksSection=urgentTasks.length
+    ?'<div class="home-section" style="display:flex;align-items:center;justify-content:space-between"><span>我的待辦任務</span><span style="font-size:11px;font-weight:400;color:var(--primary);cursor:pointer" onclick="showMyTasks()">全部 ›</span></div>'
+      +'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">'+(tasksHtml||'')+'</div>'
+    :'';
+
+  // Journal streak + my recent forms (two columns)
+  var streak=calcJournalStreak(currentUser.id);
+  var streakHtml='<div class="home-streak">'+(streak>0?'🔥 連續記錄 '+streak+' 天':'📝 今天記錄日誌吧')+'</div>';
+  var myForms=(store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id;}).slice(0,3);
+  var formsHtml=myForms.map(function(f){
+    var stCls={approved:'fst-a',rejected:'fst-r',withdrawn:'fst-w',pending:'fst-p'}[f.status]||'fst-p';
+    var stTxt={approved:'✓ 核准',rejected:'✗ 駁回',withdrawn:'↩ 撤回',pending:'⏳ 待審'}[f.status]||'待審';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b1)">'
+      +'<div style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.title)+'</div>'
+      +'<span class="'+stCls+'" style="font-size:10px;flex-shrink:0">'+stTxt+'</span>'
+      +'</div>';
+  }).join('');
+  var sideSection='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'
+    +'<div><div class="sec-label" style="margin-bottom:6px">日誌紀錄</div>'+streakHtml
+      +'<button class="home-quick-btn" style="margin-top:8px;width:100%;justify-content:center" onclick="setPage(\'journal\')">查看日誌</button></div>'
+    +'<div><div class="sec-label" style="margin-bottom:6px">我的申請</div>'
+      +(formsHtml||'<div style="font-size:12px;color:var(--faint)">尚無申請紀錄</div>')
+      +'<button class="home-quick-btn" style="margin-top:8px;width:100%;justify-content:center" onclick="setPage(\'forms\')">查看全部</button></div>'
+    +'</div>';
+
+  // Pending forms (sign panel)
   var pendHtml='';
   if(pendForms.length){
-    var rows=pendForms.map(function(f){
+    var prows=pendForms.map(function(f){
       var ft=FTYPES[f.type]||FTYPES.other;
       return '<div class="home-pend-row">'
         +'<span class="ftype '+ft.c+'" style="flex-shrink:0">'+ft.l+'</span>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="setPage(\'form\')" title="'+esc(f.title)+'">'+esc(f.title)+'</div>'
-        +'<div style="font-size:11px;color:var(--faint)">'+esc(userName(f.applicantId))+' · '+fmtDate(f.createdAt)+'</div>'
-        +'</div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="setPage(\'forms\')" title="'+esc(f.title)+'">'+esc(f.title)+'</div>'
+        +'<div style="font-size:11px;color:var(--faint)">'+esc(userName(f.applicantId))+' · '+fmtDate(f.createdAt)+'</div></div>'
         +'<div style="display:flex;gap:5px;flex-shrink:0">'
         +'<button class="btn-sm primary" style="font-size:11px;padding:3px 9px" onclick="appF(\''+f.id+'\')">核准</button>'
         +'<button class="btn-sm danger" style="font-size:11px;padding:3px 9px" onclick="rejF(\''+f.id+'\')">駁回</button>'
         +'</div></div>';
     }).join('');
     pendHtml='<div class="home-section" style="display:flex;align-items:center;justify-content:space-between">'
-      +'<span>待我簽核</span>'
-      +'<span style="font-size:11px;font-weight:400;color:var(--primary);cursor:pointer" onclick="setPage(\'form\')">全部 ›</span>'
-      +'</div>'
-      +'<div class="home-pend-list">'+rows+'</div>';
+      +'<span>待我簽核</span><span style="font-size:11px;font-weight:400;color:var(--primary);cursor:pointer" onclick="setPage(\'forms\')">全部 ›</span></div>'
+      +'<div class="home-pend-list">'+prows+'</div>';
   }
+
+  // Admin summary bar
+  var adminBarHtml='';
+  if(isAdmin()){
+    var pendAll=(store.formRequests||[]).filter(function(f){return f.status==='pending';}).length;
+    var unreadNotifs=(store.formNotifs||[]).filter(function(n){return!n.read;}).length;
+    var activeRooms=(store.rooms||[]).filter(function(r){return r.status==='active';}).length;
+    adminBarHtml='<div class="home-admin-bar">'
+      +'<span>🏥 生產中 <strong>'+activeRooms+'</strong> 間</span>'
+      +'<span>📋 待審表單 <strong>'+pendAll+'</strong></span>'
+      +'<span>🔔 未讀通知 <strong>'+unreadNotifs+'</strong></span>'
+      +'<span onclick="setPage(\'users\')" style="cursor:pointer;color:var(--primary)">⚙️ 系統管理 ›</span>'
+      +'</div>';
+  }
+
   c.innerHTML='<div class="home-wrap">'
-    +'<div class="home-greeting">嗨，'+esc(currentUser.name)+' '+greet+'</div>'
+    +adminBarHtml
+    +'<div class="home-greeting">'+avatarEl(currentUser.id,42)+' 嗨，'+esc(currentUser.name)+' '+greet+'</div>'
     +'<div class="home-sub">今天是 '+todayStr
-    +'<span class="home-duty-badge" style="background:'+sc+';color:'+stc+';margin-left:10px">'+(myShift||'未排班')+'</span></div>'
+    +(shiftInfo?'<span class="home-duty-badge" style="background:var(--s2);margin-left:10px">'+shiftInfo.l+'</span>':'<span class="home-duty-badge" style="background:var(--s2);color:var(--faint);margin-left:10px">未排班</span>')
+    +'</div>'
     +'<div class="home-section">今日概覽</div>'
     +'<div class="home-grid">'+cardsHtml+'</div>'
+    +'<div class="home-section">本週班表</div>'
+    +'<div class="home-week-strip">'+weekHtml+'</div>'
     +'<div class="home-section">快速操作</div>'
     +'<div class="home-quick">'+quickHtml+'</div>'
+    +tasksSection
+    +sideSection
     +pendHtml
     +'<div id="chartsSection"></div>'
     +'</div>';
@@ -2763,37 +3027,80 @@ function logAudit(action, detail){
   });
 }
 
-function renderAuditLog(){
-  var wrap = document.getElementById('auditLog');
-  if(!wrap || !fbDb){ return; }
-  fbDb.ref('auditLog').orderByKey().limitToLast(50).once('value').then(function(snap){
-    var logs = [];
-    snap.forEach(function(child){ logs.push(child.val()); });
+function renderAuditLog(wrap){
+  if(!wrap) wrap=document.getElementById('auditLog');
+  if(!wrap||!fbDb){if(wrap)wrap.innerHTML='<div style="color:var(--faint);font-size:13px;padding:20px">Firebase 未連線</div>';return;}
+  wrap.innerHTML='<div style="color:var(--faint);font-size:12px;padding:16px">載入中...</div>';
+  var auditQ=wrap._auditQ||'';var auditAct=wrap._auditAct||'';
+  fbDb.ref('auditLog').orderByKey().limitToLast(200).once('value').then(function(snap){
+    var logs=[];
+    snap.forEach(function(child){logs.push(child.val());});
     logs.reverse();
-    if(!logs.length){
-      wrap.innerHTML = '<div style="font-size:12px;color:var(--faint);padding:8px 0">尚無操作紀錄</div>';
-      return;
-    }
-    var ACTION_COLOR = {
-      '新增': '#2196F3', '編輯': '#FF9800', '刪除': '#F44336',
-      '發布': '#4CAF50', '審核': '#9C27B0', '備份': '#607D8B', '還原': '#E91E63'
-    };
-    function getColor(action){
-      for(var k in ACTION_COLOR){ if(action.indexOf(k) > -1) return ACTION_COLOR[k]; }
-      return 'var(--muted)';
-    }
-    var rows = logs.map(function(l){
-      var color = getColor(l.action || '');
+    if(auditQ){var q=auditQ.toLowerCase();logs=logs.filter(function(l){return(l.by||'').toLowerCase().includes(q)||(l.detail||'').toLowerCase().includes(q)||(l.action||'').toLowerCase().includes(q);});}
+    if(auditAct)logs=logs.filter(function(l){return(l.action||'').includes(auditAct);});
+    var ACTION_COLOR={'新增':'#2196F3','編輯':'#FF9800','刪除':'#F44336','發布':'#4CAF50','審核':'#9C27B0','備份':'#607D8B','還原':'#E91E63','狀態':'#00BCD4','拒絕':'#f44336','撤回':'#9E9E9E','出院':'#2e7d5a'};
+    function getColor(action){for(var k in ACTION_COLOR){if((action||'').indexOf(k)>-1)return ACTION_COLOR[k];}return'var(--muted)';}
+    var filterBar='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+      +'<input placeholder="🔍 搜尋操作者/說明" oninput="var w=this.closest(\'[data-audit]\');if(w){w.querySelector(\'[data-audit-content]\')._wrap._auditQ=this.value;renderAuditLog(w.querySelector(\'[data-audit-content]\')._wrap);}" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit;flex:1;min-width:140px">'
+      +'<select onchange="var w=this.closest(\'[data-audit]\');if(w){w.querySelector(\'[data-audit-content]\')._wrap._auditAct=this.value;renderAuditLog(w.querySelector(\'[data-audit-content]\')._wrap);}" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit"><option value="">全部動作</option><option value="新增">新增</option><option value="編輯">編輯</option><option value="刪除">刪除</option><option value="審核">審核</option><option value="發布">發布</option><option value="狀態">狀態變更</option></select>'
+      +'</div>';
+    if(!logs.length){wrap.innerHTML=filterBar+'<div style="text-align:center;padding:24px;color:var(--faint);font-size:13px">尚無符合的操作紀錄</div>';return;}
+    var rows=logs.map(function(l){
+      var color=getColor(l.action||'');
       return '<tr>'
-        + '<td style="font-size:12px;white-space:nowrap">' + (l.at||'').slice(0,16).replace('T',' ') + '</td>'
-        + '<td style="font-size:12px">' + esc(l.by||'') + '</td>'
-        + '<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:' + color + '22;color:' + color + '">' + esc(l.action||'') + '</span></td>'
-        + '<td style="font-size:12px;color:var(--muted)">' + esc(l.detail||'') + '</td>'
-        + '</tr>';
+        +'<td style="font-size:11px;white-space:nowrap;color:var(--faint)">'+(l.at||'').slice(0,16).replace('T',' ')+'</td>'
+        +'<td style="font-size:12px">'+esc(l.by||'')+'</td>'
+        +'<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:'+color+'22;color:'+color+'">'+esc(l.action||'')+'</span></td>'
+        +'<td style="font-size:12px;color:var(--muted)">'+esc(l.detail||'')+'</td>'
+        +'</tr>';
     }).join('');
-    wrap.innerHTML = '<div style="font-size:11px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">稽核日誌（最近 50 筆）</div>'
-      + '<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>說明</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    wrap.innerHTML=filterBar+'<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>說明</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   });
+}
+function renderAuditTab(c){
+  c.innerHTML='';
+  var wrap=document.createElement('div');
+  wrap.style.cssText='padding:4px 0';
+  wrap._auditQ='';wrap._auditAct='';
+  c.appendChild(wrap);
+  renderAuditLog(wrap);
+}
+function renderUserStats(c){
+  var total=store.users.length;
+  var active=store.users.filter(function(u){return(u.status||'active')==='active';}).length;
+  var disabled=store.users.filter(function(u){return u.status==='disabled';}).length;
+  var resigned=store.users.filter(function(u){return u.status==='resigned';}).length;
+  var byDept=store.departments.map(function(d){
+    var cnt=store.users.filter(function(u){return u.deptId===d.id&&(u.status||'active')==='active';}).length;
+    return{name:d.name,cnt:cnt};
+  });
+  var byJob=[['nurse','護理師'],['doctor','醫師'],['admin','行政'],['it','IT'],['other','其他']].map(function(j){
+    var cnt=store.users.filter(function(u){return u.jobType===j[0]&&(u.status||'active')==='active';}).length;
+    return{label:j[1],cnt:cnt};
+  }).filter(function(x){return x.cnt>0;});
+  var statCards=[
+    {label:'總人數',val:total,color:'var(--primary)'},
+    {label:'在職',val:active,color:'#2e7d5a'},
+    {label:'停用',val:disabled,color:'#888'},
+    {label:'離職',val:resigned,color:'var(--red)'},
+  ].map(function(s){
+    return'<div style="background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:16px 20px;text-align:center;min-width:80px">'
+      +'<div style="font-size:28px;font-weight:800;color:'+s.color+'">'+s.val+'</div>'
+      +'<div style="font-size:12px;color:var(--faint);margin-top:3px">'+s.label+'</div></div>';
+  }).join('');
+  var deptRows=byDept.map(function(d){
+    var pct=active?Math.round(d.cnt/active*100):0;
+    return'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      +'<div style="font-size:13px;min-width:100px">'+esc(d.name)+'</div>'
+      +'<div style="flex:1;height:8px;background:var(--b1);border-radius:4px"><div style="width:'+pct+'%;height:8px;background:var(--primary);border-radius:4px;transition:width .4s"></div></div>'
+      +'<div style="font-size:12px;color:var(--faint);min-width:30px;text-align:right">'+d.cnt+'</div></div>';
+  }).join('');
+  var jobChips=byJob.map(function(j){
+    return'<span style="padding:4px 12px;border-radius:99px;background:var(--s2);font-size:12px;border:1px solid var(--b1)">'+j.label+' '+j.cnt+'</span>';
+  }).join('');
+  c.innerHTML='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">'+statCards+'</div>'
+    +'<div class="sec-label">各科別在職人數</div><div style="padding:4px 0 16px">'+deptRows+'</div>'
+    +'<div class="sec-label">職類分布</div><div style="display:flex;gap:8px;flex-wrap:wrap;padding:4px 0">'+jobChips+'</div>';
 }
 
 // ══════════════════════════════════════════
