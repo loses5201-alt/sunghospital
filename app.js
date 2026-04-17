@@ -1699,6 +1699,7 @@ function mergeNewLocal(){
   if(!store.journals)store.journals=dJournals();
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
+  if(!store.eduReads)store.eduReads={};
   store.users.forEach(function(u){if(!u.permissions)u.permissions={};});
   try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
 }
@@ -1713,6 +1714,7 @@ function mergeNew(){
   if(!store.journals)store.journals=dJournals();
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
+  if(!store.eduReads)store.eduReads={};
   store.users.forEach(function(u){if(!u.permissions)u.permissions={};});
   saveStore();
 }
@@ -1722,11 +1724,25 @@ function renderBabyPage(c){
   c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>🍼 寶寶牆</h1><div class="main-header-meta">新生兒出生公告</div></div><button class="btn-sm primary" onclick="openNewBaby()">+ 新增寶寶</button></div><div class="admin-content" id="babyC"></div></div>';
   rnBaby();
 }
-function rnBaby(){
+function babyDays(bornStr){
+  if(!bornStr) return 0;
+  const d=new Date(bornStr.split(' ')[0]);
+  const now=new Date(today());
+  const diff=Math.floor((now-d)/(1000*60*60*24));
+  return diff>=0?diff:0;
+}
+function rnBaby(q){
   const c=document.getElementById('babyC');if(!c)return;
   const cnt=store.babies.filter(b=>b.born.startsWith(today().slice(0,7))).length;
-  const cards=store.babies.map(b=>'<div class="baby-card"><div class="baby-ph">'+b.emoji+'</div><div class="baby-info"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div class="baby-name">'+esc(b.name)+'</div><span class="'+(b.gender==='boy'?'bb-b':'bb-g')+'">'+(b.gender==='boy'?'男寶':'女寶')+'</span></div><div class="baby-meta"><span>⚖ '+esc(b.weight)+'</span><span>📏 '+esc(b.height)+'</span><span>🕐 '+esc(b.born)+'</span></div><div class="baby-meta" style="margin-top:3px"><span>🏥 '+esc(b.mom)+'</span></div>'+(b.note?'<div style="font-size:12px;color:var(--muted);margin-top:5px">'+esc(b.note)+'</div>':'')+'</div></div>').join('');
-  c.innerHTML='<div style="text-align:center;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,#fde8f0,#fff0f5);border-radius:var(--radius);border:1px solid rgba(196,82,122,0.15)"><div style="font-size:20px;margin-bottom:3px">本月共迎接 '+cnt+' 位新生命</div><div style="font-size:12px;color:var(--muted)">每個寶寶都是最珍貴的禮物</div></div><div class="baby-grid">'+cards+'</div>';
+  const kw=(q||'').trim().toLowerCase();
+  const list=kw?store.babies.filter(b=>b.name.toLowerCase().includes(kw)||(b.mom||'').toLowerCase().includes(kw)):store.babies;
+  const cards=list.map(b=>{
+    const days=babyDays(b.born);
+    const daysLabel=days===0?'<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:2px 7px;border-radius:99px;font-weight:600">今日出生</span>':'<span style="font-size:10px;background:#fdf0dc;color:#8f5208;padding:2px 7px;border-radius:99px;font-weight:600">第 '+days+' 天</span>';
+    return'<div class="baby-card"><div class="baby-ph">'+b.emoji+'</div><div class="baby-info"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div class="baby-name">'+esc(b.name)+'</div><span class="'+(b.gender==='boy'?'bb-b':'bb-g')+'">'+(b.gender==='boy'?'男寶':'女寶')+'</span>'+daysLabel+'</div><div class="baby-meta"><span>⚖ '+esc(b.weight)+'</span><span>📏 '+esc(b.height)+'</span><span>🕐 '+esc(b.born)+'</span></div><div class="baby-meta" style="margin-top:3px"><span>🏥 '+esc(b.mom)+'</span></div>'+(b.note?'<div style="font-size:12px;color:var(--muted);margin-top:5px">'+esc(b.note)+'</div>':'')+'</div></div>';
+  }).join('');
+  const searchBar='<div style="display:flex;gap:10px;margin-bottom:14px"><input id="babySearch" class="baby-search-input" placeholder="🔍 搜尋寶寶名稱或床位..." oninput="rnBaby(this.value)" value="'+esc(kw)+'" style="flex:1;padding:8px 12px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit"></div>';
+  c.innerHTML='<div style="text-align:center;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,#fde8f0,#fff0f5);border-radius:var(--radius);border:1px solid rgba(196,82,122,0.15)"><div style="font-size:20px;margin-bottom:3px">本月共迎接 '+cnt+' 位新生命</div><div style="font-size:12px;color:var(--muted)">每個寶寶都是最珍貴的禮物</div></div>'+searchBar+'<div class="baby-grid">'+(cards||'<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--faint);font-size:13px">找不到符合的寶寶 🔍</div>')+'</div>';
 }
 function openNewBaby(){
   const nOpts=store.users.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');
@@ -2007,7 +2023,12 @@ function rnDuty(){
   const hdr=wk.map((d,i)=>'<div class="dcell dc-hd">'+DLBLS[i]+'<br><span style="font-size:10px;font-weight:400">'+fmtDate(d).slice(5)+'</span></div>').join('');
   const rows=nurses.map(u=>{const cells=wk.map(d=>{const sh=(store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'off';const s=SHINFO[sh]||SHINFO.off;return'<div class="dcell" style="'+(d===today()?'background:#fff0f5':'')+'" onclick="'+(hasPerm('manageSchedule')?'editDC(\''+u.id+'\',\''+d+'\')':'void(0)')+'" ><span class="'+s.c+'">'+s.l+'</span></div>';}).join('');return'<div class="dcell dc-rl">'+avatarEl(u.id,18)+'<span style="margin-left:4px">'+esc(u.name)+'</span></div>'+cells;}).join('');
   const pSw=store.swapRequests.filter(s=>s.status==='pending');
-  const swCards=store.swapRequests.map(s=>'<div class="swcard"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+esc(userName(s.fromId))+' → '+esc(userName(s.toId))+'</div><div style="font-size:11px;color:var(--muted)">'+fmtDate(s.fromDate)+' '+(SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+' ⇄ '+fmtDate(s.toDate)+' '+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+'</div>'+(s.reason?'<div style="font-size:11px;color:var(--faint)">'+esc(s.reason)+'</div>':'')+'</div><span style="font-size:10px;padding:2px 7px;border-radius:99px;font-weight:500;background:'+(s.status==='approved'?'#e8f7f0':'#fdf0dc')+';color:'+(s.status==='approved'?'#2e7d5a':'#8f5208')+'">'+(s.status==='approved'?'✓ 核准':'待審')+'</span>'+(isAdmin()&&s.status==='pending'?'<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejectSw(\''+s.id+'\')">拒絕</button><button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appSw(\''+s.id+'\')">核准</button>':'')+'</div>').join('');
+  const swStClr={approved:'#2e7d5a',rejected:'#b03050',pending:'#8f5208'};const swStBg={approved:'#e8f7f0',rejected:'#fce8e8',pending:'#fdf0dc'};const swStTxt={approved:'✓ 核准',rejected:'✗ 拒絕',pending:'⏳ 待審'};
+  const swCards=store.swapRequests.map(s=>{
+    const stClr=swStClr[s.status]||'#888';const stBg=swStBg[s.status]||'#f0f0f0';const stTxt=swStTxt[s.status]||s.status;
+    const timeline='<div class="sw-timeline"><div class="sw-step sw-step-done">'+avatarEl(s.fromId,18)+'<div><div style="font-size:11px;font-weight:600">'+esc(userName(s.fromId))+'</div><div style="font-size:10px;color:var(--faint)">'+fmtDate(s.fromDate)+' '+( SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+'</div></div></div><div class="sw-arrow">⇄</div><div class="sw-step '+(s.status==='approved'?'sw-step-done':s.status==='rejected'?'sw-step-rej':'sw-step-pend')+'">'+avatarEl(s.toId,18)+'<div><div style="font-size:11px;font-weight:600">'+esc(userName(s.toId))+'</div><div style="font-size:10px;color:var(--faint)">'+fmtDate(s.toDate)+' '+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+'</div></div></div></div>';
+    return'<div class="swcard"><div style="flex:1;min-width:0">'+timeline+(s.reason?'<div style="font-size:11px;color:var(--muted);margin-top:6px;padding:6px 10px;background:var(--s2);border-radius:6px;font-style:italic;white-space:pre-wrap">💬 '+esc(s.reason)+'</div>':'')+'<div style="font-size:10px;color:var(--faint);margin-top:4px">'+(s.createdAt||'')+'</div></div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><span style="font-size:10px;padding:3px 8px;border-radius:99px;font-weight:600;background:'+stBg+';color:'+stClr+'">'+stTxt+'</span>'+(isAdmin()&&s.status==='pending'?'<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appSw(\''+s.id+'\')">核准</button><button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejectSw(\''+s.id+'\')">拒絕</button>':'')+'</div></div>';
+  }).join('');
   c.innerHTML='<div class="sec-label">本週排班</div><div style="overflow-x:auto;margin-bottom:18px"><div class="duty-grid" style="min-width:560px"><div class="dcell dc-hd">姓名</div>'+hdr+rows+'</div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div class="sec-label" style="margin:0">換班申請 '+(pSw.length?'<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:1px 6px;border-radius:99px">'+pSw.length+'</span>':'')+'</div><button class="btn-sm" onclick="openNewSw()">+ 申請換班</button></div>'+(swCards||'<div style="text-align:center;padding:18px;color:var(--faint);font-size:13px">尚無換班申請</div>');
 }
 function editDC(uid,date){
@@ -2025,7 +2046,7 @@ function openNewSw(){
   const uOpts=store.users.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');
   const dOpts=getWk().map(d=>'<option value="'+d+'">'+fmtDate(d)+'</option>').join('');
   const sOpts=Object.entries(SHINFO).map(([k,v])=>'<option value="'+k+'">'+v.l+'</option>').join('');
-  showModal('申請換班','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>換班對象</label><select id="swt">'+uOpts+'</select></div><div class="form-row"><label>原因</label><input id="swr"></div><div class="form-row"><label>我的日期</label><select id="swfd">'+dOpts+'</select></div><div class="form-row"><label>我的班別</label><select id="swfs">'+sOpts+'</select></div><div class="form-row"><label>對方日期</label><select id="swtd">'+dOpts+'</select></div><div class="form-row"><label>對方班別</label><select id="swts">'+sOpts+'</select></div></div>',()=>{store.swapRequests.unshift({id:uid(),fromId:currentUser.id,toId:document.getElementById('swt').value,fromDate:document.getElementById('swfd').value,toDate:document.getElementById('swtd').value,fromShift:document.getElementById('swfs').value,toShift:document.getElementById('swts').value,reason:document.getElementById('swr').value,status:'pending'});saveStore();closeModal();rnDuty();});
+  showModal('申請換班','<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>換班對象</label><select id="swt">'+uOpts+'</select></div><div class="form-row"><label>我的日期</label><select id="swfd">'+dOpts+'</select></div><div class="form-row"><label>我的班別</label><select id="swfs">'+sOpts+'</select></div><div class="form-row"><label>對方日期</label><select id="swtd">'+dOpts+'</select></div><div class="form-row"><label>對方班別</label><select id="swts">'+sOpts+'</select></div></div><div class="form-row" style="margin-top:6px"><label>換班原因</label><textarea id="swr" style="min-height:70px" placeholder="請說明換班原因，例：家庭事務、身體不適..."></textarea></div>',()=>{store.swapRequests.unshift({id:uid(),fromId:currentUser.id,toId:document.getElementById('swt').value,fromDate:document.getElementById('swfd').value,toDate:document.getElementById('swtd').value,fromShift:document.getElementById('swfs').value,toShift:document.getElementById('swts').value,reason:document.getElementById('swr').value.trim(),status:'pending',createdAt:today()+' '+nowTime()});saveStore();closeModal();rnDuty();});
 }
 function appSw(id){const s=store.swapRequests.find(x=>x.id===id);if(!s)return;s.status='approved';if(!store.dutySchedule[s.fromId])store.dutySchedule[s.fromId]={};if(!store.dutySchedule[s.toId])store.dutySchedule[s.toId]={};const tmp=(store.dutySchedule[s.fromId][s.fromDate])||'off';store.dutySchedule[s.fromId][s.fromDate]=(store.dutySchedule[s.toId][s.toDate])||'off';store.dutySchedule[s.toId][s.toDate]=tmp;saveStore();rnDuty();}
 
@@ -2054,12 +2075,32 @@ function renderEduPage(c){
 }
 function rnEdu(){
   const c=document.getElementById('eduC');if(!c)return;
+  if(!store.eduReads)store.eduReads={};
+  const allIds=store.users.map(u=>u.id);
   c.innerHTML=store.eduItems.map((e,i)=>{
     const tags=e.tags.map(t=>{const tm=ETAGS[t]||{l:t,c:''};return'<span class="etag '+tm.c+'">'+tm.l+'</span>';}).join('');
-    return'<div class="ecard" onclick="togEdu(\'eex'+i+'\')"><div class="eico">'+e.icon+'</div><div style="flex:1;min-width:0"><div class="etitle">'+esc(e.title)+'</div><div class="edesc">'+esc(e.desc)+'</div><div>'+tags+'</div><div class="eexp" id="eex'+i+'">'+esc(e.content)+'</div></div></div>';
+    const readers=store.eduReads[e.id]||{};
+    const readCnt=allIds.filter(id=>readers[id]).length;
+    const myRead=readers[currentUser.id];
+    const pct=allIds.length?Math.round(readCnt/allIds.length*100):0;
+    const progressHtml=isAdmin()
+      ?'<div style="margin-top:6px;display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--b1);border-radius:4px"><div style="width:'+pct+'%;height:4px;background:var(--primary);border-radius:4px;transition:width .3s"></div></div><span style="font-size:10px;color:var(--faint);white-space:nowrap">'+readCnt+'/'+allIds.length+' 人已讀</span></div>'
+      :(myRead?'<span style="font-size:10px;color:var(--green);margin-top:4px;display:block">✓ 已讀</span>':'');
+    return'<div class="ecard" onclick="togEdu(\'eex'+i+'\',\''+esc(e.id)+'\')"><div class="eico">'+e.icon+'</div><div style="flex:1;min-width:0"><div class="etitle">'+esc(e.title)+'</div><div class="edesc">'+esc(e.desc)+'</div><div>'+tags+'</div>'+progressHtml+'<div class="eexp" id="eex'+i+'">'+esc(e.content)+'</div></div></div>';
   }).join('');
 }
-function togEdu(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+function togEdu(id,eduId){
+  const el=document.getElementById(id);if(!el)return;
+  el.classList.toggle('open');
+  if(el.classList.contains('open')&&eduId){
+    if(!store.eduReads)store.eduReads={};
+    if(!store.eduReads[eduId])store.eduReads[eduId]={};
+    if(!store.eduReads[eduId][currentUser.id]){
+      store.eduReads[eduId][currentUser.id]=true;
+      saveStore();rnEdu();
+    }
+  }
+}
 function openNewEdu(){
   showModal('新增衛教資料','<div class="form-row"><label>標題</label><input id="eu" placeholder="衛教主題"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>圖示</label><input id="ei" placeholder="例：🤱"></div><div class="form-row"><label>標籤（br/nb/pp/nu）</label><input id="et" placeholder="例：br,nb"></div></div><div class="form-row"><label>簡介</label><input id="ed"></div><div class="form-row"><label>詳細內容</label><textarea id="ec" style="min-height:110px"></textarea></div>',
   ()=>{const t=document.getElementById('eu').value.trim();if(!t)return;if(!store.eduItems)store.eduItems=[];store.eduItems.push({id:uid(),title:t,icon:document.getElementById('ei').value||'📄',tags:document.getElementById('et').value.split(',').map(x=>x.trim()).filter(Boolean),desc:document.getElementById('ed').value,content:document.getElementById('ec').value});saveStore();closeModal();rnEdu();});

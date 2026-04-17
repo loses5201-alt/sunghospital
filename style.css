@@ -993,3 +993,11 @@ input:focus,textarea:focus,select:focus{
   border-radius:4px;padding:1px 5px;font-size:10px;font-family:inherit;
 }
 
+/* ── Swap request timeline ── */
+.sw-timeline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.sw-step{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:var(--s2)}
+.sw-step-done{border-left:3px solid var(--green)}
+.sw-step-rej{border-left:3px solid var(--red);opacity:.7}
+.sw-step-pend{border-left:3px solid var(--amber)}
+.sw-arrow{font-size:14px;color:var(--primary);font-weight:700}
+
