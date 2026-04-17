@@ -1192,3 +1192,18 @@ input:focus,textarea:focus,select:focus{
 .chat-file-preview{display:flex;align-items:center;gap:8px;padding:6px 14px 0;font-size:12px;color:var(--text)}
 .chat-file-preview img{max-height:46px;max-width:68px;border-radius:6px;object-fit:cover;border:1.5px solid rgba(196,82,122,.2)}
 .chat-file-preview .cfp-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+
+/* ── 決議事項 ── */
+.res-card{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--b1);margin-bottom:8px;transition:box-shadow .12s}
+.res-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.res-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.res-done{background:#e8f5e9;color:#2e7d32}
+.res-wip{background:#fff8e1;color:#f57c00}
+.res-overdue{background:#fce8e8;color:#b03050;animation:pulseRed 1.6s ease-in-out infinite}
+@keyframes pulseRed{0%,100%{opacity:1}50%{opacity:.65}}
+
+/* ── 緊急表單 ── */
+.frq-urgent{border-left:3px solid var(--red)!important;background:rgba(255,0,0,.02)}
+
+/* ── 表單卡片 flex wrapping fix ── */
+.frq-card{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px}

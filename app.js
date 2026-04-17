@@ -780,7 +780,8 @@ function renderMeetingMain(){
       <div class="stat-item"><div class="stat-num" style="color:${rc<rt?'var(--red)':'var(--green)'}">${rc}/${rt}</div><div class="stat-label">已讀</div></div>
     </div>
     <div class="tabs">
-      <div class="tab ${currentTab==='notes'?'active':''}" onclick="switchTab('notes',this)">紀錄摘要</div>
+      <div class="tab ${currentTab==='notes'?'active':''}" onclick="switchTab('notes',this)">紀錄摘要${m.signoff&&m.signoff.locked?'<span class="tab-cnt" style="background:#e8f5e9;color:#2e7d32">🔏</span>':''}</div>
+      <div class="tab ${currentTab==='resolutions'?'active':''}" onclick="switchTab('resolutions',this)">決議事項 ${m.resolutions&&m.resolutions.length?`<span class="tab-cnt" style="background:var(--amber-bg);color:var(--amber)">${m.resolutions.length}</span>`:''}</div>
       <div class="tab ${currentTab==='tasks'?'active':''}" onclick="switchTab('tasks',this)">任務 ${m.tasks.length?`<span class="tab-cnt" style="background:var(--s2);color:var(--muted)">${m.tasks.length}</span>`:''}</div>
       <div class="tab ${currentTab==='progress'?'active':''}" onclick="switchTab('progress',this)">進度</div>
       <div class="tab ${currentTab==='chat'?'active':''}" onclick="switchTab('chat',this)">討論 ${m.chat&&m.chat.length?`<span class="tab-cnt" style="background:var(--blue-bg);color:var(--blue)">${m.chat.length}</span>`:''}</div>
@@ -799,6 +800,7 @@ function renderTab(){
   const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;
   const c=document.getElementById('tabContent');
   if(currentTab==='notes')renderNotes(c,m);
+  else if(currentTab==='resolutions')renderResolutions(c,m);
   else if(currentTab==='tasks')renderTasks(c,m);
   else if(currentTab==='progress')renderProgress(c,m);
   else if(currentTab==='chat')renderChat(c,m);
@@ -829,7 +831,9 @@ function renderNotes(c, m) {
     + '</div>'
     + '<div id="notesDisplay" style="background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:14px 16px;font-size:14px;line-height:1.8;white-space:pre-wrap">'
     + (m.notes ? esc(m.notes) : '<span style="color:var(--faint)">尚無摘要</span>')
-    + '</div>';
+    + '</div>'
+    // ── 簽核區 ──
+    + renderSignoffSection(m);
 }
 
 function editNotesInline(meetingId) {
@@ -2004,6 +2008,11 @@ function mergeNewLocal(){
     if(!b.dischargeDate)b.dischargeDate='';
   });
   (store.shifts||[]).forEach(function(s){if(!s.checklist)s.checklist=[];});
+  (store.meetings||[]).forEach(function(m){
+    if(!m.resolutions)m.resolutions=[];
+    if(!m.signoff)m.signoff={locked:false,signatures:{}};
+  });
+  (store.formRequests||[]).forEach(function(f){if(f.urgent===undefined)f.urgent=false;});
   try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
 }
 // mergeNew：補足欄位後同步到 Firebase
@@ -2035,6 +2044,11 @@ function mergeNew(){
     if(!b.dischargeDate)b.dischargeDate='';
   });
   (store.shifts||[]).forEach(function(s){if(!s.checklist)s.checklist=[];});
+  (store.meetings||[]).forEach(function(m){
+    if(!m.resolutions)m.resolutions=[];
+    if(!m.signoff)m.signoff={locked:false,signatures:{}};
+  });
+  (store.formRequests||[]).forEach(function(f){if(f.urgent===undefined)f.urgent=false;});
   saveStore();
   checkNewNotifs();
 }
@@ -2291,7 +2305,9 @@ function rnForms(){
           : '<div class="frq-attach"><a onclick="viewAttachment(\'' + f.id + '\')" style="cursor:pointer">\ud83d\udcce ' + esc(f.attachment.name) + '</a></div>')
       : '';
 
-    return '<div class="frq-card"><span class="ftype ' + ft.c + '">' + ft.l + '</span>'
+    return '<div class="frq-card'+(f.urgent&&f.status==='pending'?' frq-urgent':'')+'">'
+      +(f.urgent&&f.status==='pending'?'<span style="font-size:10px;font-weight:700;color:var(--red);background:#fce8e8;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px">🔴 緊急</span>':'')
+      +'<span class="ftype ' + ft.c + '">' + ft.l + '</span>'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:13px;font-weight:600;margin-bottom:3px;cursor:pointer" onclick="openFormDetail(\'' + f.id + '\')">'
       + esc(f.title) + ' <span style="font-size:10px;color:var(--primary);font-weight:400">\u8a73\u60c5 \u203a</span></div>'
@@ -2308,9 +2324,17 @@ function rnForms(){
       + (canA ? '<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appF(\'' + f.id + '\')">\u6838\u51c6</button>'
                + '<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejF(\'' + f.id + '\')">\u99b3\u56de</button>' : '')
       + (canW ? '<button class="btn-sm" style="font-size:11px;padding:4px 8px" onclick="withdrawForm(\'' + f.id + '\')">\u64a4\u56de</button>' : '')
+      + (f.applicantId===currentUser.id&&f.status==='rejected'?'<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="resubmitForm(\''+f.id+'\')">↩ 重新申請</button>':'')
       + '</div></div>';
   }
 
+  // sort: urgent+pending first, then by date
+  all.sort(function(a,b){
+    var aUrgPend=(a.urgent&&a.status==='pending')?1:0;
+    var bUrgPend=(b.urgent&&b.status==='pending')?1:0;
+    if(bUrgPend!==aUrgPend)return bUrgPend-aUrgPend;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
   var pend = all.filter(function(f){ return f.status==='pending' && isApp(f); });
   c.innerHTML = (pend.length
     ? '<div class="sec-label">\u5f85\u6211\u5be9\u6838\uff08' + pend.length + '\uff09</div>' + pend.map(rCard).join('') + '<div class="sec-label">\u5168\u90e8\u7533\u8acb</div>'
@@ -2329,7 +2353,8 @@ function openNewFrm(){
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>開始日期</label><input id="fsd" type="date" value="'+today()+'"></div><div class="form-row"><label>結束日期</label><input id="fed" type="date" value="'+today()+'"></div></div>'+
     '<div class="form-row"><label>原因</label><textarea id="frs"></textarea></div>'+
     '<div class="form-row"><label>送審主管</label><select id="fap">'+aOpts+'</select></div>'+
-    '<div class="form-row"><label>附件（圖片或 PDF，上限 800 KB）</label><input type="file" id="fattach" accept="image/*,.pdf" onchange="handleAttachment(this)" style="font-size:12px;width:100%"><div id="fattachPreview"></div></div>',
+    '<div class="form-row"><label>附件（圖片或 PDF，上限 800 KB）</label><input type="file" id="fattach" accept="image/*,.pdf" onchange="handleAttachment(this)" style="font-size:12px;width:100%"><div id="fattachPreview"></div></div>'+
+    '<div class="form-row" style="margin-top:2px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="furgent" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer"> <span style="color:var(--red);font-weight:700">🔴 標記為緊急（置頂顯示並提醒審核人員）</span></label></div>',
   ()=>{
     const t=document.getElementById('ftit').value.trim();if(!t)return;
     store.formRequests.unshift({
@@ -2340,6 +2365,7 @@ function openNewFrm(){
       reason:document.getElementById('frs').value,
       approvers:[document.getElementById('fap').value],
       statuses:['pending'],status:'pending',createdAt:today(),
+      urgent:!!(document.getElementById('furgent')&&document.getElementById('furgent').checked),
       attachment:_pendingAttachment||null
     });
     _pendingAttachment=null;
@@ -3871,4 +3897,212 @@ if(_origRenderDutyPage2){
       header.insertAdjacentElement('afterend',wrap);renderScheduleHints(wrap);
     },0);
   };
+}
+
+// ════════════════════════════════════════════════════════
+// 會議決議事項 & 紀錄簽核
+// ════════════════════════════════════════════════════════
+
+// ── 決議事項 Tab ──
+function renderResolutions(c, m) {
+  if(!m.resolutions) m.resolutions = [];
+  var today2 = today();
+  var canEdit = isAdmin() || m.attendeeIds.indexOf(currentUser.id) >= 0;
+
+  var rows = m.resolutions.map(function(r) {
+    var overdue = r.deadline && r.deadline < today2 && r.status !== '已完成';
+    var statusCls = r.status === '已完成' ? 'res-done' : overdue ? 'res-overdue' : 'res-wip';
+    var statusLbl = r.status === '已完成' ? '✓ 完成' : overdue ? '⚠ 逾期' : '進行中';
+    var assignee = r.assigneeId ? store.users.find(function(u){ return u.id === r.assigneeId; }) : null;
+    return '<div class="res-card">'
+      + '<div class="res-status ' + statusCls + '">' + statusLbl + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:13px;font-weight:600;margin-bottom:4px">' + esc(r.content) + '</div>'
+      + '<div style="display:flex;gap:12px;font-size:11px;color:var(--muted);flex-wrap:wrap">'
+      + (assignee ? '<span>👤 ' + esc(assignee.name) + '</span>' : '<span style="color:var(--faint)">未指定負責人</span>')
+      + (r.deadline ? '<span>📅 ' + fmtDate(r.deadline) + (overdue ? ' <span style="color:var(--red);font-weight:700">逾期</span>' : '') + '</span>' : '')
+      + '</div></div>'
+      + (canEdit ? '<div style="display:flex;gap:4px;flex-shrink:0">'
+        + '<button class="btn-xs" onclick="toggleResolutionStatus(\''+m.id+'\',\''+r.id+'\')" title="切換狀態">' + (r.status === '已完成' ? '↩' : '✓') + '</button>'
+        + '<button class="btn-xs danger" onclick="deleteResolution(\''+m.id+'\',\''+r.id+'\')" title="刪除">×</button>'
+        + '</div>' : '')
+      + '</div>';
+  }).join('') || '<div style="text-align:center;padding:32px;color:var(--faint);font-size:13px">尚無決議事項<br>點擊下方按鈕新增</div>';
+
+  var doneCount = m.resolutions.filter(function(r){ return r.status === '已完成'; }).length;
+  var total = m.resolutions.length;
+
+  c.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    + '<div class="sec-label" style="margin:0">決議追蹤'
+    + (total ? ' <span style="font-size:11px;color:var(--muted);font-weight:400">(' + doneCount + '/' + total + ' 完成)</span>' : '')
+    + '</div>'
+    + (canEdit ? '<button class="btn-sm primary" onclick="openAddResolution(\''+m.id+'\')">+ 新增決議</button>' : '')
+    + '</div>'
+    + (total > 0 ? '<div style="height:4px;background:var(--b1);border-radius:4px;margin-bottom:14px"><div style="width:'
+      + (total ? Math.round(doneCount/total*100) : 0) + '%;height:4px;background:var(--green);border-radius:4px;transition:width .3s"></div></div>' : '')
+    + rows;
+}
+
+function openAddResolution(meetingId) {
+  var m = store.meetings.find(function(x){ return x.id === meetingId; });
+  if(!m) return;
+  var aOpts = '<option value="">（不指定）</option>'
+    + m.attendeeIds.map(function(uid2){
+        return '<option value="' + uid2 + '">' + esc(userName(uid2)) + '</option>';
+      }).join('');
+  showModal('新增決議事項',
+    '<div class="form-row"><label>決議內容</label><textarea id="resContent" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="例：每週四辦理感控教育訓練，由護理長主持"></textarea></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + '<div class="form-row"><label>負責人</label><select id="resAssignee">' + aOpts + '</select></div>'
+    + '<div class="form-row"><label>截止日期</label><input id="resDeadline" type="date"></div>'
+    + '</div>',
+    function() {
+      var content = document.getElementById('resContent').value.trim();
+      if(!content) return;
+      if(!m.resolutions) m.resolutions = [];
+      m.resolutions.push({
+        id: uid(),
+        content: content,
+        assigneeId: document.getElementById('resAssignee').value || null,
+        deadline: document.getElementById('resDeadline').value || '',
+        status: '進行中',
+        createdAt: today() + ' ' + nowTime()
+      });
+      saveStore(); closeModal(); renderTab();
+    }
+  );
+}
+
+function toggleResolutionStatus(meetingId, resId) {
+  var m = store.meetings.find(function(x){ return x.id === meetingId; });
+  if(!m) return;
+  var r = (m.resolutions||[]).find(function(x){ return x.id === resId; });
+  if(!r) return;
+  r.status = r.status === '已完成' ? '進行中' : '已完成';
+  saveStore(); renderTab(); renderSidebar();
+}
+
+function deleteResolution(meetingId, resId) {
+  if(!confirm('確定刪除此決議？')) return;
+  var m = store.meetings.find(function(x){ return x.id === meetingId; });
+  if(!m) return;
+  m.resolutions = (m.resolutions||[]).filter(function(r){ return r.id !== resId; });
+  saveStore(); renderTab();
+}
+
+// ── 紀錄簽核 ──
+function renderSignoffSection(m) {
+  if(!m.signoff) m.signoff = {locked: false, signatures: {}};
+  var locked = m.signoff.locked;
+  var sigs = m.signoff.signatures || {};
+  var isAttendee = m.attendeeIds.indexOf(currentUser.id) >= 0;
+  var mySig = sigs[currentUser.id];
+  var signedCount = m.attendeeIds.filter(function(id){ return sigs[id] && sigs[id].signed; }).length;
+  var allSigned = signedCount === m.attendeeIds.length;
+
+  if(!locked && !m.notes) return '';
+
+  var sigChips = m.attendeeIds.map(function(uid2) {
+    var s = sigs[uid2];
+    var signed = s && s.signed;
+    return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;background:' + (signed ? 'var(--green-bg,#e8f5e9)' : 'var(--s2)') + ';border:1px solid ' + (signed ? 'rgba(46,125,82,.2)' : 'var(--b1)') + '">'
+      + avatarEl(uid2, 22)
+      + '<span style="font-size:12px;font-weight:600">' + esc(userName(uid2)) + '</span>'
+      + (signed
+        ? '<span style="font-size:10px;color:var(--green);margin-left:auto">✓ ' + (s.time||'').slice(5,16) + '</span>'
+        : '<span style="font-size:10px;color:var(--faint);margin-left:auto">待簽核</span>')
+      + '</div>';
+  }).join('');
+
+  var html = '<div style="margin-top:18px;padding:14px 16px;border:1.5px solid ' + (allSigned ? 'rgba(46,125,82,.3)' : locked ? 'rgba(255,160,0,.3)' : 'var(--b1)') + ';border-radius:var(--radius);background:' + (allSigned ? 'rgba(46,125,82,.04)' : 'var(--surface)') + '">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    + '<div style="font-size:13px;font-weight:700">'
+    + (allSigned ? '✅ 全員完成簽核' : locked ? '🔏 紀錄簽核中 (' + signedCount + '/' + m.attendeeIds.length + ')' : '📄 會議紀錄簽核')
+    + '</div>'
+    + '<div style="display:flex;gap:6px">'
+    + (locked && isAttendee && !mySig
+      ? '<button class="btn-sm primary" onclick="signMeetingMinutes(\''+m.id+'\')">✍️ 確認簽核</button>'
+      : '')
+    + (isAdmin() && !locked && m.notes
+      ? '<button class="btn-sm" onclick="lockMeetingMinutes(\''+m.id+'\')">🔏 發布簽核</button>'
+      : '')
+    + (isAdmin() && locked && !allSigned
+      ? '<button class="btn-sm" onclick="unlockMeetingMinutes(\''+m.id+'\')" style="font-size:11px">解除鎖定</button>'
+      : '')
+    + '</div></div>'
+    + (locked
+      ? '<div style="display:flex;flex-wrap:wrap;gap:6px">' + sigChips + '</div>'
+      : '<div style="font-size:12px;color:var(--faint)">完成摘要後，點擊「發布簽核」讓與會成員確認。</div>')
+    + '</div>';
+  return html;
+}
+
+function lockMeetingMinutes(meetingId) {
+  if(!confirm('發布後，紀錄將鎖定並通知與會成員簽核。確定嗎？')) return;
+  var m = store.meetings.find(function(x){ return x.id === meetingId; });
+  if(!m) return;
+  if(!m.signoff) m.signoff = {};
+  m.signoff.locked = true;
+  m.signoff.signatures = m.signoff.signatures || {};
+  logAudit('發布簽核', m.title);
+  saveStore(); renderTab();
+  showToast('已發布', '請與會成員前往確認簽核', '🔏');
+}
+
+function unlockMeetingMinutes(meetingId) {
+  if(!confirm('解除後簽核狀態將重置，確定嗎？')) return;
+  var m = store.meetings.find(function(x){ return x.id === meetingId; });
+  if(!m) return;
+  m.signoff = {locked: false, signatures: {}};
+  saveStore(); renderTab();
+  showToast('已解除', '紀錄簽核已重置', '🔓');
+}
+
+function signMeetingMinutes(meetingId) {
+  var m = store.meetings.find(function(x){ return x.id === meetingId; });
+  if(!m || !m.signoff || !m.signoff.locked) return;
+  if(!m.signoff.signatures) m.signoff.signatures = {};
+  m.signoff.signatures[currentUser.id] = {signed: true, time: today() + ' ' + nowTime()};
+  saveStore(); renderTab();
+  showToast('已簽核', m.title, '✍️');
+}
+
+// ── 表單：退回重申 ──
+function resubmitForm(id) {
+  var f = store.formRequests.find(function(x){ return x.id === id; });
+  if(!f) return;
+  _pendingAttachment = null;
+  var approvers = store.users.filter(function(u){
+    return u.id !== currentUser.id && u.status !== 'disabled' && u.status !== 'resigned'
+      && (u.role === 'admin' || (u.permissions && u.permissions.approveForm));
+  });
+  var aOpts = approvers.length
+    ? approvers.map(function(u){ return '<option value="' + u.id + '"' + (f.approvers[0]===u.id?' selected':'') + '>' + esc(u.name) + '</option>'; }).join('')
+    : '<option value="">（尚未設定可審核人員）</option>';
+  showModal('重新申請（退回修改）',
+    '<div style="padding:8px 12px;background:var(--amber-bg,#fff8e1);border-radius:6px;font-size:12px;color:var(--amber);margin-bottom:12px">📋 原申請已退回，請修改後重新送出</div>'
+    + '<div class="form-row"><label>類型</label><select id="rfty"><option value="leave"' + (f.type==='leave'?' selected':'') + '>請假</option><option value="overtime"' + (f.type==='overtime'?' selected':'') + '>加班</option><option value="supply"' + (f.type==='supply'?' selected':'') + '>物品申請</option><option value="other"' + (f.type==='other'?' selected':'') + '>其他</option></select></div>'
+    + '<div class="form-row"><label>標題</label><input id="rftit" value="' + esc(f.title) + '"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>開始日期</label><input id="rfsd" type="date" value="' + (f.startDate||today()) + '"></div><div class="form-row"><label>結束日期</label><input id="rfed" type="date" value="' + (f.endDate||today()) + '"></div></div>'
+    + '<div class="form-row"><label>原因</label><textarea id="rfrs">' + esc(f.reason||'') + '</textarea></div>'
+    + '<div class="form-row"><label>送審主管</label><select id="rfap">' + aOpts + '</select></div>',
+    function() {
+      var t = document.getElementById('rftit').value.trim(); if(!t) return;
+      store.formRequests.unshift({
+        id: uid(), type: document.getElementById('rfty').value, title: t,
+        applicantId: currentUser.id, date: today(),
+        startDate: document.getElementById('rfsd').value,
+        endDate: document.getElementById('rfed').value,
+        reason: document.getElementById('rfrs').value,
+        approvers: [document.getElementById('rfap').value],
+        statuses: ['pending'], status: 'pending', createdAt: today() + ' ' + nowTime(),
+        urgent: f.urgent || false,
+        attachment: _pendingAttachment || null,
+        resubmittedFrom: f.id
+      });
+      _pendingAttachment = null;
+      saveStore(); closeModal(); rnForms();
+      showToast('已重新送出', t, '📋');
+    }
+  );
 }
