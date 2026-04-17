@@ -1077,3 +1077,83 @@ input:focus,textarea:focus,select:focus{
 .cal-event-duty{background:var(--amber-bg);color:var(--amber);font-size:10px;padding:1px 5px;border-radius:3px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
 .cal-event-leave{background:#fce8e8;color:#b03050;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
 
+
+/* ════════════════════════════════════════════
+   新功能 CSS
+   ════════════════════════════════════════════ */
+
+/* ── 站內訊息 ── */
+.msg-sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--b1);display:flex;flex-direction:column;height:100%;overflow:hidden}
+.msg-main{flex:1;display:flex;flex-direction:column;min-width:0;height:100%;overflow:hidden}
+.chat-room-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .12s}
+.chat-room-item:hover{background:var(--s2)}
+.chat-room-item.active{background:var(--primary-light)}
+.chat-room-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.chat-room-info{flex:1;min-width:0}
+.chat-room-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-room-last{font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.chat-unread-dot{min-width:18px;height:18px;background:var(--primary);color:white;border-radius:99px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0}
+.chat-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--b1);background:var(--surface);flex-shrink:0}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.chat-bubble-row{display:flex;align-items:flex-end;gap:8px}
+.chat-bubble-row.mine{flex-direction:row-reverse}
+.chat-bubble{max-width:68%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;position:relative}
+.bubble-other{background:var(--s2);color:var(--text);border-bottom-left-radius:4px}
+.bubble-mine{background:var(--primary);color:white;border-bottom-right-radius:4px}
+.bubble-time{display:block;font-size:10px;opacity:.6;margin-top:3px;text-align:right}
+.chat-input-bar{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--b1);background:var(--surface);flex-shrink:0}
+.chat-input{flex:1;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius);padding:8px 12px;background:var(--s2);color:var(--text);outline:none;transition:border-color .12s}
+.chat-input:focus{border-color:var(--primary)}
+
+/* ── 設備回報 ── */
+.eq-card{background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;border-left:3px solid var(--b1)}
+.eq-s-open{border-left-color:var(--red)}
+.eq-s-inprogress{border-left-color:var(--amber)}
+.eq-s-resolved{border-left-color:var(--green);opacity:.7}
+.eq-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.eq-cat-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--s2);color:var(--muted)}
+.eq-status-lbl{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
+.eq-sl-open{background:var(--red-bg);color:var(--red)}
+.eq-sl-inprogress{background:var(--amber-bg);color:var(--amber)}
+.eq-sl-resolved{background:var(--green-bg);color:var(--green)}
+.eq-name{font-size:15px;font-weight:700;margin-bottom:4px}
+.eq-meta{font-size:11px;color:var(--faint)}
+.eq-note{font-size:12px;color:var(--muted);margin-top:4px;padding:6px 8px;background:var(--s2);border-radius:var(--radius-sm)}
+.eq-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn-xs{font-size:11px;padding:3px 10px;border-radius:5px;border:1px solid var(--b2);background:var(--s2);color:var(--text);cursor:pointer;transition:all .12s;font-family:inherit}
+.btn-xs:hover{background:var(--s3)}
+.btn-xs.success{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+.btn-xs.danger{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+
+/* ── 全院儀表板 ── */
+.kiosk-wrap{display:flex;flex-direction:column;height:100%;background:var(--bg);padding:20px;gap:16px;overflow-y:auto}
+.kiosk-header{display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap}
+.kiosk-logo{font-size:20px;font-weight:900;color:var(--primary);letter-spacing:-.02em;flex-shrink:0}
+.kiosk-time-block{display:flex;flex-direction:column}
+.kiosk-time{font-size:38px;font-weight:900;line-height:1;letter-spacing:-.04em}
+.kiosk-date{font-size:14px;color:var(--muted);margin-top:2px}
+.kiosk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;flex:1}
+.kiosk-card{background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:18px 20px}
+.kiosk-big{grid-column:span 2}
+.kiosk-wide{grid-column:span 3}
+.kiosk-card-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.kiosk-card-value{font-size:36px;font-weight:900;line-height:1;letter-spacing:-.03em}
+.kiosk-staff-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.kiosk-staff-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--s2);border-radius:99px;font-size:12px;font-weight:600}
+.kiosk-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.kiosk-ann-item{font-size:13px;padding:5px 0;border-bottom:1px solid var(--b1);color:var(--text)}
+.kiosk-ann-item:last-child{border-bottom:none}
+
+/* ── 今日摘要 ── */
+.summary-sub{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.summary-list{display:flex;flex-direction:column;gap:8px}
+.summary-item{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;border-left:3px solid var(--b2);background:var(--s2);transition:background .12s}
+.summary-item:hover{background:var(--s3)}
+.summary-shift{border-left-color:var(--amber);background:var(--amber-bg)}
+.summary-ann{border-left-color:var(--blue)}
+.summary-form{border-left-color:var(--primary)}
+.summary-task{border-left-color:var(--green)}
+.summary-msg{border-left-color:#9b8fd4}
+
+/* ── Theme btn active ── */
+.btn-sm.active{background:var(--primary);color:white;border-color:var(--primary)}

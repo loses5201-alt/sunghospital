@@ -1,14 +1,40 @@
-// SW: clear all caches and unregister
-self.addEventListener('install', function() {
+var CACHE = 'sunghospital-v1';
+var ASSETS = [
+  '/sunghospital/',
+  '/sunghospital/index.html',
+  '/sunghospital/app.js',
+  '/sunghospital/style.css',
+  '/sunghospital/manifest.json'
+];
+
+self.addEventListener('install', function(e) {
   self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then(function(c) { return c.addAll(ASSETS); }).catch(function(){})
+  );
 });
+
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(keys) {
-      return Promise.all(keys.map(function(k) { return caches.delete(k); }));
-    }).then(function() {
-      return self.clients.claim();
+      return Promise.all(keys.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));
+    }).then(function() { return self.clients.claim(); })
+  );
+});
+
+// Network-first: try network, fall back to cache
+self.addEventListener('fetch', function(e) {
+  if(e.request.method!=='GET')return;
+  var url=new URL(e.request.url);
+  // Only cache same-origin and Firebase (skip auth/firestore)
+  if(url.hostname.indexOf('firebase')>=0||url.hostname.indexOf('google')>=0)return;
+  e.respondWith(
+    fetch(e.request).then(function(res){
+      var clone=res.clone();
+      caches.open(CACHE).then(function(c){c.put(e.request,clone);});
+      return res;
+    }).catch(function(){
+      return caches.match(e.request);
     })
   );
 });
-// No fetch interception - always go to network

@@ -24,7 +24,7 @@ function normalizeStore(s) {
   if (!s) return s;
   ['meetings','users','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
-   'eduItems','titles','formNotifs'].forEach(function(f) {
+   'eduItems','titles','formNotifs','messages','chatRooms','equipment'].forEach(function(f) {
     s[f] = normalizeArr(s[f]);
   });
   s.meetings.forEach(function(m) {
@@ -396,7 +396,9 @@ function initApp(){
   startClock();
   startPresence();
   initBrowserNotifications();
+  initDarkModeAuto();
   setInterval(updateShiftCountdown,60000);updateShiftCountdown();
+  setTimeout(showDailySummary, 800);
 }
 function updateNavUser(){
   if(!currentUser)return;
@@ -451,7 +453,9 @@ var NAV_GROUPS = [
     { id:'navCal',      page:'calendar',      label:'行事曆',  badge:'cal',
       svg:'<rect x="3" y="4" width="14" height="14" rx="2"/><path d="M7 2v4M13 2v4M3 9h14"/>'},
     { id:'navJournal',  page:'journal',       label:'工作日誌',
-      svg:'<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>'}
+      svg:'<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>'},
+    { id:'navMessages', page:'messages',      label:'站內訊息', badge:'msg',
+      svg:'<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>'}
   ]},
   { id:'nursing', label:'護理管理', dot:'#5ba5e0', items:[
     { id:'navBaby',     page:'baby',          label:'寶寶牆',
@@ -469,13 +473,17 @@ var NAV_GROUPS = [
     { id:'navMeetings', page:'meetings',      label:'會議紀錄',
       svg:'<rect x="3" y="4" width="14" height="14" rx="2"/><path d="M7 2v4M13 2v4M3 9h14"/>'},
     { id:'navIncident', page:'incident',      label:'異常通報',  badge:'ir',
-      svg:'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'}
+      svg:'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'},
+    { id:'navEquipment',page:'equipment',     label:'設備回報',  badge:'eq',
+      svg:'<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'}
   ]},
   { id:'system', label:'系統管理', dot:'#9b8fd4', items:[
     { id:'navStats',    page:'stats',         label:'統計報表',
       svg:'<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>'},
     { id:'navEdu',      page:'edu',           label:'衛教資料',
       svg:'<path d="M10 3L2 7l8 4 8-4-8-4z"/><path d="M2 7v5M18 7v5M6 9v4a4 4 0 008 0V9"/>'},
+    { id:'navKiosk',    page:'kiosk',         label:'全院儀表板',
+      svg:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'},
     { id:'navDepts',    page:'departments',   label:'科別管理',  adminOnly:true,
       svg:'<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'},
     { id:'navUsers',    page:'users',         label:'人員管理',  adminOnly:true,
@@ -526,7 +534,7 @@ function renderNav(){
   wrap.innerHTML=html;
 
   // Re-wire badges
-  updateAnnBadge();updateIrBadge();updateCalBadge();
+  updateAnnBadge();updateIrBadge();updateCalBadge();updateMsgBadge();updateEqBadge();
   var notifCount=(store.formNotifs||[]).filter(function(n){return !n.read;}).length;
   updateNotifBadge(notifCount);
 }
@@ -573,6 +581,9 @@ function setPage(page){
     else if(page==='journal'){hideSidebar();renderPageInMain(renderJournalPage);}
     else if(page==='edu'){hideSidebar();renderPageInMain(renderEduPage);}
     else if(page==='home'){hideSidebar();renderPageInMain(renderHomePage);}
+    else if(page==='messages'){hideSidebar();renderPageInMain(renderMessagesPage);}
+    else if(page==='equipment'){hideSidebar();renderPageInMain(renderEquipmentPage);}
+    else if(page==='kiosk'){hideSidebar();renderPageInMain(renderKioskPage);}
   }
 }
 function renderPageInMain(fn){
@@ -1976,6 +1987,9 @@ function mergeNewLocal(){
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
   if(!store.eduReads)store.eduReads={};
+  if(!store.messages)store.messages=[];
+  if(!store.chatRooms)store.chatRooms=[];
+  if(!store.equipment)store.equipment=[];
   store.users.forEach(function(u){
     if(!u.permissions)u.permissions={};
     if(!u.status)u.status='active';
@@ -2004,6 +2018,9 @@ function mergeNew(){
   if(!store.eduItems)store.eduItems=dEdu();
   if(!store.formNotifs)store.formNotifs=[];
   if(!store.eduReads)store.eduReads={};
+  if(!store.messages)store.messages=[];
+  if(!store.chatRooms)store.chatRooms=[];
+  if(!store.equipment)store.equipment=[];
   store.users.forEach(function(u){
     if(!u.permissions)u.permissions={};
     if(!u.status)u.status='active';
@@ -3462,3 +3479,302 @@ renderPageInMain = function(fn){
     });
   });
 };
+
+
+// ════════════════════════════════════════════════════════
+// ① 站內訊息
+// ════════════════════════════════════════════════════════
+var _activeChatRoom = null;
+
+function updateMsgBadge(){
+  if(!currentUser)return;
+  var n=(store.messages||[]).filter(function(m){
+    return m.to===currentUser.id && !((m.reads||{})[currentUser.id]);
+  }).length;
+  var b=document.getElementById('badge_msg');
+  if(b){b.style.display=n>0?'flex':'none';if(n>0)b.textContent=n>9?'9+':String(n);}
+}
+
+function getOrCreateDM(otherId){
+  var existing=(store.chatRooms||[]).find(function(r){
+    return !r.isGroup && r.members.indexOf(currentUser.id)>=0 && r.members.indexOf(otherId)>=0 && r.members.length===2;
+  });
+  if(existing)return existing;
+  var room={id:uid(),isGroup:false,members:[currentUser.id,otherId],name:'',lastMsg:'',lastTs:''};
+  if(!store.chatRooms)store.chatRooms=[];
+  store.chatRooms.push(room);saveStore();return room;
+}
+
+function sendMsg(roomId,text){
+  text=(text||'').trim();if(!text)return;
+  var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});if(!room)return;
+  var other=room.members.filter(function(id){return id!==currentUser.id;})[0];
+  var msg={id:uid(),roomId:roomId,from:currentUser.id,to:other||'',text:text,ts:new Date().toISOString(),reads:{}};
+  msg.reads[currentUser.id]=true;
+  if(!store.messages)store.messages=[];
+  store.messages.push(msg);room.lastMsg=text;room.lastTs=msg.ts;
+  saveStore();renderChatThread(roomId);updateMsgBadge();
+}
+
+function renderMessagesPage(c){
+  var activeUsers=store.users.filter(function(u){return u.status==='active'&&u.id!==currentUser.id;});
+  var rooms=(store.chatRooms||[]).filter(function(r){return r.members.indexOf(currentUser.id)>=0;});
+  rooms.sort(function(a,b){return (b.lastTs||'').localeCompare(a.lastTs||'');});
+  var roomList=rooms.map(function(r){
+    var otherId=r.members.filter(function(id){return id!==currentUser.id;})[0];
+    var other=store.users.find(function(u){return u.id===otherId;})||{name:'未知',avatar:'av1'};
+    var unread=(store.messages||[]).filter(function(m){return m.roomId===r.id&&m.to===currentUser.id&&!(m.reads||{})[currentUser.id];}).length;
+    var active=_activeChatRoom===r.id?'active':'';
+    return '<div class="chat-room-item '+active+'" onclick="openChatRoom(\''+r.id+'\')">'      +'<div class="chat-room-av '+other.avatar+'">'+initials(other.name)+'</div>'      +'<div class="chat-room-info"><div class="chat-room-name">'+esc(other.name)+'</div>'      +'<div class="chat-room-last">'+esc((r.lastMsg||'').slice(0,24)||'點擊開始對話')+'</div></div>'      +(unread?'<span class="chat-unread-dot">'+unread+'</span>':'')+'</div>';
+  }).join('')||'<div style="padding:24px;text-align:center;color:var(--faint);font-size:13px">尚無對話<br>點擊下方人員開始聊天</div>';
+  var userBtns=activeUsers.map(function(u){
+    return '<button class="btn-sm" style="flex-shrink:0" onclick="startDM(\''+u.id+'\')">'+esc(u.name)+'</button>';
+  }).join('');
+  c.innerHTML='<div class="admin-layout" style="flex-direction:row;height:100%;overflow:hidden">'    +'<div class="msg-sidebar"><div style="padding:14px 14px 10px;border-bottom:1px solid var(--b1)"><h2 style="font-size:16px;font-weight:800">💬 站內訊息</h2></div>'    +'<div style="padding:8px 10px;border-bottom:1px solid var(--b1);display:flex;flex-wrap:wrap;gap:6px">'+userBtns+'</div>'    +'<div id="roomList" style="flex:1;overflow-y:auto;padding:6px">'+roomList+'</div></div>'    +'<div id="chatMain" class="msg-main">'    +(_activeChatRoom?''
+      :'<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--faint)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg><div>選擇聯絡人開始對話</div></div>')
+    +'</div></div>';
+  if(_activeChatRoom)renderChatThread(_activeChatRoom);
+}
+
+function startDM(userId){var room=getOrCreateDM(userId);_activeChatRoom=room.id;setPage('messages');}
+
+function openChatRoom(roomId){
+  _activeChatRoom=roomId;
+  (store.messages||[]).forEach(function(m){if(m.roomId===roomId&&m.to===currentUser.id){if(!m.reads)m.reads={};m.reads[currentUser.id]=true;}});
+  saveStore();renderChatThread(roomId);updateMsgBadge();
+  document.querySelectorAll('.chat-room-item').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.chat-room-item').forEach(function(el){if(el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(roomId)>=0)el.classList.add('active');});
+}
+
+function renderChatThread(roomId){
+  var main=document.getElementById('chatMain');if(!main)return;
+  var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});if(!room)return;
+  var otherId=room.members.filter(function(id){return id!==currentUser.id;})[0];
+  var other=store.users.find(function(u){return u.id===otherId;})||{name:'未知',avatar:'av1'};
+  var msgs=(store.messages||[]).filter(function(m){return m.roomId===roomId;});
+  msgs.sort(function(a,b){return a.ts.localeCompare(b.ts);});
+  var bubbles=msgs.map(function(m){
+    var isMine=m.from===currentUser.id;
+    var sender=store.users.find(function(u){return u.id===m.from;})||{name:'?',avatar:'av1'};
+    var time=m.ts?m.ts.slice(11,16):'';
+    return '<div class="chat-bubble-row '+(isMine?'mine':'')+'">'      +(!isMine?'<div class="'+sender.avatar+'" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+initials(sender.name)+'</div>':'')
+      +'<div class="chat-bubble '+(isMine?'bubble-mine':'bubble-other')+'">'+esc(m.text)+'<span class="bubble-time">'+time+'</span></div></div>';
+  }).join('');
+  main.innerHTML='<div class="chat-header">'    +'<div class="'+other.avatar+'" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'+initials(other.name)+'</div>'    +'<div><div style="font-weight:700;font-size:14px">'+esc(other.name)+'</div>'    +'<div style="font-size:11px;color:var(--faint)">'+esc(userDept(otherId))+'</div></div>'    +'</div>'    +'<div id="chatMessages" class="chat-messages">'+bubbles+'</div>'    +'<div class="chat-input-bar">'    +'<input id="chatInput" class="chat-input" placeholder="輸入訊息..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitMsg(\''+roomId+'\');}">'    +'<button class="btn-sm primary" onclick="submitMsg(\''+roomId+'\')">送出</button>'    +'</div>';
+  var cm=document.getElementById('chatMessages');if(cm)cm.scrollTop=cm.scrollHeight;
+  var ci=document.getElementById('chatInput');if(ci)ci.focus();
+}
+
+function submitMsg(roomId){
+  var input=document.getElementById('chatInput');if(!input)return;
+  var text=input.value.trim();if(!text)return;input.value='';sendMsg(roomId,text);
+}
+
+// ════════════════════════════════════════════════════════
+// ② 設備/耗材回報
+// ════════════════════════════════════════════════════════
+var EQ_CATS={device:'設備故障',supply:'耗材不足',facility:'環境維修',other:'其他'};
+var EQ_STATUS={open:'待處理',inprogress:'處理中',resolved:'已解決'};
+
+function updateEqBadge(){
+  var n=(store.equipment||[]).filter(function(e){return e.status!=='resolved';}).length;
+  var b=document.getElementById('badge_eq');if(b)b.style.display=n>0?'flex':'none';
+}
+
+function renderEquipmentPage(c){
+  var items=store.equipment||[];
+  var pending=items.filter(function(e){return e.status!=='resolved';});
+  var resolved=items.filter(function(e){return e.status==='resolved';});
+  function eqCard(e){
+    var canResolve=isAdmin()||hasPerm('manageIR');
+    var actions=e.status!=='resolved'
+      ?(e.status==='open'?'<button class="btn-xs" onclick="setEqStatus(\''+e.id+'\',\'inprogress\')">開始處理</button>':'')
+       +(canResolve?'<button class="btn-xs success" onclick="setEqStatus(\''+e.id+'\',\'resolved\')">標記解決</button>':'')
+       +'<button class="btn-xs danger" onclick="deleteEqReport(\''+e.id+'\')">刪除</button>'
+      :'<span style="font-size:11px;color:var(--faint)">解決日期：'+esc(e.resolvedAt||'')+'</span>';
+    return '<div class="eq-card eq-s-'+e.status+'">'      +'<div class="eq-card-top"><span class="eq-cat-badge">'+esc(EQ_CATS[e.category]||e.category)+'</span>'      +'<span class="eq-status-lbl eq-sl-'+e.status+'">'+esc(EQ_STATUS[e.status]||e.status)+'</span></div>'      +'<div class="eq-name">'+esc(e.name)+'</div>'      +'<div class="eq-meta">📍 '+esc(e.location||'未指定')+' &nbsp;·&nbsp; 回報者：'+esc(userName(e.reportedBy))+' &nbsp;·&nbsp; '+esc((e.reportedAt||'').slice(0,10))+'</div>'      +(e.note?'<div class="eq-note">'+esc(e.note)+'</div>':'')
+      +'<div class="eq-actions">'+actions+'</div></div>';
+  }
+  c.innerHTML='<div class="admin-layout">'    +'<div class="main-header"><div><h1>🔧 設備回報</h1><div class="main-header-meta">設備故障 · 耗材不足 · 環境維修</div></div>'    +'<button class="btn-sm primary" onclick="openNewEqReport()">＋ 新增回報</button></div>'    +'<div class="admin-content">'    +'<div class="metric-grid" style="margin-bottom:16px">'    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)">'+pending.filter(function(e){return e.status==='open';}).length+'</div><div class="metric-lbl">待處理</div></div>'    +'<div class="metric-box"><div class="metric-num" style="color:var(--amber)">'+pending.filter(function(e){return e.status==='inprogress';}).length+'</div><div class="metric-lbl">處理中</div></div>'    +'<div class="metric-box"><div class="metric-num" style="color:var(--green)">'+resolved.length+'</div><div class="metric-lbl">已解決</div></div>'    +'</div>'    +(pending.length?'<div class="home-section">🚨 待處理 / 處理中</div>'+pending.map(eqCard).join('')
+      :'<div style="padding:30px;text-align:center;color:var(--faint)">目前無待處理項目 ✅</div>')
+    +(resolved.length?'<div class="home-section" style="margin-top:20px">✅ 已解決（最近10筆）</div>'+resolved.slice(-10).reverse().map(eqCard).join(''):'')
+    +'</div></div>';
+  updateEqBadge();
+}
+
+function openNewEqReport(){
+  var locOpts=(store.rooms||[]).map(function(r){return '<option value="'+esc(r.name)+'">'+esc(r.name)+'</option>';}).join('');
+  showModal('新增設備/耗材回報',
+    '<div class="form-row"><label>類型</label><select id="eqCat">'    +Object.entries(EQ_CATS).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1]+'</option>';}).join('')+'</select></div>'    +'<div class="form-row"><label>名稱/項目</label><input id="eqName" placeholder="例：呼叫鈴故障、手術手套不足..."></div>'    +'<div class="form-row"><label>地點</label><select id="eqLoc"><option value="">（選擇）</option>'+locOpts    +'<option value="護理站">護理站</option><option value="倉庫">倉庫</option></select></div>'    +'<div class="form-row"><label>補充說明</label><textarea id="eqNote" style="min-height:60px"></textarea></div>',
+  function(){
+    var name=document.getElementById('eqName').value.trim();
+    if(!name){alert('請填寫名稱');return;}
+    var item={id:uid(),name:name,category:document.getElementById('eqCat').value,
+      location:document.getElementById('eqLoc').value,note:document.getElementById('eqNote').value,
+      status:'open',reportedBy:currentUser.id,reportedAt:today()};
+    if(!store.equipment)store.equipment=[];
+    store.equipment.push(item);logAudit('設備回報',name);saveStore();closeModal();
+    renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('回報已送出',name,'🔧');
+  });
+}
+
+function setEqStatus(id,status){
+  var e=(store.equipment||[]).find(function(x){return x.id===id;});if(!e)return;
+  e.status=status;if(status==='resolved'){e.resolvedBy=currentUser.id;e.resolvedAt=today();}
+  logAudit('設備狀態更新',e.name+' → '+(EQ_STATUS[status]||status));
+  saveStore();renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('狀態已更新',e.name,'✅');
+}
+
+function deleteEqReport(id){
+  if(!confirm('確定刪除此回報？'))return;
+  var e=(store.equipment||[]).find(function(x){return x.id===id;});
+  store.equipment=(store.equipment||[]).filter(function(x){return x.id!==id;});
+  logAudit('刪除設備回報',e?e.name:'');saveStore();renderPageInMain(renderEquipmentPage);updateEqBadge();
+}
+
+// ════════════════════════════════════════════════════════
+// ③ 全院儀表板
+// ════════════════════════════════════════════════════════
+var _kioskTimer=null;
+function renderKioskPage(c){
+  var onDutyToday=(store.dutySchedule
+    ?Object.entries(store.dutySchedule).filter(function(kv){var s=kv[1][today()];return s&&s!=='off';})
+       .map(function(kv){return store.users.find(function(u){return u.id===kv[0];})||null;}).filter(Boolean):[]);
+  var activeRooms=(store.rooms||[]).filter(function(r){return r.status==='active'||r.status==='waiting';}).length;
+  var pendingForms=(store.formRequests||[]).filter(function(f){return f.status==='pending';}).length;
+  var openIR=(store.incidents||[]).filter(function(i){return i.status==='new';}).length;
+  var pendingEq=(store.equipment||[]).filter(function(e){return e.status!=='resolved';}).length;
+  var now=new Date();
+  var timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var dateStr=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 星期'+['日','一','二','三','四','五','六'][now.getDay()];
+  var shiftNow=(function(){var h=now.getHours();return h>=7&&h<15?'🌅 早班':h>=15&&h<23?'☀️ 午班':'🌙 夜班';})();
+  var staffHtml=onDutyToday.slice(0,8).map(function(u){
+    return '<div class="kiosk-staff-chip"><div class="kiosk-av '+u.avatar+'">'+initials(u.name)+'</div><span>'+esc(u.name)+'</span></div>';
+  }).join('')||'<span style="color:var(--faint)">今日尚未排班</span>';
+  var annHtml=(store.announcements||[]).slice(0,3).map(function(a){return '<div class="kiosk-ann-item">📢 '+esc(a.title)+'</div>';}).join('')||'<div style="color:var(--faint)">無公告</div>';
+  c.innerHTML='<div id="kioskView" class="kiosk-wrap">'    +'<div class="kiosk-header">'    +'<div class="kiosk-logo">宋俊宏婦幼醫院</div>'    +'<div class="kiosk-time-block"><div class="kiosk-time">'+timeStr+'</div><div class="kiosk-date">'+dateStr+'</div></div>'    +'<button class="btn-sm" style="align-self:center;margin-left:auto" onclick="toggleKioskFS()">⛶ 全螢幕</button>'    +'</div>'    +'<div class="kiosk-grid">'    +'<div class="kiosk-card kiosk-big"><div class="kiosk-card-label">目前班別</div><div class="kiosk-card-value">'+shiftNow+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">使用中產房</div><div class="kiosk-card-value" style="color:var(--amber)">'+activeRooms+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">待審表單</div><div class="kiosk-card-value" style="color:'+(pendingForms>0?'var(--red)':'var(--green)')+'">'+pendingForms+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">未結通報</div><div class="kiosk-card-value" style="color:'+(openIR>0?'var(--red)':'var(--green)')+'">'+openIR+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">設備待處理</div><div class="kiosk-card-value" style="color:'+(pendingEq>0?'var(--amber)':'var(--green)')+'">'+pendingEq+'</div></div>'    +'<div class="kiosk-card kiosk-wide"><div class="kiosk-card-label">今日當班人員</div><div class="kiosk-staff-row">'+staffHtml+'</div></div>'    +'<div class="kiosk-card kiosk-wide"><div class="kiosk-card-label">最新公告</div>'+annHtml+'</div>'    +'</div></div>';
+  if(_kioskTimer)clearInterval(_kioskTimer);
+  _kioskTimer=setInterval(function(){if(document.getElementById('kioskView'))renderPageInMain(renderKioskPage);else clearInterval(_kioskTimer);},30000);
+}
+function toggleKioskFS(){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
+  else document.exitFullscreen&&document.exitFullscreen();
+}
+
+// ════════════════════════════════════════════════════════
+// ④ 智慧排班建議
+// ════════════════════════════════════════════════════════
+function renderScheduleHints(container){
+  if(!container)return;
+  var hints=[];
+  for(var i=0;i<7;i++){
+    var d=new Date();d.setDate(d.getDate()+i);var ds=d.toISOString().slice(0,10);
+    var cnt=Object.entries(store.dutySchedule||{}).filter(function(kv){var s=kv[1][ds];return s&&s!=='off';}).length;
+    var label=fmtDate(ds)+(i===0?' (今天)':i===1?' (明天)':'');
+    if(cnt===0)hints.push({t:'error',msg:label+' 無人排班'});
+    else if(cnt<=1)hints.push({t:'warn',msg:label+' 僅 '+cnt+' 人排班'});
+  }
+  if(!hints.length){container.innerHTML='<div style="font-size:12px;color:var(--green);padding:4px 8px">✅ 未來7天排班人力充足</div>';return;}
+  container.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0">'+hints.map(function(h){
+    return '<div style="font-size:12px;padding:3px 10px;border-radius:99px;background:'+(h.t==='error'?'var(--red-bg)':'var(--amber-bg)')+';color:'+(h.t==='error'?'var(--red)':'var(--amber)')+'">'      +(h.t==='error'?'🚨 ':'⚠️ ')+esc(h.msg)+'</div>';
+  }).join('')+'</div>';
+}
+
+// ════════════════════════════════════════════════════════
+// ⑤ 今日摘要
+// ════════════════════════════════════════════════════════
+function showDailySummary(){
+  var key='dailySummary_'+today();if(localStorage.getItem(key))return;
+  localStorage.setItem(key,'1');
+  var myForms=(store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id&&f.status==='pending';}).length;
+  var unreadAnn=(store.announcements||[]).filter(function(a){return !a.reads[currentUser.id];}).length;
+  var myTasks=(store.meetings||[]).flatMap(function(m){return m.tasks||[];}).filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';}).length;
+  var unreadMsg=(store.messages||[]).filter(function(m){return m.to===currentUser.id&&!(m.reads||{})[currentUser.id];}).length;
+  var shiftToday=(function(){
+    var s=store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][today()];
+    if(!s||s==='off')return null;
+    return {morning:'🌅 早班',afternoon:'☀️ 午班',night:'🌙 夜班'}[s]||s;
+  })();
+  if(!myForms&&!unreadAnn&&!myTasks&&!unreadMsg&&!shiftToday)return;
+  var items=[];
+  if(shiftToday)items.push('<div class="summary-item summary-shift">今日班別：<strong>'+shiftToday+'</strong></div>');
+  if(unreadAnn)items.push('<div class="summary-item summary-ann" onclick="closeModal();setPage(\'announcements\')" style="cursor:pointer">📢 未讀公告 <strong>'+unreadAnn+' 則</strong></div>');
+  if(myForms)items.push('<div class="summary-item summary-form" onclick="closeModal();setPage(\'forms\')" style="cursor:pointer">📋 待審申請 <strong>'+myForms+' 件</strong></div>');
+  if(myTasks)items.push('<div class="summary-item summary-task" onclick="closeModal();setPage(\'meetings\')" style="cursor:pointer">✅ 待完成任務 <strong>'+myTasks+' 項</strong></div>');
+  if(unreadMsg)items.push('<div class="summary-item summary-msg" onclick="closeModal();setPage(\'messages\')" style="cursor:pointer">💬 未讀訊息 <strong>'+unreadMsg+' 則</strong></div>');
+  showModal('👋 早安，'+esc(currentUser.name)+'！',
+    '<div class="summary-sub">今日工作重點</div><div class="summary-list">'+items.join('')+'</div>'    +'<div style="font-size:11px;color:var(--faint);margin-top:12px;text-align:center">點擊項目可快速跳轉 · 今日僅顯示一次</div>',null);
+  setTimeout(function(){var f=document.querySelector('.modal-footer');if(f)f.style.display='none';},0);
+}
+
+// ════════════════════════════════════════════════════════
+// ⑥ 深色模式跟隨系統
+// ════════════════════════════════════════════════════════
+var _dmMq=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');
+function initDarkModeAuto(){
+  if(localStorage.getItem('themeMode')==='system'){
+    applySystemDark();if(_dmMq)_dmMq.addEventListener('change',applySystemDark);
+  }
+}
+function applySystemDark(){
+  var dark=_dmMq&&_dmMq.matches;
+  document.body.classList.toggle('dark',dark);localStorage.setItem('darkMode',dark?'1':'0');
+}
+function setThemeMode(mode){
+  localStorage.setItem('themeMode',mode);
+  if(_dmMq)_dmMq.removeEventListener('change',applySystemDark);
+  if(mode==='system'){applySystemDark();if(_dmMq)_dmMq.addEventListener('change',applySystemDark);}
+  else if(mode==='dark'){document.body.classList.add('dark');localStorage.setItem('darkMode','1');}
+  else if(mode==='light'){document.body.classList.remove('dark');localStorage.setItem('darkMode','0');}
+  document.querySelectorAll('.theme-btn').forEach(function(b){b.classList.toggle('active',b.dataset.mode===mode);});
+  showToast('外觀設定已更新','','🎨');
+}
+var _origOpenSettings2=(typeof openSettings==='function')?openSettings:null;
+openSettings=function(){
+  if(_origOpenSettings2)_origOpenSettings2();
+  var mode=localStorage.getItem('themeMode')||'manual';
+  setTimeout(function(){
+    var mc=document.getElementById('modalContent');if(!mc||mc.querySelector('.theme-mode-section'))return;
+    var sec=document.createElement('div');sec.className='theme-mode-section';
+    sec.style.cssText='margin-top:16px;border-top:1px solid var(--b1);padding-top:14px';
+    sec.innerHTML='<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">外觀模式</div>'      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'      +'<button class="btn-sm theme-btn'+(mode==='light'?' active':'')+'" data-mode="light" onclick="setThemeMode(\'light\')">☀️ 淺色</button>'      +'<button class="btn-sm theme-btn'+(mode==='dark'?' active':'')+'" data-mode="dark" onclick="setThemeMode(\'dark\')">🌙 深色</button>'      +'<button class="btn-sm theme-btn'+(mode==='system'?' active':'')+'" data-mode="system" onclick="setThemeMode(\'system\')">💻 跟隨系統</button>'      +'</div>';
+    var footer=mc.querySelector('.modal-footer');footer?mc.insertBefore(sec,footer):mc.appendChild(sec);
+  },50);
+};
+
+// ════════════════════════════════════════════════════════
+// ⑦ 績效出勤報表 + 排班建議 patch
+// ════════════════════════════════════════════════════════
+function renderPerformanceSection(){
+  var rows=store.users.filter(function(u){return u.status==='active';}).map(function(u){
+    var myDuty=store.dutySchedule&&store.dutySchedule[u.id]
+      ?Object.values(store.dutySchedule[u.id]).filter(function(s){return s&&s!=='off';}).length:0;
+    var leaves=(store.formRequests||[]).filter(function(f){return f.applicantId===u.id&&f.type==='leave'&&f.status==='approved';}).length;
+    var myTasks=(store.meetings||[]).flatMap(function(m){return m.tasks||[];}).filter(function(t){return t.assigneeId===u.id;});
+    var done=myTasks.filter(function(t){return t.status==='已完成';}).length;
+    var pct=myTasks.length?Math.round(done/myTasks.length*100):null;
+    var pctClr=pct===null?'var(--faint)':pct===100?'var(--green)':pct>50?'var(--amber)':'var(--red)';
+    return '<tr style="border-bottom:1px solid var(--b1)">'      +'<td style="padding:7px 8px"><div style="display:flex;align-items:center;gap:7px">'      +'<div class="'+u.avatar+'" style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+initials(u.name)+'</div>'+esc(u.name)+'</div></td>'      +'<td style="text-align:center;padding:7px 4px">'+myDuty+'</td>'      +'<td style="text-align:center;padding:7px 4px">'+leaves+'</td>'      +'<td style="text-align:center;padding:7px 4px">'+myTasks.length+'</td>'      +'<td style="text-align:center;padding:7px 4px;color:'+pctClr+';font-weight:700">'+(pct!==null?pct+'%':'—')+'</td>'      +'</tr>';
+  }).join('');
+  return '<div class="stat-card" style="margin-top:14px"><div class="stat-card-title">👥 人員績效出勤概覽</div>'    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'    +'<thead><tr style="color:var(--muted)">'    +'<th style="text-align:left;padding:6px 8px;font-weight:600">姓名</th>'    +'<th style="padding:6px 4px;font-weight:600">班次</th><th style="padding:6px 4px;font-weight:600">請假</th>'    +'<th style="padding:6px 4px;font-weight:600">任務</th><th style="padding:6px 4px;font-weight:600">完成率</th>'    +'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+var _origRenderStatsPage=renderStatsPage;
+renderStatsPage=function(c){
+  _origRenderStatsPage(c);
+  if(isAdmin()||hasPerm('viewReports')){
+    setTimeout(function(){var content=c.querySelector('.admin-content');if(content)content.insertAdjacentHTML('beforeend',renderPerformanceSection());},0);
+  }
+};
+
+var _origRenderDutyPage2=(typeof renderDutyPage==='function')?renderDutyPage:null;
+if(_origRenderDutyPage2){
+  renderDutyPage=function(c){
+    _origRenderDutyPage2(c);
+    setTimeout(function(){
+      var header=c.querySelector('.main-header');if(!header)return;
+      var wrap=document.createElement('div');wrap.style.cssText='padding:8px 22px 0';wrap.id='scheduleHints';
+      header.insertAdjacentElement('afterend',wrap);renderScheduleHints(wrap);
+    },0);
+  };
+}

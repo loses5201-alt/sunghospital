@@ -1,28 +1,28 @@
 {
-  "name": "宋俊宏婦幼醫院 協作管理平台",
-  "short_name": "婦幼醫院",
-  "description": "宋俊宏婦幼醫院內部協作管理平台",
+  "name": "宋俊宏婦幼醫院 管理平台",
+  "short_name": "婦幼管理",
+  "description": "宋俊宏婦幼醫院 協作管理平台",
   "start_url": "/sunghospital/",
   "scope": "/sunghospital/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#c4527a",
+  "background_color": "#3a0d20",
+  "theme_color": "#3a0d20",
   "lang": "zh-TW",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
     },
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ],
-  "categories": ["medical", "productivity"],
-  "screenshots": []
+  "categories": [
+    "medical",
+    "productivity"
+  ]
 }
