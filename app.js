@@ -388,11 +388,9 @@ function initApp(){
   applySettings();
   mergeNewLocal(); // 只補欄位到 localStorage，不覆蓋 Firebase
   startFirebaseSync(); // 先從雲端讀資料，之後再存回去
-  if(isAdmin()){
-    document.getElementById('navDepts').style.display='flex';
-    document.getElementById('navUsers').style.display='flex';
-  }
-  updateNavUser();updateAnnBadge();updateIrBadge();updateCalBadge();updateNotifBadge((store.announcements||[]).filter(a=>!a.reads[currentUser&&currentUser.id]).length);
+  updateNavUser();
+  renderNav();
+  updateAnnBadge();updateIrBadge();updateCalBadge();updateNotifBadge((store.announcements||[]).filter(a=>!a.reads[currentUser&&currentUser.id]).length);
   renderSidebar();setPage('home');
   checkPendingEmergency();
   startClock();
@@ -436,6 +434,115 @@ function logout(){
 // ══════════════════════════════════════════
 // NAV / PAGE ROUTING
 // ══════════════════════════════════════════
+
+// ── Nav group definitions ──────────────────
+var _navExpanded = (localStorage.getItem('navExpanded')==='1');
+var _navGroupCollapsed = JSON.parse(localStorage.getItem('navGroupCollapsed')||'{}');
+
+var NAV_GROUPS = [
+  { id:'daily', label:'日常作業', dot:'#e07ca0', items:[
+    { id:'navHome',     page:'home',          label:'首頁',
+      svg:'<path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>'},
+    { id:'navAnn',      page:'announcements', label:'公告',     badge:'ann',
+      svg:'<path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V4a1 1 0 00-2 0v1.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>'},
+    { id:'navCal',      page:'calendar',      label:'行事曆',  badge:'cal',
+      svg:'<rect x="3" y="4" width="14" height="14" rx="2"/><path d="M7 2v4M13 2v4M3 9h14"/>'},
+    { id:'navJournal',  page:'journal',       label:'工作日誌',
+      svg:'<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>'}
+  ]},
+  { id:'nursing', label:'護理管理', dot:'#5ba5e0', items:[
+    { id:'navBaby',     page:'baby',          label:'寶寶牆',
+      svg:'<path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-5 0-9 2.25-9 5v1h18v-1c0-2.75-4-5-9-5z"/>'},
+    { id:'navDelivery', page:'delivery',      label:'產房狀態',
+      svg:'<path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>'},
+    { id:'navShift',    page:'shift',         label:'交班紀錄',
+      svg:'<path d="M8 7h3m-3 4h5m-5 4h2M4 5v14l3-2 3 2 3-2 3 2V5a2 2 0 00-2-2H6a2 2 0 00-2 2z"/>'},
+    { id:'navDuty',     page:'duty',          label:'值班表',
+      svg:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'}
+  ]},
+  { id:'admin', label:'行政作業', dot:'#f0b429', items:[
+    { id:'navForms',    page:'forms',         label:'表單簽核',
+      svg:'<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>'},
+    { id:'navMeetings', page:'meetings',      label:'會議紀錄',
+      svg:'<rect x="3" y="4" width="14" height="14" rx="2"/><path d="M7 2v4M13 2v4M3 9h14"/>'},
+    { id:'navIncident', page:'incident',      label:'異常通報',  badge:'ir',
+      svg:'<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/>'}
+  ]},
+  { id:'system', label:'系統管理', dot:'#9b8fd4', items:[
+    { id:'navStats',    page:'stats',         label:'統計報表',
+      svg:'<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>'},
+    { id:'navEdu',      page:'edu',           label:'衛教資料',
+      svg:'<path d="M10 3L2 7l8 4 8-4-8-4z"/><path d="M2 7v5M18 7v5M6 9v4a4 4 0 008 0V9"/>'},
+    { id:'navDepts',    page:'departments',   label:'科別管理',  adminOnly:true,
+      svg:'<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'},
+    { id:'navUsers',    page:'users',         label:'人員管理',  adminOnly:true,
+      svg:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>'}
+  ]}
+];
+
+function renderNav(){
+  var bar=document.getElementById('navBar');
+  var wrap=document.getElementById('navItems');
+  if(!wrap)return;
+  if(_navExpanded)bar.classList.add('nav-expanded');
+  else bar.classList.remove('nav-expanded');
+
+  var html='';
+  NAV_GROUPS.forEach(function(g){
+    var collapsed=!!_navGroupCollapsed[g.id];
+    var visItems=g.items.filter(function(it){ return !it.adminOnly||isAdmin(); });
+    if(!visItems.length)return;
+    var arrowRot=collapsed?'rotate(-90deg)':'';
+    html+='<div class="nav-group" id="ng_'+g.id+'">'
+      +'<div class="nav-group-hdr" onclick="toggleNavGroup(\''+g.id+'\')" title="'+g.label+'">'
+      +'<div class="nav-group-dot" style="background:'+g.dot+'"></div>'
+      +'<span class="nav-group-lbl">'+g.label+'</span>'
+      +'<div class="nav-spacer" style="flex:1;min-width:0"></div>'
+      +'<span class="nav-group-arrow" style="transform:'+arrowRot+'">▾</span>'
+      +'</div>'
+      +'<div class="nav-group-body'+(collapsed?' ng-collapsed':'')+'">';
+    visItems.forEach(function(it){
+      var isActive=(currentPage===it.page)?'active':'';
+      var fillType=it.svg.indexOf('stroke')!==-1?'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"':'fill="currentColor"';
+      var svgEl='<svg viewBox="0 0 20 20" '+fillType+' width="16" height="16">'+it.svg+'</svg>';
+      html+='<button class="nav-btn '+isActive+'" id="'+it.id+'" onclick="setPage(\''+it.page+'\')" title="'+it.label+'">'
+        +svgEl+'<span class="nav-lbl">'+it.label+'</span>'
+        +(it.badge?'<span class="nav-badge" id="badge_'+it.badge+'" style="display:none"></span>':'')
+        +'</button>';
+    });
+    html+='</div></div>';
+  });
+
+  // expand toggle button
+  html='<button class="nav-expand-btn" onclick="toggleNavExpand()" title="展開/收合選單">'
+    +(_navExpanded
+      ? '<svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/></svg>'
+      : '<svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/></svg>')
+    +'</button>'+html;
+
+  wrap.innerHTML=html;
+
+  // Re-wire badges
+  updateAnnBadge();updateIrBadge();updateCalBadge();
+  var notifCount=(store.formNotifs||[]).filter(function(n){return !n.read;}).length;
+  updateNotifBadge(notifCount);
+}
+
+function toggleNavExpand(){
+  _navExpanded=!_navExpanded;
+  localStorage.setItem('navExpanded',_navExpanded?'1':'0');
+  renderNav();
+}
+
+function toggleNavGroup(gid){
+  _navGroupCollapsed[gid]=!_navGroupCollapsed[gid];
+  localStorage.setItem('navGroupCollapsed',JSON.stringify(_navGroupCollapsed));
+  var body=document.querySelector('#ng_'+gid+' .nav-group-body');
+  var arrow=document.querySelector('#ng_'+gid+' .nav-group-arrow');
+  if(body)body.classList.toggle('ng-collapsed',!!_navGroupCollapsed[gid]);
+  if(arrow)arrow.style.transform=_navGroupCollapsed[gid]?'rotate(-90deg)':'';
+}
+
 function setPage(page){
   currentPage=page;
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -1126,7 +1233,7 @@ function openAnnFromMarquee(id){
 function updateAnnBadge(){
   if(!currentUser)return;
   const n=store.announcements.filter(a=>!a.reads[currentUser.id]).length;
-  const b=document.getElementById('annBadge');if(b)b.style.display=n>0?'flex':'none';
+  const b=document.getElementById('badge_ann');if(b)b.style.display=n>0?'flex':'none';
 }
 function markAllAnnRead(){
   store.announcements.forEach(a=>{if(!a.reads[currentUser.id])a.reads[currentUser.id]=true;});
@@ -1279,7 +1386,7 @@ function confirmEmergency(){
 function updateIrBadge(){
   if(!currentUser)return;
   const n=store.incidents.filter(i=>i.status==='new').length;
-  const b=document.getElementById('irBadge');if(b)b.style.display=n>0?'flex':'none';
+  const b=document.getElementById('badge_ir');if(b)b.style.display=n>0?'flex':'none';
 }
 const irLevels={1:{label:'Level 1 輕微',cls:'ir-l1'},2:{label:'Level 2 中度',cls:'ir-l2'},3:{label:'Level 3 重大',cls:'ir-l3'},4:{label:'Level 4 嚴重',cls:'ir-l4'}};
 function renderIncidentPage(c){
@@ -2383,7 +2490,7 @@ function removeToast(t){
 function updateCalBadge(){
   const td=today();
   const events=(store.calEvents||[]).filter(e=>e.date===td);
-  const b=document.getElementById('calBadge');
+  const b=document.getElementById('badge_cal');
   if(!b)return;
   if(events.length){b.textContent=events.length;b.style.display='flex';}
   else b.style.display='none';
