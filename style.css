@@ -4,6 +4,7 @@
   --bg:#fdf6f8;--surface:#fff;--s2:#faeef2;--s3:#f5e4ea;
   --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.13);--b3:rgba(0,0,0,0.22);
   --text:#2d1f24;--muted:#7a5862;--faint:#b8909a;
+  --primary:#c4527a;--primary-light:#fde8f0;--primary-dark:#a8405f;
   --green:#1a6645;--green-bg:#e4f2eb;--green-light:#c8e6d4;
   --blue:#1558a0;--blue-bg:#e6eef9;
   --amber:#8f5208;--amber-bg:#fdf0dc;
@@ -11,9 +12,14 @@
   --orange:#a04010;--orange-bg:#fdeede;
   --purple:#5530a8;--purple-bg:#eeebfc;
   --teal:#0d6e65;--teal-bg:#e2f3f1;
-  --radius:12px;--radius-sm:8px;--radius-xs:5px;
+  --radius:12px;--radius-sm:8px;--radius-xs:5px;--radius-lg:18px;
   --shadow:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);
   --shadow-md:0 4px 24px rgba(0,0,0,0.10),0 1px 4px rgba(0,0,0,0.05);
+  --shadow-lg:0 8px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06);
+  --shadow-pink:0 6px 24px rgba(196,82,122,0.22);
+  --t-fast:.12s cubic-bezier(.4,0,.2,1);
+  --t-med:.22s cubic-bezier(.4,0,.2,1);
+  --t-spring:.3s cubic-bezier(.34,1.56,.64,1);
 }
 body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;height:100vh;overflow:hidden}
 
@@ -22,6 +28,7 @@ body.dark{
   --bg:#111318;--surface:#1c1f26;--s2:#22262f;--s3:#2a2f3a;
   --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.13);--b3:rgba(255,255,255,0.22);
   --text:#e8eaf0;--muted:#9fa3b0;--faint:#5a5f70;
+  --primary:#d4699a;--primary-light:#2d1a22;--primary-dark:#c4527a;
   --green:#2ecc71;--green-bg:#0d2b1a;--green-light:#1a3d28;
   --blue:#5b9cf6;--blue-bg:#0d1e3a;
   --amber:#f0b429;--amber-bg:#2a2010;
@@ -31,6 +38,8 @@ body.dark{
   --teal:#3dd6c8;--teal-bg:#0d2422;
   --shadow:0 1px 3px rgba(0,0,0,0.3),0 4px 12px rgba(0,0,0,0.2);
   --shadow-md:0 4px 24px rgba(0,0,0,0.5),0 1px 4px rgba(0,0,0,0.3);
+  --shadow-lg:0 8px 40px rgba(0,0,0,0.6),0 2px 8px rgba(0,0,0,0.4);
+  --shadow-pink:0 6px 24px rgba(212,105,154,0.3);
 }
 body.dark .main-header{background:var(--surface);border-bottom-color:var(--b1)}
 body.dark .tab-bar{background:var(--surface)}
@@ -835,3 +844,152 @@ body.dark .banner{
 /* font size overrides from settings */
 body.font-sm{font-size:13px !important}
 body.font-lg{font-size:17px !important}
+
+/* ══════════════════════════════════════════
+   PHASE 2 VISUAL UPGRADE
+   ══════════════════════════════════════════ */
+
+/* ── Input & select focus glow (unified) ── */
+input,textarea,select{transition:border-color var(--t-fast),box-shadow var(--t-fast) !important}
+input:focus,textarea:focus,select:focus{
+  outline:none !important;
+  border-color:var(--primary) !important;
+  box-shadow:0 0 0 3px rgba(196,82,122,0.13) !important;
+}
+
+/* ── Button polish ── */
+.btn-sm{transition:all var(--t-fast) !important}
+.btn-sm:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.08) !important}
+.btn-sm:active{transform:scale(.95) translateY(0) !important;box-shadow:none !important}
+.btn-sm.primary:hover{background:var(--primary-dark) !important;box-shadow:var(--shadow-pink) !important}
+.btn-sm.primary:active{background:var(--primary-dark) !important}
+.btn-add:hover{box-shadow:var(--shadow-pink) !important}
+.btn-new:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,0.08) !important}
+
+/* ── Meeting sidebar items ── */
+.meeting-item{
+  transition:background var(--t-fast),border-color var(--t-fast),transform var(--t-fast) !important;
+  border-left:2px solid transparent !important;
+}
+.meeting-item:hover{
+  background:var(--s2) !important;
+  border-left-color:rgba(196,82,122,0.35) !important;
+  transform:translateX(2px) !important;
+}
+.meeting-item.active{
+  background:var(--primary-light) !important;
+  border-left-color:var(--primary) !important;
+}
+.my-tasks-entry{border-left-color:var(--primary) !important}
+
+/* ── Task cards richer hover ── */
+.task-card{transition:all var(--t-fast) !important}
+.task-card:hover{
+  transform:translateY(-2px) !important;
+  box-shadow:0 6px 20px rgba(0,0,0,0.09) !important;
+  border-color:var(--b2) !important;
+}
+
+/* ── Tabs smooth underline ── */
+.tab{transition:color var(--t-fast),border-bottom-color var(--t-fast) !important;position:relative}
+.tab:hover{color:var(--text) !important}
+.tab:hover::after{
+  content:'';position:absolute;bottom:-1px;left:15%;right:15%;
+  height:2px;background:rgba(196,82,122,0.3);border-radius:2px;
+}
+
+/* ── Toast slide from right ── */
+@keyframes toastIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+.toast{border-radius:var(--radius-sm);box-shadow:var(--shadow-lg) !important}
+
+/* ── Unified empty state ── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 20px;text-align:center;color:var(--faint);
+  gap:10px;
+}
+.empty-state-icon{font-size:40px;opacity:.7;animation:breathe 3s ease-in-out infinite}
+.empty-state-title{font-size:14px;font-weight:700;color:var(--muted);margin-top:4px}
+.empty-state-desc{font-size:12px;line-height:1.7;max-width:260px}
+
+/* ── Scrollbars unified ── */
+*::-webkit-scrollbar{width:4px;height:4px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px}
+*::-webkit-scrollbar-thumb:hover{background:var(--b3)}
+
+/* ── Home cards improved ── */
+.home-card{
+  border-radius:var(--radius-lg) !important;
+  transition:transform var(--t-spring),box-shadow var(--t-med) !important;
+}
+.home-card:hover{
+  transform:translateY(-5px) scale(1.02) !important;
+  box-shadow:var(--shadow-pink) !important;
+}
+.home-card:active{transform:translateY(-1px) scale(.99) !important}
+
+/* ── Frq-card (form request card) hover ── */
+.frq-card{transition:all var(--t-fast) !important}
+.frq-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md) !important;border-color:var(--b2) !important}
+
+/* ── Stagger animation — natural delays ── */
+.stagger-item:nth-child(1){animation-delay:.04s !important}
+.stagger-item:nth-child(2){animation-delay:.09s !important}
+.stagger-item:nth-child(3){animation-delay:.14s !important}
+.stagger-item:nth-child(4){animation-delay:.19s !important}
+.stagger-item:nth-child(5){animation-delay:.24s !important}
+.stagger-item:nth-child(6){animation-delay:.28s !important}
+.stagger-item:nth-child(n+7){animation-delay:.32s !important}
+
+/* ── Modal backdrop upgrade ── */
+.overlay{backdrop-filter:blur(6px) !important;background:rgba(0,0,0,0.42) !important}
+@keyframes modalIn{from{opacity:0;transform:scale(.93) translateY(-16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal{box-shadow:var(--shadow-lg) !important;border:1px solid var(--b1)}
+
+/* ── Baby card ── */
+.baby-card{border-radius:var(--radius-lg) !important}
+
+/* ── Person card hover ── */
+.person-card{transition:all var(--t-fast) !important}
+.person-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md) !important}
+
+/* ── Vote option hover ── */
+.vote-option{transition:all var(--t-fast) !important}
+.vote-option:hover:not(.voted){background:var(--s2) !important}
+
+/* ── Search overlay (global Ctrl+K) ── */
+#searchOverlay{
+  position:fixed;inset:0;z-index:8000;
+  background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);
+  display:none;align-items:flex-start;justify-content:center;
+  padding-top:10vh;
+}
+#searchOverlay.open{display:flex}
+.search-box{
+  background:var(--surface);border-radius:var(--radius-lg) !important;
+  box-shadow:var(--shadow-lg) !important;width:560px;max-width:94vw;
+  overflow:hidden;animation:modalIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+#searchInput2{
+  width:100%;padding:16px 20px;font-size:16px;font-family:inherit;
+  border:none;outline:none;background:transparent;color:var(--text);
+}
+#searchResults{max-height:400px;overflow-y:auto}
+.search-group-label{
+  font-size:10px;font-weight:800;color:var(--primary);
+  text-transform:uppercase;letter-spacing:.1em;
+  padding:6px 16px 4px;
+}
+.search-item:hover,.search-item.active{background:var(--s2)}
+.search-item-main{font-size:13px;font-weight:600;flex:1}
+.search-hint{
+  padding:10px 16px;font-size:11px;color:var(--faint);
+  border-top:1px solid var(--b1);display:flex;gap:16px;
+}
+.search-hint kbd{
+  background:var(--s2);border:1px solid var(--b2);
+  border-radius:4px;padding:1px 5px;font-size:10px;font-family:inherit;
+}
+
