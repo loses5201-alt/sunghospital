@@ -1575,125 +1575,7 @@ function animateNumbers(container){
   });
 }
 
-function renderStatsPage(c){
-  var allTasks = store.meetings.flatMap(function(m){ return m.tasks; });
-  var doneTasks = allTasks.filter(function(t){ return t.status==='\u5df2\u5b8c\u6210'; }).length;
-  var overdueTasks = allTasks.filter(function(t){ return t.status!=='\u5df2\u5b8c\u6210'&&t.due&&t.due<today(); }).length;
-  var critTasks = allTasks.filter(function(t){ return t.priority==='critical'; }).length;
-  var taskRate = allTasks.length ? Math.round(doneTasks/allTasks.length*100) : 0;
-  var irOpen = store.incidents.filter(function(i){ return i.status!=='closed'; }).length;
-
-  var days7 = [];
-  for(var i=6;i>=0;i--){
-    var d = new Date(); d.setDate(d.getDate()-i);
-    var ds = d.toISOString().slice(0,10);
-    days7.push({ label:(d.getMonth()+1)+'/'+(d.getDate()), count:store.incidents.filter(function(ir){ return ir.date===ds; }).length });
-  }
-  var maxIR = Math.max(1, Math.max.apply(null, days7.map(function(d){ return d.count; })));
-
-  var shiftCounts = {morning:0,afternoon:0,night:0,off:0};
-  if(store.dutySchedule){
-    Object.values(store.dutySchedule).forEach(function(ud){ Object.values(ud).forEach(function(sh){ if(shiftCounts[sh]!==undefined) shiftCounts[sh]++; }); });
-  }
-  var totalShifts = shiftCounts.morning+shiftCounts.afternoon+shiftCounts.night||1;
-
-  var deptStats = store.departments.map(function(d){
-    return {name:d.name, count:store.users.filter(function(u){ return u.deptId===d.id; }).length};
-  }).filter(function(d){ return d.count>0; }).sort(function(a,b){ return b.count-a.count; });
-  var maxDept = Math.max(1, Math.max.apply(null, deptStats.map(function(d){ return d.count; })));
-
-  var userTaskStats = store.users.map(function(u){
-    var assigned = allTasks.filter(function(t){ return t.assigneeId===u.id; });
-    var done = assigned.filter(function(t){ return t.status==='\u5df2\u5b8c\u6210'; }).length;
-    return {name:u.name, total:assigned.length, done:done, pct:assigned.length?Math.round(done/assigned.length*100):0};
-  }).filter(function(u){ return u.total>0; }).sort(function(a,b){ return b.pct-a.pct; });
-
-  var annReadRates = store.announcements.slice(0,6).map(function(a){
-    var total = store.users.length;
-    var read = Object.values(a.reads).filter(Boolean).length;
-    return {title:a.title, pct:total?Math.round(read/total*100):0};
-  });
-
-  var babies = store.babies||[];
-  var boys = babies.filter(function(b){ return b.gender==='boy'; }).length;
-  var girls = babies.filter(function(b){ return b.gender==='girl'; }).length;
-
-  var irLvCnt = ['1','2','3','4'].map(function(lv){
-    return {lv:lv, label:irLevels[lv]?irLevels[lv].label:'L'+lv, cnt:store.incidents.filter(function(ir){ return ir.level===lv; }).length};
-  });
-
-  // SVG chart data
-  var irChartData = days7.map(function(d){ return {l:d.label,v:d.count}; });
-  var irColors = days7.map(function(d){ return d.count===0?'var(--b2)':d.count>=3?'var(--red)':'var(--amber)'; });
-
-  var deptChartData = deptStats.map(function(d){ return {l:d.name,v:d.count}; });
-  var shiftChartData = [
-    {l:'早班',v:shiftCounts.morning},
-    {l:'午班',v:shiftCounts.afternoon},
-    {l:'夜班',v:shiftCounts.night}
-  ];
-  var userTaskChartData = userTaskStats.slice(0,10).map(function(u){ return {l:u.name,v:u.pct}; });
-  var annChartData = annReadRates.map(function(a){ return {l:a.title,v:a.pct}; });
-
-  // Multi-color bar chart for incidents
-  function svgMultiBarChart(data,colors,h){
-    h=h||140;var w=400;
-    if(!data||!data.length)return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">暫無資料</div>';
-    var max=Math.max.apply(null,data.map(function(d){return d.v;}))||1;
-    var gap=(w-40)/data.length;
-    var bw=Math.max(8,Math.floor(gap*0.6));
-    var gridLines=[0.25,0.5,0.75,1].map(function(f){
-      var y=Math.round(h-18-f*(h-32));
-      return '<line x1="10" y1="'+y+'" x2="'+(w-10)+'" y2="'+y+'" stroke="var(--b1)" stroke-width="1"/>';
-    }).join('');
-    var bars=data.map(function(d,i){
-      var bh=Math.round(d.v/max*(h-32));if(bh<2)bh=2;
-      var x=Math.round(i*gap+20+(gap-bw)/2);
-      var y=h-18-bh;
-      var clr=colors&&colors[i]?colors[i]:'var(--primary)';
-      var lbl=d.l.length>5?d.l.slice(0,5)+'…':d.l;
-      return '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="'+clr+'" opacity=".85"><title>'+d.l+': '+d.v+'</title></rect>'
-        +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(h-2)+'" text-anchor="middle">'+lbl+'</text>'
-        +(d.v>0?'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" style="font-weight:700;fill:var(--text)">'+d.v+'</text>':'');
-    }).join('');
-    return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'+gridLines+bars+'</svg>';
-  }
-
-  c.innerHTML = '<div class="admin-layout">'
-    +'<div class="main-header"><div><h1>統計報表</h1><div class="main-header-meta">任務 · 公告 · 事件 · 排班 · 人員</div></div></div>'
-    +'<div class="admin-content">'
-    +'<div class="metric-grid">'
-    +'<div class="metric-box"><div class="metric-num" style="color:var(--green)" data-target="'+taskRate+'">0%</div><div class="metric-lbl">任務完成率</div></div>'
-    +'<div class="metric-box"><div class="metric-num" data-target="'+allTasks.length+'">0</div><div class="metric-lbl">總任務數</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+overdueTasks+'">0</div><div class="metric-lbl">逾期任務</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)" data-target="'+critTasks+'">0</div><div class="metric-lbl">緊急任務</div></div>'
-    +'<div class="metric-box"><div class="metric-num" data-target="'+store.meetings.length+'">0</div><div class="metric-lbl">會議總數</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:'+(irOpen>0?'var(--red)':'var(--green)')+'" data-target="'+irOpen+'">0</div><div class="metric-lbl">未結案通報</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:#5ba5e0" data-target="'+boys+'">0</div><div class="metric-lbl">🍼 男寶</div></div>'
-    +'<div class="metric-box"><div class="metric-num" style="color:#e07ca0" data-target="'+girls+'">0</div><div class="metric-lbl">🌸 女寶</div></div>'
-    +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">📈 近 7 天異常事件趨勢</div>'
-    +svgMultiBarChart(irChartData,irColors,140)+'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">🗓 班別分布（排班紀錄）</div>'
-    +(shiftChartData.some(function(d){return d.v>0;})?svgBarChart(shiftChartData,'var(--amber)',140):'<div style="color:var(--faint);font-size:13px">尚無排班資料</div>')
-    +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">🏥 科別人員分布</div>'
-    +(deptChartData.length?svgBarChart(deptChartData,'var(--primary)',140):'<div style="color:var(--faint);font-size:13px">尚無資料</div>')
-    +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">✅ 成員任務完成率（%）</div>'
-    +(userTaskChartData.length?svgBarChart(userTaskChartData,'var(--green)',140):'<div style="color:var(--faint);font-size:13px">尚無任務資料</div>')
-    +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">📢 公告閱讀率（%）</div>'
-    +(annChartData.length?svgBarChart(annChartData,'var(--blue)',140):'<div style="color:var(--faint);font-size:13px">尚無公告</div>')
-    +'</div>'
-    +'<div class="stat-card"><div class="stat-card-title">⚠️ 異常事件等級統計</div>'
-    +'<div class="metric-grid" style="grid-template-columns:repeat(4,1fr)">'
-    +irLvCnt.map(function(x){ return '<div class="metric-box"><div class="metric-num">'+x.cnt+'</div><div class="metric-lbl">'+esc(x.label)+'</div></div>'; }).join('')
-    +'</div></div>'
-    +'</div></div>';
-
-  setTimeout(function(){ animateNumbers(c); }, 80);
-}
+// 統計報表 → modules/stats.js
 
 
 // ══════════════════════════════════════════
@@ -2724,44 +2606,7 @@ function deleteComment(postId,commentId){
 // keep openNewJ as alias for quick action
 function openNewJ(){openNewPost();}
 
-// 衛教資料庫
-const ETAGS={br:{l:'哺乳',c:'et-br'},nb:{l:'新生兒',c:'et-nb'},pp:{l:'產後',c:'et-pp'},nu:{l:'營養',c:'et-nu'}};
-function renderEduPage(c){
-  c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📚 衛教資料庫</h1><div class="main-header-meta">點擊卡片展開詳細內容</div></div>'+(isAdmin()?'<button class="btn-sm primary" onclick="openNewEdu()">+ 新增</button>':'')+'</div><div class="admin-content" id="eduC"></div></div>';
-  rnEdu();
-}
-function rnEdu(){
-  const c=document.getElementById('eduC');if(!c)return;
-  if(!store.eduReads)store.eduReads={};
-  const allIds=store.users.map(u=>u.id);
-  c.innerHTML=store.eduItems.map((e,i)=>{
-    const tags=e.tags.map(t=>{const tm=ETAGS[t]||{l:t,c:''};return'<span class="etag '+tm.c+'">'+tm.l+'</span>';}).join('');
-    const readers=store.eduReads[e.id]||{};
-    const readCnt=allIds.filter(id=>readers[id]).length;
-    const myRead=readers[currentUser.id];
-    const pct=allIds.length?Math.round(readCnt/allIds.length*100):0;
-    const progressHtml=isAdmin()
-      ?'<div style="margin-top:6px;display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--b1);border-radius:4px"><div style="width:'+pct+'%;height:4px;background:var(--primary);border-radius:4px;transition:width .3s"></div></div><span style="font-size:10px;color:var(--faint);white-space:nowrap">'+readCnt+'/'+allIds.length+' 人已讀</span></div>'
-      :(myRead?'<span style="font-size:10px;color:var(--green);margin-top:4px;display:block">✓ 已讀</span>':'');
-    return'<div class="ecard" onclick="togEdu(\'eex'+i+'\',\''+esc(e.id)+'\')"><div class="eico">'+e.icon+'</div><div style="flex:1;min-width:0"><div class="etitle">'+esc(e.title)+'</div><div class="edesc">'+esc(e.desc)+'</div><div>'+tags+'</div>'+progressHtml+'<div class="eexp" id="eex'+i+'">'+esc(e.content)+'</div></div></div>';
-  }).join('');
-}
-function togEdu(id,eduId){
-  const el=document.getElementById(id);if(!el)return;
-  el.classList.toggle('open');
-  if(el.classList.contains('open')&&eduId){
-    if(!store.eduReads)store.eduReads={};
-    if(!store.eduReads[eduId])store.eduReads[eduId]={};
-    if(!store.eduReads[eduId][currentUser.id]){
-      store.eduReads[eduId][currentUser.id]=true;
-      saveStore();rnEdu();
-    }
-  }
-}
-function openNewEdu(){
-  showModal('新增衛教資料','<div class="form-row"><label>標題</label><input id="eu" placeholder="衛教主題"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>圖示</label><input id="ei" placeholder="例：🤱"></div><div class="form-row"><label>標籤（br/nb/pp/nu）</label><input id="et" placeholder="例：br,nb"></div></div><div class="form-row"><label>簡介</label><input id="ed"></div><div class="form-row"><label>詳細內容</label><textarea id="ec" style="min-height:110px"></textarea></div>',
-  ()=>{const t=document.getElementById('eu').value.trim();if(!t)return;if(!store.eduItems)store.eduItems=[];store.eduItems.push({id:uid(),title:t,icon:document.getElementById('ei').value||'📄',tags:document.getElementById('et').value.split(',').map(x=>x.trim()).filter(Boolean),desc:document.getElementById('ed').value,content:document.getElementById('ec').value});saveStore();closeModal();rnEdu();});
-}
+// 衛教資料庫 → modules/edu.js
 
 
 // ══════════════════════════════════════════
@@ -4077,95 +3922,12 @@ function chatImgZoom(msgId){
 }
 
 // ════════════════════════════════════════════════════════
-// ② 設備/耗材回報
+// ② 設備/耗材回報 → modules/equipment.js
 // ════════════════════════════════════════════════════════
-var EQ_CATS={device:'設備故障',supply:'耗材不足',facility:'環境維修',other:'其他'};
-var EQ_STATUS={open:'待處理',inprogress:'處理中',resolved:'已解決'};
-
-function updateEqBadge(){
-  var n=(store.equipment||[]).filter(function(e){return e.status!=='resolved';}).length;
-  var b=document.getElementById('badge_eq');if(b)b.style.display=n>0?'flex':'none';
-}
-
-function renderEquipmentPage(c){
-  var items=store.equipment||[];
-  var pending=items.filter(function(e){return e.status!=='resolved';});
-  var resolved=items.filter(function(e){return e.status==='resolved';});
-  function eqCard(e){
-    var canResolve=isAdmin()||hasPerm('manageIR');
-    var actions=e.status!=='resolved'
-      ?(e.status==='open'?'<button class="btn-xs" onclick="setEqStatus(\''+e.id+'\',\'inprogress\')">開始處理</button>':'')
-       +(canResolve?'<button class="btn-xs success" onclick="setEqStatus(\''+e.id+'\',\'resolved\')">標記解決</button>':'')
-       +'<button class="btn-xs danger" onclick="deleteEqReport(\''+e.id+'\')">刪除</button>'
-      :'<span style="font-size:11px;color:var(--faint)">解決日期：'+esc(e.resolvedAt||'')+'</span>';
-    return '<div class="eq-card eq-s-'+e.status+'">'      +'<div class="eq-card-top"><span class="eq-cat-badge">'+esc(EQ_CATS[e.category]||e.category)+'</span>'      +'<span class="eq-status-lbl eq-sl-'+e.status+'">'+esc(EQ_STATUS[e.status]||e.status)+'</span></div>'      +'<div class="eq-name">'+esc(e.name)+'</div>'      +'<div class="eq-meta">📍 '+esc(e.location||'未指定')+' &nbsp;·&nbsp; 回報者：'+esc(userName(e.reportedBy))+' &nbsp;·&nbsp; '+esc((e.reportedAt||'').slice(0,10))+'</div>'      +(e.note?'<div class="eq-note">'+esc(e.note)+'</div>':'')
-      +'<div class="eq-actions">'+actions+'</div></div>';
-  }
-  c.innerHTML='<div class="admin-layout">'    +'<div class="main-header"><div><h1>🔧 設備回報</h1><div class="main-header-meta">設備故障 · 耗材不足 · 環境維修</div></div>'    +'<button class="btn-sm primary" onclick="openNewEqReport()">＋ 新增回報</button></div>'    +'<div class="admin-content">'    +'<div class="metric-grid" style="margin-bottom:16px">'    +'<div class="metric-box"><div class="metric-num" style="color:var(--red)">'+pending.filter(function(e){return e.status==='open';}).length+'</div><div class="metric-lbl">待處理</div></div>'    +'<div class="metric-box"><div class="metric-num" style="color:var(--amber)">'+pending.filter(function(e){return e.status==='inprogress';}).length+'</div><div class="metric-lbl">處理中</div></div>'    +'<div class="metric-box"><div class="metric-num" style="color:var(--green)">'+resolved.length+'</div><div class="metric-lbl">已解決</div></div>'    +'</div>'    +(pending.length?'<div class="home-section">🚨 待處理 / 處理中</div>'+pending.map(eqCard).join('')
-      :'<div style="padding:30px;text-align:center;color:var(--faint)">目前無待處理項目 ✅</div>')
-    +(resolved.length?'<div class="home-section" style="margin-top:20px">✅ 已解決（最近10筆）</div>'+resolved.slice(-10).reverse().map(eqCard).join(''):'')
-    +'</div></div>';
-  updateEqBadge();
-}
-
-function openNewEqReport(){
-  var locOpts=(store.rooms||[]).map(function(r){return '<option value="'+esc(r.name)+'">'+esc(r.name)+'</option>';}).join('');
-  showModal('新增設備/耗材回報',
-    '<div class="form-row"><label>類型</label><select id="eqCat">'    +Object.entries(EQ_CATS).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1]+'</option>';}).join('')+'</select></div>'    +'<div class="form-row"><label>名稱/項目</label><input id="eqName" placeholder="例：呼叫鈴故障、手術手套不足..."></div>'    +'<div class="form-row"><label>地點</label><select id="eqLoc"><option value="">（選擇）</option>'+locOpts    +'<option value="護理站">護理站</option><option value="倉庫">倉庫</option></select></div>'    +'<div class="form-row"><label>補充說明</label><textarea id="eqNote" style="min-height:60px"></textarea></div>',
-  function(){
-    var name=document.getElementById('eqName').value.trim();
-    if(!name){alert('請填寫名稱');return;}
-    var item={id:uid(),name:name,category:document.getElementById('eqCat').value,
-      location:document.getElementById('eqLoc').value,note:document.getElementById('eqNote').value,
-      status:'open',reportedBy:currentUser.id,reportedAt:today()};
-    if(!store.equipment)store.equipment=[];
-    store.equipment.push(item);logAudit('設備回報',name);saveStore();closeModal();
-    renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('回報已送出',name,'🔧');
-  });
-}
-
-function setEqStatus(id,status){
-  var e=(store.equipment||[]).find(function(x){return x.id===id;});if(!e)return;
-  e.status=status;if(status==='resolved'){e.resolvedBy=currentUser.id;e.resolvedAt=today();}
-  logAudit('設備狀態更新',e.name+' → '+(EQ_STATUS[status]||status));
-  saveStore();renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('狀態已更新',e.name,'✅');
-}
-
-function deleteEqReport(id){
-  if(!confirm('確定刪除此回報？'))return;
-  var e=(store.equipment||[]).find(function(x){return x.id===id;});
-  store.equipment=(store.equipment||[]).filter(function(x){return x.id!==id;});
-  logAudit('刪除設備回報',e?e.name:'');saveStore();renderPageInMain(renderEquipmentPage);updateEqBadge();
-}
 
 // ════════════════════════════════════════════════════════
-// ③ 全院儀表板
+// ③ 全院儀表板 → modules/kiosk.js
 // ════════════════════════════════════════════════════════
-var _kioskTimer=null;
-function renderKioskPage(c){
-  var onDutyToday=(store.dutySchedule
-    ?Object.entries(store.dutySchedule).filter(function(kv){var s=kv[1][today()];return s&&s!=='off';})
-       .map(function(kv){return store.users.find(function(u){return u.id===kv[0];})||null;}).filter(Boolean):[]);
-  var activeRooms=(store.rooms||[]).filter(function(r){return r.status==='active'||r.status==='waiting';}).length;
-  var pendingForms=(store.formRequests||[]).filter(function(f){return f.status==='pending';}).length;
-  var openIR=(store.incidents||[]).filter(function(i){return i.status==='new';}).length;
-  var pendingEq=(store.equipment||[]).filter(function(e){return e.status!=='resolved';}).length;
-  var now=new Date();
-  var timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  var dateStr=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 星期'+['日','一','二','三','四','五','六'][now.getDay()];
-  var shiftNow=(function(){var h=now.getHours();return h>=7&&h<15?'🌅 早班':h>=15&&h<23?'☀️ 午班':'🌙 夜班';})();
-  var staffHtml=onDutyToday.slice(0,8).map(function(u){
-    return '<div class="kiosk-staff-chip"><div class="kiosk-av '+u.avatar+'">'+initials(u.name)+'</div><span>'+esc(u.name)+'</span></div>';
-  }).join('')||'<span style="color:var(--faint)">今日尚未排班</span>';
-  var annHtml=(store.announcements||[]).slice(0,3).map(function(a){return '<div class="kiosk-ann-item">📢 '+esc(a.title)+'</div>';}).join('')||'<div style="color:var(--faint)">無公告</div>';
-  c.innerHTML='<div id="kioskView" class="kiosk-wrap">'    +'<div class="kiosk-header">'    +'<div class="kiosk-logo">宋俊宏婦幼醫院</div>'    +'<div class="kiosk-time-block"><div class="kiosk-time">'+timeStr+'</div><div class="kiosk-date">'+dateStr+'</div></div>'    +'<button class="btn-sm" style="align-self:center;margin-left:auto" onclick="toggleKioskFS()">⛶ 全螢幕</button>'    +'</div>'    +'<div class="kiosk-grid">'    +'<div class="kiosk-card kiosk-big"><div class="kiosk-card-label">目前班別</div><div class="kiosk-card-value">'+shiftNow+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">使用中產房</div><div class="kiosk-card-value" style="color:var(--amber)">'+activeRooms+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">待審表單</div><div class="kiosk-card-value" style="color:'+(pendingForms>0?'var(--red)':'var(--green)')+'">'+pendingForms+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">未結通報</div><div class="kiosk-card-value" style="color:'+(openIR>0?'var(--red)':'var(--green)')+'">'+openIR+'</div></div>'    +'<div class="kiosk-card"><div class="kiosk-card-label">設備待處理</div><div class="kiosk-card-value" style="color:'+(pendingEq>0?'var(--amber)':'var(--green)')+'">'+pendingEq+'</div></div>'    +'<div class="kiosk-card kiosk-wide"><div class="kiosk-card-label">今日當班人員</div><div class="kiosk-staff-row">'+staffHtml+'</div></div>'    +'<div class="kiosk-card kiosk-wide"><div class="kiosk-card-label">最新公告</div>'+annHtml+'</div>'    +'</div></div>';
-  if(_kioskTimer)clearInterval(_kioskTimer);
-  _kioskTimer=setInterval(function(){if(document.getElementById('kioskView'))renderPageInMain(renderKioskPage);else clearInterval(_kioskTimer);},30000);
-}
-function toggleKioskFS(){
-  if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
-  else document.exitFullscreen&&document.exitFullscreen();
-}
 
 // ════════════════════════════════════════════════════════
 // ④ 智慧排班建議
