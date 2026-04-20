@@ -1237,3 +1237,55 @@ input:focus,textarea:focus,select:focus{
 /* Smoother page transitions */
 .page-enter{animation:pageSlideIn .2s cubic-bezier(.4,0,.2,1)}
 @keyframes pageSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════════════════════════════════════════════════
+   聊天室進階 UI
+   ════════════════════════════════════════════════ */
+
+/* 在線綠點 */
+.presence-online{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:#2ecc71;border:2px solid var(--surface);box-shadow:0 0 4px rgba(46,204,113,.6)}
+.presence-sm{width:7px;height:7px}
+
+/* 泡泡外層 wrap（容納名稱、引用、泡泡、反應） */
+.bubble-wrap{display:flex;flex-direction:column;align-items:flex-start;max-width:68%;position:relative}
+.chat-bubble-row.mine .bubble-wrap{align-items:flex-end}
+
+/* 傳送人名稱 */
+.bubble-sender-name{font-size:10px;font-weight:700;color:var(--primary);margin-bottom:3px;padding-left:2px}
+
+/* 引用回覆塊 */
+.bubble-reply-quote{font-size:11px;padding:5px 10px;border-left:3px solid rgba(255,255,255,.5);background:rgba(0,0,0,.1);border-radius:6px 6px 0 0;margin-bottom:-2px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .12s}
+.bubble-other .bubble-reply-quote{border-left-color:var(--primary);background:rgba(196,82,122,.08)}
+.bubble-reply-quote:hover{background:rgba(0,0,0,.18)}
+
+/* 已讀回條 */
+.bubble-receipt{font-size:9px;margin-left:5px;opacity:.7}
+
+/* 訊息動作列（hover 時顯示） */
+.chat-bubble-row{position:relative}
+.msg-actions{display:none;align-items:center;gap:2px;position:absolute;top:50%;transform:translateY(-50%);z-index:10;background:var(--surface);border:1px solid var(--b1);border-radius:99px;padding:2px 4px;box-shadow:var(--shadow)}
+.chat-bubble-row:hover .msg-actions{display:flex}
+.chat-bubble-row.mine .msg-actions{right:calc(100% + 6px);left:auto}
+.chat-bubble-row:not(.mine) .msg-actions{left:calc(100% + 6px);right:auto}
+.msg-action-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:6px;color:var(--muted);transition:background .12s,color .12s;line-height:1}
+.msg-action-btn:hover{background:var(--s2);color:var(--text)}
+.msg-action-btn.danger:hover{background:var(--red-bg);color:var(--red)}
+
+/* 表情選擇器（hover 時顯示在泡泡上方） */
+.msg-reaction-picker{display:none;gap:2px;padding:4px 6px;background:var(--surface);border:1px solid var(--b1);border-radius:99px;box-shadow:var(--shadow-md);position:absolute;top:-38px;left:0;z-index:20;white-space:nowrap}
+.chat-bubble-row.mine .msg-reaction-picker{left:auto;right:0}
+.bubble-wrap:hover .msg-reaction-picker{display:flex}
+.msg-reaction-picker button{background:none;border:none;cursor:pointer;font-size:16px;padding:2px 3px;border-radius:50%;transition:transform .12s;line-height:1}
+.msg-reaction-picker button:hover{transform:scale(1.3)}
+
+/* 表情反應顯示 */
+.chat-reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chat-reaction-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;border:1.5px solid var(--b1);background:var(--surface);font-size:13px;cursor:pointer;transition:all .12s;font-family:inherit}
+.chat-reaction-chip span{font-size:11px;font-weight:700;color:var(--muted)}
+.chat-reaction-chip:hover{border-color:var(--primary);background:var(--primary-light)}
+.chat-reaction-chip.reacted{border-color:var(--primary);background:var(--primary-light)}
+.chat-reaction-chip.reacted span{color:var(--primary)}
+
+/* 引用回覆預覽（輸入區上方） */
+#chatReplyPreview{padding:0 12px}
+.reply-preview-bar{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--s2);border-left:3px solid var(--primary);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:4px;font-size:12px}

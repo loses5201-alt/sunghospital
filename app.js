@@ -2013,6 +2013,15 @@ function mergeNewLocal(){
     if(!m.signoff)m.signoff={locked:false,signatures:{}};
   });
   (store.formRequests||[]).forEach(function(f){if(f.urgent===undefined)f.urgent=false;});
+  (store.messages||[]).forEach(function(m){
+    if(!m.reactions)m.reactions={};
+    if(m.deleted===undefined)m.deleted=false;
+    if(!m.replyTo)m.replyTo=null;
+  });
+  (store.chatRooms||[]).forEach(function(r){
+    if(r.isGroup===undefined)r.isGroup=false;
+    if(!r.groupName)r.groupName='';
+  });
   try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
 }
 // mergeNew：補足欄位後同步到 Firebase
@@ -2049,6 +2058,15 @@ function mergeNew(){
     if(!m.signoff)m.signoff={locked:false,signatures:{}};
   });
   (store.formRequests||[]).forEach(function(f){if(f.urgent===undefined)f.urgent=false;});
+  (store.messages||[]).forEach(function(m){
+    if(!m.reactions)m.reactions={};
+    if(m.deleted===undefined)m.deleted=false;
+    if(!m.replyTo)m.replyTo=null;
+  });
+  (store.chatRooms||[]).forEach(function(r){
+    if(r.isGroup===undefined)r.isGroup=false;
+    if(!r.groupName)r.groupName='';
+  });
   saveStore();
   checkNewNotifs();
 }
@@ -3512,6 +3530,7 @@ renderPageInMain = function(fn){
 // ════════════════════════════════════════════════════════
 var _activeChatRoom = null;
 var _pendingChatFile = null;
+var _replyToMsg = null;
 
 function updateMsgBadge(){
   if(!currentUser)return;
@@ -3532,17 +3551,18 @@ function getOrCreateDM(otherId){
   store.chatRooms.push(room);saveStore();return room;
 }
 
-function sendMsg(roomId,text,attachment){
+function sendMsg(roomId,text,attachment,replyTo){
   text=(text||'').trim();
   if(!text&&!attachment)return;
   var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});if(!room)return;
-  var other=room.members.filter(function(id){return id!==currentUser.id;})[0];
-  var msg={id:uid(),roomId:roomId,from:currentUser.id,to:other||'',text:text,ts:new Date().toISOString(),reads:{}};
+  var others=room.members.filter(function(id){return id!==currentUser.id;});
+  var msg={id:uid(),roomId:roomId,from:currentUser.id,to:others[0]||'',text:text,ts:new Date().toISOString(),reads:{},reactions:{},deleted:false};
   msg.reads[currentUser.id]=true;
   if(attachment)msg.attachment=attachment;
+  if(replyTo)msg.replyTo=replyTo;
   if(!store.messages)store.messages=[];
   store.messages.push(msg);
-  room.lastMsg=attachment?'📎 '+attachment.name:text;
+  room.lastMsg=attachment?'📎 '+attachment.name:(text.slice(0,30)||'');
   room.lastTs=msg.ts;
   saveStore();renderChatThread(roomId);updateMsgBadge();
 }
@@ -3578,18 +3598,34 @@ function renderMessagesPage(c){
   var rooms=(store.chatRooms||[]).filter(function(r){return r.members.indexOf(currentUser.id)>=0;});
   rooms.sort(function(a,b){return (b.lastTs||'').localeCompare(a.lastTs||'');});
   var roomList=rooms.map(function(r){
-    var otherId=r.members.filter(function(id){return id!==currentUser.id;})[0];
-    var other=store.users.find(function(u){return u.id===otherId;})||{name:'未知',avatar:'av1'};
-    var unread=(store.messages||[]).filter(function(m){return m.roomId===r.id&&m.to===currentUser.id&&!(m.reads||{})[currentUser.id];}).length;
+    var unread=(store.messages||[]).filter(function(m){return m.roomId===r.id&&m.to===currentUser.id&&!m.deleted&&!(m.reads||{})[currentUser.id];}).length;
     var active=_activeChatRoom===r.id?'active':'';
-    return '<div class="chat-room-item '+active+'" onclick="openChatRoom(\''+r.id+'\')">'      +'<div class="chat-room-av '+other.avatar+'">'+initials(other.name)+'</div>'      +'<div class="chat-room-info"><div class="chat-room-name">'+esc(other.name)+'</div>'      +'<div class="chat-room-last">'+esc((r.lastMsg||'').slice(0,24)||'點擊開始對話')+'</div></div>'      +(unread?'<span class="chat-unread-dot">'+unread+'</span>':'')+'</div>';
+    var avHtml,nameHtml,lastHtml;
+    if(r.isGroup){
+      avHtml='<div class="chat-room-av av-e" style="font-size:15px">👥</div>';
+      nameHtml=esc(r.groupName||'群組');
+    } else {
+      var otherId=r.members.filter(function(id){return id!==currentUser.id;})[0];
+      var other=store.users.find(function(u){return u.id===otherId;})||{name:'未知',avatar:'av1'};
+      var onlineDot=isOnline(otherId)?'<span class="presence-online"></span>':'';
+      avHtml='<div style="position:relative;flex-shrink:0"><div class="chat-room-av '+other.avatar+'">'+initials(other.name)+'</div>'+onlineDot+'</div>';
+      nameHtml=esc(other.name);
+    }
+    lastHtml=esc((r.lastMsg||'').slice(0,26)||'點擊開始對話');
+    return '<div class="chat-room-item '+active+'" onclick="openChatRoom(\''+r.id+'\')">'
+      +avHtml
+      +'<div class="chat-room-info"><div class="chat-room-name">'+nameHtml+'</div>'
+      +'<div class="chat-room-last">'+lastHtml+'</div></div>'
+      +(unread?'<span class="chat-unread-dot">'+unread+'</span>':'')+'</div>';
   }).join('')||'<div style="padding:24px;text-align:center;color:var(--faint);font-size:13px">尚無對話<br>點擊下方人員開始聊天</div>';
   var userBtns=activeUsers.map(function(u){
-    return '<button class="dm-start-btn" onclick="startDM(\''+u.id+'\')">'+esc(u.name)+'</button>';
+    var dot=isOnline(u.id)?'<span class="presence-online" style="position:static;display:inline-block;margin-right:3px"></span>':'';
+    return '<button class="dm-start-btn" onclick="startDM(\''+u.id+'\')" title="傳訊給 '+esc(u.name)+'">'+dot+esc(u.name)+'</button>';
   }).join('');
   c.innerHTML='<div class="admin-layout" style="flex-direction:row;height:100%;overflow:hidden">'
     +'<div class="msg-sidebar">'
-    +'<div class="msg-sidebar-hdr"><h2>💬 站內訊息</h2></div>'
+    +'<div class="msg-sidebar-hdr" style="display:flex;align-items:center;justify-content:space-between"><h2>💬 站內訊息</h2>'
+    +'<button class="btn-xs" onclick="openCreateGroup()" title="建立群組" style="border-radius:99px;padding:4px 10px;font-size:11px">＋群組</button></div>'
     +'<div style="padding:10px 10px 8px;border-bottom:1px solid rgba(196,82,122,.1);display:flex;flex-wrap:wrap;gap:6px">'+userBtns+'</div>'
     +'<div id="roomList" style="flex:1;overflow-y:auto;padding:6px">'+roomList+'</div>'
     +'</div>'
@@ -3597,7 +3633,7 @@ function renderMessagesPage(c){
     +(_activeChatRoom?''
       :'<div class="chat-empty-ph">'
       +'<svg viewBox="0 0 48 48" fill="none" width="64" height="64"><circle cx="24" cy="24" r="22" fill="rgba(196,82,122,.1)"/><path d="M14 20h20M14 27h13" stroke="#c4527a" stroke-width="2.2" stroke-linecap="round"/><path d="M34 14H14a3 3 0 00-3 3v14a3 3 0 003 3h3l3 4 3-4h11a3 3 0 003-3V17a3 3 0 00-3-3z" stroke="#c4527a" stroke-width="2" fill="rgba(196,82,122,.05)"/></svg>'
-      +'<p>選個人開始聊天吧 ✨<br><span style="font-size:11px">點上方名字或左側對話</span></p>'
+      +'<p>選個人開始聊天吧 ✨<br><span style="font-size:11px">點上方名字或左側對話　或建立群組</span></p>'
       +'</div>')
     +'</div></div>';
   if(_activeChatRoom)renderChatThread(_activeChatRoom);
@@ -3616,41 +3652,119 @@ function openChatRoom(roomId){
 function renderChatThread(roomId){
   var main=document.getElementById('chatMain');if(!main)return;
   var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});if(!room)return;
-  var otherId=room.members.filter(function(id){return id!==currentUser.id;})[0];
-  var other=store.users.find(function(u){return u.id===otherId;})||{name:'未知',avatar:'av1'};
+  var isGroup=room.isGroup;
+  var otherId=!isGroup?room.members.filter(function(id){return id!==currentUser.id;})[0]:null;
+  var other=otherId?(store.users.find(function(u){return u.id===otherId;})||{name:'未知',avatar:'av1'}):null;
   var msgs=(store.messages||[]).filter(function(m){return m.roomId===roomId;});
   msgs.sort(function(a,b){return a.ts.localeCompare(b.ts);});
-  var bubbles=msgs.map(function(m){
+
+  var REACTIONS=['❤️','👍','😂','😮','😢','🙏'];
+  var lastDate='';
+  var bubbles=msgs.map(function(m,idx){
     var isMine=m.from===currentUser.id;
     var sender=store.users.find(function(u){return u.id===m.from;})||{name:'?',avatar:'av1'};
     var time=m.ts?m.ts.slice(11,16):'';
+    var dateStr=m.ts?m.ts.slice(0,10):'';
+    var dateSep='';
+    if(dateStr&&dateStr!==lastDate){lastDate=dateStr;dateSep='<div class="chat-date-sep">'+fmtDate(dateStr)+'</div>';}
+
+    // deleted
+    if(m.deleted){
+      return dateSep+'<div class="chat-bubble-row '+(isMine?'mine':'')+'" style="opacity:.55">'
+        +(!isMine?'<div class="'+sender.avatar+'" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+initials(sender.name)+'</div>':'')
+        +'<div class="chat-bubble '+(isMine?'bubble-mine':'bubble-other')+'" style="font-style:italic;opacity:.7"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="11" height="11" style="opacity:.6;margin-right:3px"><path d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9z"/></svg>此訊息已刪除'
+        +'<span class="bubble-time">'+time+'</span></div></div>';
+    }
+
+    // reply-to block
+    var replyHtml='';
+    if(m.replyTo){
+      replyHtml='<div class="bubble-reply-quote" onclick="scrollToMsg(\''+m.replyTo.msgId+'\')">↩ <strong>'+esc(m.replyTo.fromName)+'</strong>: '+esc((m.replyTo.text||'📎 附件').slice(0,40))+'</div>';
+    }
+
+    // attachment
     var att='';
-    if(m.attachment){
+    if(m.attachment&&!m.deleted){
       var a=m.attachment;
       if(a.mime&&a.mime.startsWith('image/')){
         att='<img src="'+a.data+'" style="max-width:200px;max-height:180px;border-radius:8px;display:block;margin-top:'+(m.text?'6px':'0')+';cursor:zoom-in" onclick="chatImgZoom(\''+m.id+'\')">';
       } else {
-        att='<a href="'+a.data+'" download="'+esc(a.name)+'" style="display:flex;align-items:center;gap:6px;margin-top:'+(m.text?'6px':'0')+';padding:6px 10px;background:rgba(0,0,0,.12);border-radius:6px;font-size:11px;color:inherit;text-decoration:none">'
+        att='<a href="'+a.data+'" download="'+esc(a.name)+'" style="display:flex;align-items:center;gap:6px;margin-top:'+(m.text?'6px':'0')+';padding:6px 10px;background:rgba(0,0,0,.1);border-radius:8px;font-size:11px;color:inherit;text-decoration:none;max-width:200px">'
           +'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M13 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7z"/><path d="M13 2v5h5"/></svg>'
           +esc(a.name)+'</a>';
       }
     }
-    return '<div class="chat-bubble-row '+(isMine?'mine':'')+'">'
-      +(!isMine?'<div class="'+sender.avatar+'" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+initials(sender.name)+'</div>':'')
+
+    // reactions display
+    var reactionMap=m.reactions||{};
+    var reactionDisplay=Object.keys(reactionMap).filter(function(e){return reactionMap[e]&&reactionMap[e].length>0;}).map(function(e){
+      var users=reactionMap[e];
+      var iReacted=users.indexOf(currentUser.id)>=0;
+      var names=users.map(function(uid2){return userName(uid2);}).join('、');
+      return '<button class="chat-reaction-chip'+(iReacted?' reacted':'')+'" onclick="reactToMsg(\''+roomId+'\',\''+m.id+'\',\''+e+'\')" title="'+esc(names)+'">'+e+'<span>'+users.length+'</span></button>';
+    }).join('');
+
+    // reaction picker (always shown on hover via CSS)
+    var reactionPicker='<div class="msg-reaction-picker">'+REACTIONS.map(function(e){
+      return '<button onclick="reactToMsg(\''+roomId+'\',\''+m.id+'\',\''+e+'\')">'+e+'</button>';
+    }).join('')+'</div>';
+
+    // action bar (reply + delete)
+    var actions='<div class="msg-actions">'
+      +'<button class="msg-action-btn" onclick="setReply(\''+m.id+'\',\''+esc(m.text||'📎').replace(/'/g,'')+'\',\''+esc(sender.name)+'\')" title="回覆">↩</button>'
+      +(isMine?'<button class="msg-action-btn danger" onclick="deleteMsg(\''+roomId+'\',\''+m.id+'\')" title="刪除">×</button>':'')
+      +'</div>';
+
+    // seen receipt
+    var receipt='';
+    if(isMine){
+      var seenByOthers=room.members.filter(function(id){return id!==currentUser.id&&(m.reads||{})[id];});
+      receipt='<span class="bubble-receipt">'+(seenByOthers.length>0?'✓✓':'✓')+'</span>';
+    }
+
+    // sender name for group chats or first in sequence
+    var senderName='';
+    if(!isMine&&(isGroup||idx===0||(msgs[idx-1]&&msgs[idx-1].from!==m.from))){
+      senderName='<div class="bubble-sender-name">'+esc(sender.name)+'</div>';
+    }
+
+    return dateSep
+      +'<div class="chat-bubble-row '+(isMine?'mine':'')+'" id="msg-'+m.id+'">'
+      +(!isMine?'<div style="position:relative;flex-shrink:0"><div class="'+sender.avatar+'" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">'+initials(sender.name)+'</div>'+(isOnline(m.from)&&!isMine?'<span class="presence-online presence-sm"></span>':'')+'</div>':'')
+      +'<div class="bubble-wrap">'
+      +senderName
+      +(isMine?'':'')+reactionPicker
       +'<div class="chat-bubble '+(isMine?'bubble-mine':'bubble-other')+'">'
-      +(m.text?esc(m.text):'')
+      +replyHtml
+      +(m.text?'<span>'+esc(m.text)+'</span>':'')
       +att
-      +'<span class="bubble-time">'+time+'</span></div></div>';
+      +'<span class="bubble-time">'+time+receipt+'</span></div>'
+      +(reactionDisplay?'<div class="chat-reactions">'+reactionDisplay+'</div>':'')
+      +actions
+      +'</div></div>';
   }).join('');
+
+  // header
+  var headerAvHtml,headerName,headerSub;
+  if(isGroup){
+    headerAvHtml='<div style="width:36px;height:36px;border-radius:50%;background:var(--lavender-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 8px rgba(155,143,212,.3)">👥</div>';
+    headerName=esc(room.groupName||'群組');
+    headerSub=room.members.length+'位成員';
+  } else {
+    var onlineSub=isOnline(otherId)?'<span style="color:var(--green);font-weight:600">● 最近活躍</span>':'<span>'+esc(userDept(otherId))+'</span>';
+    headerAvHtml='<div style="position:relative;flex-shrink:0"><div class="'+other.avatar+'" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(196,82,122,.25)">'+initials(other.name)+'</div>'+(isOnline(otherId)?'<span class="presence-online"></span>':'')+'</div>';
+    headerName=esc(other.name);
+    headerSub=onlineSub;
+  }
+
   main.innerHTML='<div class="chat-header">'
-    +'<div class="'+other.avatar+'" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px rgba(196,82,122,.25)">'+initials(other.name)+'</div>'
-    +'<div style="flex:1;min-width:0">'
-    +'<div class="chat-header-name">'+esc(other.name)+'</div>'
-    +'<div class="chat-header-dept">'+esc(userDept(otherId))+'</div>'
-    +'</div>'
-    +'<svg viewBox="0 0 20 20" fill="none" stroke="rgba(196,82,122,.4)" stroke-width="1.5" width="18" height="18"><path d="M2 5a2 2 0 012-2h11a2 2 0 012 2v7a2 2 0 01-2 2H9l-4 3V14H4a2 2 0 01-2-2V5z"/></svg>'
+    +headerAvHtml
+    +'<div style="flex:1;min-width:0"><div class="chat-header-name">'+headerName+'</div>'
+    +'<div class="chat-header-dept">'+headerSub+'</div></div>'
+    +(isGroup?'<button class="btn-xs" onclick="manageChatGroup(\''+roomId+'\')" style="flex-shrink:0">成員</button>':'')
     +'</div>'
     +'<div id="chatMessages" class="chat-messages">'+bubbles+'</div>'
+    +'<div id="chatReplyPreview" style="display:none"></div>'
     +'<div id="chatFilePreview" class="chat-file-preview" style="display:none"></div>'
     +'<div class="chat-input-bar">'
     +'<label class="chat-clip-btn" title="附加檔案（最大800KB）">'
@@ -3660,8 +3774,7 @@ function renderChatThread(roomId){
     +'<input id="chatInput" class="chat-input" placeholder="說點什麼吧 ✨" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitMsg(\''+roomId+'\');}">'
     +'<button class="chat-send-btn" onclick="submitMsg(\''+roomId+'\')" title="送出">'
     +'<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>'
-    +'</button>'
-    +'</div>';
+    +'</button></div>';
   var cm=document.getElementById('chatMessages');if(cm)cm.scrollTop=cm.scrollHeight;
   var ci=document.getElementById('chatInput');if(ci)ci.focus();
 }
@@ -3672,8 +3785,10 @@ function submitMsg(roomId){
   if(!text&&!_pendingChatFile)return;
   input.value='';
   var att=_pendingChatFile;
+  var reply=_replyToMsg;
   _clearChatFilePreview();
-  sendMsg(roomId,text,att);
+  clearReply();
+  sendMsg(roomId,text,att,reply);
 }
 
 function chatImgZoom(msgId){
@@ -4105,4 +4220,106 @@ function resubmitForm(id) {
       showToast('已重新送出', t, '📋');
     }
   );
+}
+
+// ════════════════════════════════════════════════════════
+// 聊天室進階功能
+// ════════════════════════════════════════════════════════
+
+function isOnline(userId){
+  var msgs=(store.messages||[]).filter(function(m){return m.from===userId;});
+  if(!msgs.length)return false;
+  var last=msgs.reduce(function(a,b){return a.ts>b.ts?a:b;});
+  return (Date.now()-new Date(last.ts).getTime())<30*60*1000;
+}
+
+function reactToMsg(roomId,msgId,emoji){
+  var m=(store.messages||[]).find(function(x){return x.id===msgId;});
+  if(!m)return;
+  if(!m.reactions)m.reactions={};
+  if(!m.reactions[emoji])m.reactions[emoji]=[];
+  var idx=m.reactions[emoji].indexOf(currentUser.id);
+  if(idx>=0){m.reactions[emoji].splice(idx,1);if(!m.reactions[emoji].length)delete m.reactions[emoji];}
+  else{m.reactions[emoji].push(currentUser.id);}
+  saveStore();renderChatThread(roomId);
+}
+
+function setReply(msgId,text,fromName){
+  _replyToMsg={msgId:msgId,text:text,fromName:fromName};
+  var prev=document.getElementById('chatReplyPreview');
+  if(prev){
+    prev.style.display='flex';
+    prev.innerHTML='<div class="reply-preview-bar">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;color:var(--primary)">↩ 回覆 '+esc(fromName)+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc((text||'📎 附件').slice(0,50))+'</div></div>'
+      +'<button onclick="clearReply()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0 4px;flex-shrink:0">×</button>'
+      +'</div>';
+  }
+  var ci=document.getElementById('chatInput');if(ci)ci.focus();
+}
+
+function clearReply(){
+  _replyToMsg=null;
+  var prev=document.getElementById('chatReplyPreview');
+  if(prev){prev.style.display='none';prev.innerHTML='';}
+}
+
+function deleteMsg(roomId,msgId){
+  if(!confirm('確定刪除此訊息？'))return;
+  var m=(store.messages||[]).find(function(x){return x.id===msgId;});
+  if(!m||m.from!==currentUser.id)return;
+  m.deleted=true;m.text='';m.attachment=null;
+  var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});
+  if(room){var last=(store.messages||[]).filter(function(x){return x.roomId===roomId&&!x.deleted;});last.sort(function(a,b){return b.ts.localeCompare(a.ts);});room.lastMsg=last.length?(last[0].text||'📎 附件'):'';}
+  saveStore();renderChatThread(roomId);
+}
+
+function scrollToMsg(msgId){
+  var el=document.getElementById('msg-'+msgId);
+  if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.transition='background .3s';el.style.background='rgba(196,82,122,.12)';setTimeout(function(){el.style.background='';},1200);}
+}
+
+function openCreateGroup(){
+  var activeUsers=store.users.filter(function(u){return u.status==='active'&&u.id!==currentUser.id;});
+  var checks=activeUsers.map(function(u){
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px">'
+      +'<input type="checkbox" class="grp-member" value="'+u.id+'" style="width:15px;height:15px;accent-color:var(--primary)">'
+      +avatarEl(u.id,22)+esc(u.name)+'</label>';
+  }).join('');
+  showModal('建立群組聊天',
+    '<div class="form-row"><label>群組名稱</label><input id="grpName" placeholder="例：護理站小隊 🌸"></div>'
+    +'<div class="form-row"><label>選擇成員</label><div style="max-height:200px;overflow-y:auto;border:1px solid var(--b1);border-radius:var(--radius-sm);padding:8px 12px">'+checks+'</div></div>',
+    function(){
+      var name=document.getElementById('grpName').value.trim();
+      if(!name)return;
+      var members=[currentUser.id];
+      document.querySelectorAll('.grp-member:checked').forEach(function(cb){members.push(cb.value);});
+      if(members.length<2){alert('請至少選擇一位成員');return;}
+      if(!store.chatRooms)store.chatRooms=[];
+      var room={id:uid(),isGroup:true,groupName:name,members:members,lastMsg:'',lastTs:''};
+      store.chatRooms.push(room);
+      _activeChatRoom=room.id;
+      saveStore();closeModal();setPage('messages');
+      showToast('群組已建立',name,'👥');
+    }
+  );
+}
+
+function manageChatGroup(roomId){
+  var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});
+  if(!room)return;
+  var memberList=room.members.map(function(uid2){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+avatarEl(uid2,26)
+      +'<span style="font-size:13px;font-weight:600">'+esc(userName(uid2))+'</span>'
+      +(uid2===currentUser.id?'<span style="font-size:10px;color:var(--faint)">(我)</span>':'')
+      +'</div>';
+  }).join('');
+  var html='<div class="form-row"><label>群組名稱</label><input id="editGrpName" value="'+esc(room.groupName)+'"></div>'
+    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">成員（'+room.members.length+'）</div>'
+    +'<div style="border:1px solid var(--b1);border-radius:var(--radius-sm);padding:8px 12px;max-height:180px;overflow-y:auto">'+memberList+'</div>';
+  showModal('群組資訊',html,function(){
+    var n=document.getElementById('editGrpName').value.trim();
+    if(n){room.groupName=n;saveStore();renderChatThread(roomId);renderMessagesPage(document.getElementById('pageContainer'));}
+    closeModal();
+  },'儲存');
 }
