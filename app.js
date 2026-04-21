@@ -170,7 +170,7 @@ function startFirebaseSync(onReady) {
   // 策略：永遠先從雲端拉最新資料
   fbDb.ref('store').once('value').then(function(snap) {
     var cloudData = snap.val();
-    if (cloudData && cloudData.users && cloudData.users.length > 0) {
+    if (cloudData && normalizeArr(cloudData.users).length > 0) {
       // 雲端有資料，以雲端為準（覆蓋本機 localStorage 舊快取）
       store = normalizeStore(cloudData);
       try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
