@@ -616,7 +616,15 @@ function renderPageInMain(fn){
   const c=document.getElementById('pageContainer');
   c.innerHTML='';
   c.style.cssText='';
-  fn(c);
+  if(typeof fn !== 'function'){
+    c.innerHTML='<div style="padding:40px;text-align:center;color:var(--red)">頁面載入失敗（函式未定義）</div>';
+    return;
+  }
+  try{ fn(c); }catch(e){
+    console.error('[renderPageInMain]', e);
+    c.innerHTML='<div style="padding:40px;text-align:center"><div style="color:var(--red);font-size:16px;font-weight:700;margin-bottom:8px">頁面發生錯誤</div><div style="color:var(--muted);font-size:13px">'+esc(e.message)+'</div></div>';
+    return;
+  }
   // 頁面切換淡入動畫
   c.classList.remove('page-enter');
   void c.offsetWidth; // reflow
