@@ -343,6 +343,8 @@ function initApp(){
     setTimeout(showDailySummary, 800);
     // 每天自動備份一次（靜默，不打擾使用者）
     setTimeout(autoBackupDaily, 3000);
+    // 啟動閒置計時器
+    startIdleTimer();
   });
 }
 function updateNavUser(){
@@ -373,6 +375,7 @@ document.addEventListener('click',function(e){
 });
 function logout(){
   localStorage.removeItem('loggedInUserId'); // 清除 session
+  stopIdleTimer();
   if(fbDb)fbDb.ref('store/_savedAt').off();
   if(fbAuth&&fbAuth.currentUser)fbAuth.signOut().catch(function(){});
   currentUser=null;currentMeetingId=null;
@@ -380,6 +383,43 @@ function logout(){
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginUser').value='';
   document.getElementById('loginPass').value='';
+}
+
+// ══════════════════════════════════════════
+// 閒置自動登出（120 分鐘無操作）
+// ══════════════════════════════════════════
+var IDLE_LIMIT = 120 * 60 * 1000; // 120 分鐘
+var _idleTimer = null;
+var _idleWarnTimer = null;
+
+function resetIdleTimer() {
+  if (!currentUser) return;
+  clearTimeout(_idleTimer);
+  clearTimeout(_idleWarnTimer);
+  // 110 分鐘後顯示警告
+  _idleWarnTimer = setTimeout(function() {
+    if (!currentUser) return;
+    showToast('閒置警告', '10 分鐘後將自動登出，請點擊任意處繼續', '⏰');
+  }, IDLE_LIMIT - 10 * 60 * 1000);
+  // 120 分鐘後自動登出
+  _idleTimer = setTimeout(function() {
+    if (!currentUser) return;
+    showToast('已自動登出', '閒置超過 120 分鐘', '🔒');
+    setTimeout(logout, 1500);
+  }, IDLE_LIMIT);
+}
+
+function stopIdleTimer() {
+  clearTimeout(_idleTimer);
+  clearTimeout(_idleWarnTimer);
+}
+
+function startIdleTimer() {
+  var events = ['mousedown','mousemove','keydown','touchstart','scroll','click'];
+  events.forEach(function(ev) {
+    document.addEventListener(ev, resetIdleTimer, { passive: true });
+  });
+  resetIdleTimer();
 }
 
 // ══════════════════════════════════════════
