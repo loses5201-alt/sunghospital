@@ -7,6 +7,7 @@ function renderUsersPage(c){
       <div class="header-actions">
         <button class="btn-sm" onclick="backupData()" title="下載資料備份">📥 備份</button>
         <button class="btn-sm" onclick="restoreData()" title="從備份檔還原">📤 還原</button>
+        <button class="btn-sm" onclick="loadSampleData()" title="載入範例資料（會覆蓋現有資料）" style="background:#f5e6ff;color:#7a35a0;border-color:#d0a8f0">🎭 範例資料</button>
         <button class="btn-sm primary" onclick="openAddUser()">＋ 新增人員</button>
       </div>
     </div>

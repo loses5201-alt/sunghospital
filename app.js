@@ -264,6 +264,119 @@ function defaultStore(){
 }
 function addD(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0];}
 
+// ══════════════════════════════════════════
+// 範例資料載入（管理員功能）
+// ══════════════════════════════════════════
+function loadSampleData(){
+  if(!confirm('此操作會覆蓋目前全部資料並載入範例內容，確定繼續嗎？'))return;
+  var t=today();
+  var ad=function(n){return addD(t,n);};
+  // 基礎科別不動
+  // 使用者
+  store.users=[
+    {id:'u1',username:'admin',password:'admin123',name:'系統管理員',role:'admin',deptId:'d3',title:'行政人員',avatar:'av-a',status:'active',jobType:'',joinDate:'2020-01-01',permissions:{},note:''},
+    {id:'u2',username:'dr.chang',password:'pass1234',name:'張明傑',role:'member',deptId:'d1',title:'主治醫師',avatar:'av-b',status:'active',jobType:'doctor',joinDate:'2021-03-15',permissions:{viewPatients:true,editPatients:true,viewSchedule:true,applyLeave:true,applyForm:true,reportIR:true,viewSOP:true,viewSkills:true},note:'婦產科主治，負責門診及產房'},
+    {id:'u3',username:'head.nurse',password:'pass1234',name:'林佳穎',role:'supervisor',deptId:'d2',title:'護理長',avatar:'av-c',status:'active',jobType:'nurse',joinDate:'2019-06-01',permissions:{viewPatients:true,editPatients:true,viewSchedule:true,manageSchedule:true,applyLeave:true,approveLeave:true,applyForm:true,approveForm:true,reportIR:true,manageIR:true,viewSOP:true,manageSOP:true,viewInventory:true,manageInventory:true,viewSkills:true,manageSkills:true,viewReports:true},note:'護理長，負責全護理部管理'},
+    {id:'u4',username:'nurse.chen',password:'pass1234',name:'陳怡君',role:'member',deptId:'d2',title:'護理師',avatar:'av-d',status:'active',jobType:'nurse',joinDate:'2022-08-01',permissions:{viewPatients:true,editPatients:true,viewSchedule:true,applyLeave:true,applyForm:true,reportIR:true,viewSOP:true,viewInventory:true,viewSkills:true},note:''},
+    {id:'u5',username:'nurse.huang',password:'pass1234',name:'黃淑芬',role:'member',deptId:'d2',title:'護理師',avatar:'av-e',status:'active',jobType:'nurse',joinDate:'2021-11-15',permissions:{viewPatients:true,editPatients:true,viewSchedule:true,applyLeave:true,applyForm:true,reportIR:true,viewSOP:true,viewInventory:true,viewSkills:true},note:''},
+    {id:'u6',username:'nurse.wu',password:'pass1234',name:'吳雅婷',role:'member',deptId:'d2',title:'護理師',avatar:'av-f',status:'active',jobType:'nurse',joinDate:'2023-02-01',permissions:{viewPatients:true,editPatients:true,viewSchedule:true,applyLeave:true,applyForm:true,reportIR:true,viewSOP:true,viewInventory:true},note:''},
+    {id:'u7',username:'admin.wang',password:'pass1234',name:'王志明',role:'member',deptId:'d3',title:'行政人員',avatar:'av-g',status:'active',jobType:'admin_hr',joinDate:'2020-09-01',permissions:{applyLeave:true,approveLeave:true,manageSchedule:true,viewReports:true,exportData:true,applyForm:true,approveForm:true},note:'人事行政，負責排班及人事管理'},
+    {id:'u8',username:'dr.lee',password:'pass1234',name:'李承翰',role:'member',deptId:'d1',title:'住院醫師',avatar:'av-h',status:'active',jobType:'doctor',joinDate:'2023-07-01',permissions:{viewPatients:true,editPatients:true,viewSchedule:true,applyLeave:true,applyForm:true,reportIR:true,viewSOP:true},note:''},
+  ];
+  // 會議
+  store.meetings=[
+    {id:'m1',title:'本週病房晨會',date:t,time:'08:00',location:'護理站',status:'進行中',attendeeIds:['u1','u2','u3','u4','u5'],notes:'重點：月底評鑑準備、新設備使用訓練、感染管制措施複習',tasks:[{id:'mt1',content:'準備評鑑文件',assignee:'u3',due:ad(7),status:'進行中'},{id:'mt2',content:'安排設備使用訓練',assignee:'u2',due:ad(3),status:'未開始'}],chat:[{id:'mc1',userId:'u3',text:'大家早安，今天晨會準時開始',time:t+' 07:55'},{id:'mc2',userId:'u2',text:'評鑑文件這邊已開始準備了',time:t+' 07:58'}],votes:[],resolutions:['每週四下午14:00固定進行感染管制訓練','新進護理人員須7天內完成設備使用訓練'],signoff:{locked:false,signatures:{}}},
+    {id:'m2',title:'護理品質改善會議',date:ad(-3),time:'14:00',location:'第一會議室',status:'已結束',attendeeIds:['u1','u3','u4','u5','u6'],notes:'討論護病比改善方案及病患滿意度調查結果',tasks:[{id:'mt3',content:'製作護病比分析報告',assignee:'u3',due:ad(5),status:'進行中'},{id:'mt4',content:'設計病患滿意度問卷（新版）',assignee:'u4',due:ad(10),status:'未開始'}],chat:[],votes:[],resolutions:['下月起增加夜班護理人力一名','每月第一週進行病患滿意度調查'],signoff:{locked:true,signatures:{'u1':t,'u3':t}}},
+    {id:'m3',title:'設備採購評估會議',date:ad(-7),time:'10:00',location:'院長室',status:'已結束',attendeeIds:['u1','u2','u7'],notes:'討論胎心音監測儀汰換及新型嬰兒保溫箱採購',tasks:[{id:'mt5',content:'彙整設備報價單',assignee:'u7',due:ad(-2),status:'已完成'}],chat:[],votes:[],resolutions:['核准採購新型胎心音監測儀2台，預算25萬元','嬰兒保溫箱延至下季度再行評估'],signoff:{locked:true,signatures:{'u1':ad(-7)}}},
+  ];
+  // 公告
+  store.announcements=[
+    {id:'an1',title:'🎉 宋俊宏婦幼醫院30週年院慶活動',content:'本院將於5月25日舉辦30週年院慶活動，歡迎全體同仁攜家帶眷參加。活動包含：闖關遊戲、幸運抽獎、院長感謝茶會。請各單位主管鼓勵同仁踴躍參與！',author:'u1',date:t,pinned:true,urgent:false},
+    {id:'an2',title:'⚠️ 感染管制措施更新通知',content:'依據最新疾管署公告，即日起加強下列措施：\n1. 進入病房前務必確實執行手部衛生\n2. 處置侵入性醫療器材需全程戴手套\n3. 如有疑似感染症狀之病患，立即通報感管師\n\n請全體醫護人員嚴格遵守。',author:'u3',date:ad(-1),pinned:false,urgent:true},
+    {id:'an3',title:'五月份值班表已更新',content:'五月份值班表已完成排定，請各位同仁至排班頁面確認班別。如有需要換班，請至少提前3天提出申請。本月護士節（5/12）當班人員將加發護士節慰問金。',author:'u3',date:ad(-2),pinned:false,urgent:false},
+    {id:'an4',title:'新進胎心音監測儀使用說明會',content:'本院即將引進新型胎心音監測儀，廠商將於本週五下午15:00在護理站進行使用說明及操作訓練。請產房及待產室護理師務必出席。',author:'u2',date:ad(-5),pinned:false,urgent:false},
+  ];
+  // 事件通報
+  store.incidents=[
+    {id:'ir1',title:'藥物劑量核對疏失',type:'medication',severity:'moderate',date:ad(-2),reporterId:'u4',description:'病患用藥時發現劑量與醫囑不符，護理師及時發現並更正，病患未受到傷害。事件已通報藥劑部進行雙重核對流程檢討。',status:'已結束',followUp:'加強「給藥五對」衛教訓練，下週三安排全體護理人員參加複訓。',updatedAt:ad(-1)},
+    {id:'ir2',title:'病患如廁時發生跌倒',type:'fall',severity:'minor',date:ad(-1),reporterId:'u5',description:'302號房病患林女士（產後第2天）於夜間如廁時因暈眩跌倒，無外傷，已通知主治醫師評估，生命徵象正常。已加裝床邊扶手並叮囑家屬陪同如廁。',status:'處理中',followUp:'',updatedAt:t},
+    {id:'ir3',title:'醫療廢棄物分類錯誤',type:'other',severity:'minor',date:ad(-5),reporterId:'u6',description:'發現廢棄點滴袋混入一般廢棄物桶，已立即分類處理。疑為新進清潔人員操作不當。',status:'已結束',followUp:'重新訓練清潔人員醫療廢棄物分類規定。',updatedAt:ad(-4)},
+  ];
+  // 表單申請
+  store.formRequests=[
+    {id:'fr1',type:'leave',title:'特休假申請 '+ad(5)+'～'+ad(7),applicantId:'u4',date:ad(-3),startDate:ad(5),endDate:ad(7),reason:'返鄉探親',approvers:['u3'],statuses:['approved'],status:'approved',createdAt:ad(-3),urgent:false},
+    {id:'fr2',type:'overtime',title:'加班申請 今晚夜班',applicantId:'u5',date:ad(-1),startDate:t,endDate:t,reason:'人力不足，支援夜班',approvers:['u3','u1'],statuses:['approved','pending'],status:'pending',createdAt:ad(-1),urgent:false},
+    {id:'fr3',type:'supply',title:'生理食鹽水緊急採購',applicantId:'u3',date:ad(-1),startDate:t,endDate:t,reason:'庫存不足，需緊急補貨',approvers:['u1'],statuses:['approved'],status:'approved',createdAt:ad(-1),urgent:true},
+    {id:'fr4',type:'leave',title:'事假申請 '+ad(7),applicantId:'u8',date:t,startDate:ad(7),endDate:ad(7),reason:'個人事務',approvers:['u3'],statuses:['pending'],status:'pending',createdAt:t,urgent:false},
+  ];
+  store.formNotifs=[];
+  // 請假
+  store.leaves=[
+    {id:'lv1',userId:'u4',type:'annual',startDate:ad(5),endDate:ad(7),days:3,reason:'返鄉探親',status:'approved',approverId:'u3',createdAt:ad(-3)},
+    {id:'lv2',userId:'u8',type:'personal',startDate:ad(7),endDate:ad(7),days:1,reason:'個人事務',status:'pending',approverId:'',createdAt:t},
+    {id:'lv3',userId:'u5',type:'sick',startDate:ad(-10),endDate:ad(-8),days:3,reason:'身體不適',status:'approved',approverId:'u3',createdAt:ad(-12)},
+  ];
+  store.leaveBalance={'u2':{annual:14,sick:30,personal:7,used_annual:0,used_sick:0,used_personal:0},'u3':{annual:21,sick:30,personal:7,used_annual:3,used_sick:1,used_personal:0},'u4':{annual:7,sick:30,personal:7,used_annual:0,used_sick:0,used_personal:0},'u5':{annual:14,sick:30,personal:7,used_annual:0,used_sick:3,used_personal:0},'u6':{annual:3,sick:30,personal:7,used_annual:0,used_sick:0,used_personal:0},'u7':{annual:14,sick:30,personal:7,used_annual:0,used_sick:0,used_personal:0},'u8':{annual:7,sick:30,personal:7,used_annual:0,used_sick:0,used_personal:0}};
+  // 病患
+  store.patients=[
+    {id:'pt1',name:'張○○',age:28,bed:'301',admitDate:ad(-2),status:'labor',doctorId:'u2',nurseId:'u4',diagnosis:'自然產 G1P0 38週4天',note:'羊水已破，規律宮縮，宮口開6公分'},
+    {id:'pt2',name:'林○○',age:32,bed:'302',admitDate:ad(-1),status:'postpartum',doctorId:'u2',nurseId:'u5',diagnosis:'剖腹產 G2P1 39週2天',note:'昨日14:20剖腹生產，母嬰均安，傷口無滲血'},
+    {id:'pt3',name:'王○○',age:25,bed:'LDR 1',admitDate:t,status:'waiting',doctorId:'u8',nurseId:'u6',diagnosis:'待產觀察 G1P0 37週6天',note:'宮縮15分鐘一次，宮口開2公分'},
+    {id:'pt4',name:'陳○○',age:30,bed:'308',admitDate:ad(-4),status:'discharge',doctorId:'u2',nurseId:'u3',diagnosis:'自然產 G2P2 39週',note:'母嬰狀況良好，今日出院'},
+  ];
+  // 庫存
+  store.inventory=[
+    {id:'inv1',name:'生理食鹽水 500ml',category:'輸液',unit:'袋',quantity:45,minStock:50,location:'藥品室 A-2',note:'庫存偏低，已申請補貨'},
+    {id:'inv2',name:'無菌手術手套 L',category:'耗材',unit:'雙',quantity:120,minStock:60,location:'耗材室 B-1',note:''},
+    {id:'inv3',name:'一次性醫療口罩',category:'防護',unit:'個',quantity:380,minStock:200,location:'護理站儲物間',note:''},
+    {id:'inv4',name:'注射針筒 5ml',category:'耗材',unit:'支',quantity:200,minStock:100,location:'耗材室 B-3',note:''},
+    {id:'inv5',name:'酒精棉片',category:'消毒',unit:'包',quantity:15,minStock:20,location:'護理站',note:'庫存偏低'},
+    {id:'inv6',name:'產後護理墊',category:'耗材',unit:'片',quantity:320,minStock:100,location:'耗材室 C-1',note:''},
+  ];
+  store.inventoryLogs=[
+    {id:'il1',itemId:'inv1',type:'out',qty:20,userId:'u4',date:ad(-1),note:'病房使用'},
+    {id:'il2',itemId:'inv3',type:'out',qty:50,userId:'u6',date:t,note:'護理站日常補充'},
+    {id:'il3',itemId:'inv2',type:'in',qty:60,userId:'u3',date:ad(-3),note:'採購補貨'},
+  ];
+  // SOP
+  store.sops=[
+    {id:'sop1',title:'新生兒出生護理標準作業程序',category:'新生兒護理',version:'V3.2',updateDate:ad(-30),authorId:'u3',content:'【目的】確保新生兒出生後立即護理的安全性與一致性。\n\n【適用範圍】產房及嬰兒室護理人員。\n\n【作業步驟】\n1. 出生後立即清除口鼻分泌物\n2. Apgar評分（1分鐘、5分鐘）\n3. 保暖措施（輻射保暖台，溫度38°C）\n4. 身體測量（體重、身長、頭圍）\n5. 給予維他命K1 1mg IM\n6. 點眼藥水預防淋病性眼炎\n7. 完成身分識別腕帶\n8. 通知家屬並進行親子同室衛教',tags:['新生兒','出生護理']},
+    {id:'sop2',title:'產後出血緊急處置程序',category:'緊急處置',version:'V2.1',updateDate:ad(-60),authorId:'u2',content:'【定義】產後24小時內出血量超過500ml（自然產）或1000ml（剖腹產）。\n\n【緊急處置步驟】\n1. 立即通知值班醫師\n2. 建立靜脈注射管路（18G或以上）\n3. 子宮按摩\n4. 給予Oxytocin 20IU IV drip\n5. 生命徵象每15分鐘監測\n6. 保暖（避免低體溫）\n7. 備血（O型RH+）\n8. 記錄出血量（秤重法）',tags:['緊急','產後出血']},
+    {id:'sop3',title:'給藥安全五對查核程序',category:'藥物安全',version:'V4.0',updateDate:ad(-15),authorId:'u3',content:'【目的】預防給藥錯誤，確保病患用藥安全。\n\n【五對原則】\n1. 對的病人 — 核對病患腕帶、床頭卡\n2. 對的藥物 — 核對藥名、劑型\n3. 對的劑量 — 核對濃度、單位\n4. 對的時間 — 核對給藥時間\n5. 對的途徑 — 核對給藥方式\n\n【執行規定】\n- 每次給藥前進行雙重核對\n- 高警示藥物需兩人核對',tags:['藥物安全','給藥']},
+  ];
+  // 技能
+  store.skillDefs=[
+    {id:'sk1',name:'靜脈注射穿刺技術',category:'基本護理'},
+    {id:'sk2',name:'胎心音監測操作',category:'產科專業'},
+    {id:'sk3',name:'新生兒護理',category:'新生兒照護'},
+    {id:'sk4',name:'產後護理及衛教',category:'產科專業'},
+    {id:'sk5',name:'心肺復甦術（CPR）',category:'急救技術'},
+  ];
+  store.skillMatrix={'u3':{'sk1':4,'sk2':4,'sk3':4,'sk4':4,'sk5':4},'u4':{'sk1':4,'sk2':3,'sk3':3,'sk4':3,'sk5':3},'u5':{'sk1':3,'sk2':4,'sk3':4,'sk4':3,'sk5':3},'u6':{'sk1':3,'sk2':2,'sk3':2,'sk4':2,'sk5':3},'u2':{'sk1':3,'sk2':4,'sk3':3,'sk4':4,'sk5':4}};
+  // 日誌
+  store.journals=[
+    {id:'jn1',userId:'u4',date:t,mood:'good',title:'今日護理記錄',content:'今日病患狀況良好，301號床媽媽宮口持續進展，預計晚間自然分娩。302號床剖腹產媽媽傷口癒合情形良好，已開始下床活動。',category:'work',likes:['u3','u5'],comments:[],pinned:false,image:null,edited:false,createdAt:t+' 16:30'},
+    {id:'jn2',userId:'u5',date:ad(-1),mood:'tired',title:'夜班心得',content:'昨晚夜班較為忙碌，有一名產婦緊急剖腹產，手術順利，母嬰均安。感謝林護理長及時支援，團隊合作很重要！',category:'work',likes:['u3','u4','u6'],comments:[{id:'jc1',userId:'u3',text:'辛苦了！你們處理得很好👍',createdAt:ad(-1)+' 08:10'}],pinned:false,image:null,edited:false,createdAt:ad(-1)+' 08:05'},
+  ];
+  // 嬰兒 / 產房
+  store.babies=dBabies();
+  store.rooms=dRooms();
+  store.eduItems=dEdu();
+  store.swapRequests=[];
+  store.shifts=[];
+  store.emergencies=[];
+  store.messages=[];
+  store.chatRooms=[];
+  store.equipment=[];
+  store.dutySchedule={};
+  store.eduReads={};
+  store.titles_custom=[];
+
+  saveStore();
+  showToast('範例資料載入完成','共 '+store.users.length+' 位人員、'+store.meetings.length+' 則會議、'+store.announcements.length+' 則公告','🎉');
+  setTimeout(function(){renderSidebar();setPage('home');},500);
+}
+
 let store=loadStore()||defaultStore();
 let currentUser=null,currentMeetingId=null,currentTab='notes',currentPage='meetings';
 
