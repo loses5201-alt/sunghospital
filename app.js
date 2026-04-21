@@ -1254,13 +1254,13 @@ function renderHomePage(c){
   }
   // Low inventory
   if(hasPerm('manageInventory')){
-    var lowInv=(store.inventory||[]).filter(function(i){return i.minQty!=null&&Number(i.quantity)<=Number(i.minQty);});
+    var lowInv=(store.inventory||[]).filter(function(i){return i.minQty!=null&&Number(i.qty)<=Number(i.minQty);});
     if(lowInv.length) alerts.push({level:1,tag:'庫存不足',tagCls:'tag-warn',icon:'📦',text:'有 '+lowInv.length+' 項物品庫存低於安全量',sub:lowInv.slice(0,3).map(function(i){return esc(i.name);}).join('、'),action:"setPage('inventory')"});
   }
   // Open incidents
   if(hasPerm('manageIR')){
     var openIR=(store.incidents||[]).filter(function(i){return i.status!=='closed'&&i.status!=='已結案';});
-    if(openIR.length) alerts.push({level:2,tag:'事件報告',tagCls:'tag-ir',icon:'⚠️',text:'有 '+openIR.length+' 件事件報告尚未結案',sub:'',action:"setPage('incidents')"});
+    if(openIR.length) alerts.push({level:2,tag:'事件報告',tagCls:'tag-ir',icon:'⚠️',text:'有 '+openIR.length+' 件事件報告尚未結案',sub:'',action:"setPage('incident')"});
   }
   // My form/leave status updates (recently approved/rejected)
   (store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id&&(f.status==='approved'||f.status==='rejected');}).slice(0,3).forEach(function(f){
@@ -1272,6 +1272,20 @@ function renderHomePage(c){
     var lt=(typeof LEAVE_TYPES!=='undefined'?LEAVE_TYPES:[]).find(function(x){return x.id===l.type;});
     alerts.push({level:2,tag:ok?'假單核准':'假單駁回',tagCls:ok?'tag-ok':'tag-rej',icon:ok?'✅':'❌',text:(lt?lt.label:'請假')+' '+fmtDate(l.startDate)+' ~ '+fmtDate(l.endDate),sub:'',action:"setPage('leave')"});
   });
+  // Pending equipment reports (user submitted)
+  var myEqPending=(store.equipment||[]).filter(function(e){return e.reportedBy===currentUser.id&&e.status!=='resolved';});
+  if(myEqPending.length) alerts.push({level:2,tag:'設備回報',tagCls:'tag-ir',icon:'🔧',text:'您有 '+myEqPending.length+' 筆設備回報尚未解決',sub:myEqPending.slice(0,2).map(function(e){return esc(e.name);}).join('、'),action:"setPage('equipment')"});
+  // Unacknowledged SOPs
+  var unackSops=(store.sops||[]).filter(function(s){return !s.acks||!s.acks[currentUser.id];}).length;
+  if(unackSops) alerts.push({level:3,tag:'SOP未確認',tagCls:'tag-task',icon:'📋',text:'有 '+unackSops+' 份 SOP 尚未確認閱讀',sub:'',action:"setPage('sop')"});
+  // My skill expiry (within 60 days)
+  var mySkillMatrix=(store.skillMatrix&&store.skillMatrix[currentUser.id])||{};
+  var SOON_MS=60*24*60*60*1000;
+  var expSkills=(store.skillDefs||[]).filter(function(s){
+    var cell=mySkillMatrix[s.id]||{};
+    return cell.expireDate&&cell.level==='certified'&&(new Date(cell.expireDate)-new Date(todayStr))<SOON_MS;
+  });
+  if(expSkills.length) alerts.push({level:1,tag:'證照到期',tagCls:'tag-warn',icon:'🎓',text:'有 '+expSkills.length+' 項認證即將到期',sub:expSkills.map(function(s){return esc(s.name);}).join('、'),action:"setPage('skills')"});
   // General unread announcements
   var unreadNormalAnn=(store.announcements||[]).filter(function(a){return !a.reads||!a.reads[currentUser.id];}).length;
   if(unreadNormalAnn) alerts.push({level:3,tag:'未讀公告',tagCls:'tag-ann',icon:'📢',text:'有 '+unreadNormalAnn+' 則公告尚未閱讀',sub:'',action:"setPage('announcements')"});
@@ -1325,7 +1339,7 @@ function renderHomePage(c){
 
   // ── Upcoming meetings this week ──
   var upcomingMtgs=(store.meetings||[]).filter(function(m){
-    return m.date&&m.date>=todayStr&&m.date<=wk[6]&&(m.attendees||[]).indexOf(currentUser.id)>=0;
+    return m.date&&m.date>=todayStr&&m.date<=wk[6]&&((m.attendeeIds||m.attendees||[]).indexOf(currentUser.id)>=0);
   }).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).slice(0,5);
   var mtgHtml=upcomingMtgs.length
     ?upcomingMtgs.map(function(m){
