@@ -400,11 +400,14 @@ function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,5);}
 function isAdmin(){return currentUser&&currentUser.role==='admin';}
 function isSupervisor(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='supervisor');}
+// 進階用戶擁有所有功能權限，但不能進入系統管理（人員/備份/稽核）
+function isPowerUser(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='power');}
 // 主管自動擁有審核相關權限；管理員擁有全部
 var SUPERVISOR_AUTO_PERMS=['approveForm','approveLeave','manageSchedule','manageIR'];
 function hasPerm(p){
   if(!currentUser)return false;
   if(currentUser.role==='admin')return true;
+  if(currentUser.role==='power')return true;   // 進階用戶：全功能權限
   if(currentUser.role==='supervisor'&&SUPERVISOR_AUTO_PERMS.indexOf(p)>=0)return true;
   return !!(currentUser.permissions&&currentUser.permissions[p]);
 }

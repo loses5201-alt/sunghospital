@@ -1,6 +1,10 @@
 // ════ 人員管理 ════
 var usersTabState='users';
 function renderUsersPage(c){
+  if(!isAdmin()){
+    c.innerHTML='<div style="padding:60px 24px;text-align:center"><div style="font-size:48px;margin-bottom:16px">🔒</div><div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">系統管理</div><div style="font-size:13px;color:var(--faint)">此頁面僅限系統管理員存取</div></div>';
+    return;
+  }
   c.innerHTML=`<div class="admin-layout">
     <div class="main-header">
       <div><h1>⚙️ 系統管理</h1><div class="main-header-meta">人員 · 稽核日誌 · 系統統計</div></div>
@@ -46,7 +50,7 @@ const JOBTYPES={
   other:'其他'
 };
 const STATUSLBLS={active:'在職',disabled:'停用',resigned:'離職'};
-const ROLELABELS={admin:'管理員',supervisor:'主管',member:'一般'};
+const ROLELABELS={admin:'管理員',power:'進階用戶',supervisor:'主管',member:'一般'};
 
 // ── 全功能權限定義 ──
 var PERMISSION_DEFS=[
@@ -160,8 +164,10 @@ function setUserStatus(id,status){
 function onRoleChange(sel){
   var ps=document.getElementById('permSection');
   var sn=document.getElementById('supervisorNote');
-  if(ps)ps.style.display=sel.value==='admin'?'none':'';
+  var pn=document.getElementById('powerNote');
+  if(ps)ps.style.display=(sel.value==='admin'||sel.value==='power')?'none':'';
   if(sn)sn.style.display=sel.value==='supervisor'?'':'none';
+  if(pn)pn.style.display=sel.value==='power'?'':'none';
 }
 function applyJobTypeDefaults(){
   var jt=document.getElementById('uJobType').value;
@@ -214,9 +220,10 @@ function userFormHtml(u){
     <div class="form-row"><label>職稱</label><select id="uTitle"><option value="">（無）</option>${tOpts}</select></div>
     <div class="form-row"><label>角色</label>
       <select id="uRole" onchange="onRoleChange(this)">
-        <option value="member" ${curRole==='member'?'selected':''}>一般成員</option>
+        <option value="member"     ${curRole==='member'?'selected':''}>一般成員</option>
         <option value="supervisor" ${isSvRole?'selected':''}>主管（可審核簽核）</option>
-        <option value="admin" ${isAdminRole?'selected':''}>管理員（全部權限）</option>
+        <option value="power"      ${curRole==='power'?'selected':''}>進階用戶（全功能，除系統管理）</option>
+        <option value="admin"      ${isAdminRole?'selected':''}>管理員（全部權限）</option>
       </select>
     </div>
     <div class="form-row"><label>職類</label>
@@ -247,7 +254,10 @@ function userFormHtml(u){
   <div class="form-row" style="margin-bottom:14px"><label>備註</label>
     <textarea id="uNote" style="min-height:55px" placeholder="內部備註、設備帳號等...">${esc(u?.note||'')}</textarea>
   </div>
-  <div id="permSection" style="${isAdminRole?'display:none':''}">
+  <div id="powerNote" style="${curRole==='power'?'':'display:none;'}padding:10px 14px;background:#fffbe6;border:1px solid #f0d060;border-radius:8px;font-size:12px;color:#7a5c00;margin-bottom:10px">
+    進階用戶自動擁有所有功能權限（病患、排班、請假、簽核、公告、庫存、事件、SOP、技能、報表等），<strong>但無法存取系統管理頁面</strong>（人員管理、備份還原、稽核日誌）
+  </div>
+  <div id="permSection" style="${(isAdminRole||curRole==='power')?'display:none':''}">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-size:12px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.08em;flex:1">功能權限</div>
       <button type="button" class="btn-xs" onclick="applyJobTypeDefaults()" title="根據職類帶入預設勾選">套用職種預設</button>
