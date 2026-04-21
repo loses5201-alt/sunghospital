@@ -1667,3 +1667,188 @@ body.dark .main-header{background:linear-gradient(135deg,rgba(196,82,122,.06) 0%
 /* ── 34. Swcard / jcard ── */
 .swcard{border-radius:var(--radius) !important;padding:14px 16px !important;border:1.5px solid var(--b1) !important;margin-bottom:8px !important}
 .jcard{border-radius:var(--radius) !important;padding:16px 18px !important;border:1.5px solid var(--b1) !important;margin-bottom:10px !important}
+
+/* ════════════════════════════════════════════════════════
+   VISUAL POLISH — 專業排版全面修正
+   ════════════════════════════════════════════════════════ */
+
+/* ── 修正缺少的 --secondary 變數 ── */
+:root{--secondary:#b06090}
+body.dark{--secondary:#cc7aaa}
+
+/* ── 全域排版基礎 ── */
+*{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* ── 按鈕組統一高度與間距 ── */
+.header-actions{gap:10px !important;align-items:center !important}
+.btn-sm{
+  height:36px !important;
+  padding:0 18px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  white-space:nowrap !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  letter-spacing:.01em !important;
+  border-radius:99px !important;
+  transition:all .18s cubic-bezier(.4,0,.2,1) !important;
+}
+.btn-sm.primary{
+  background:linear-gradient(135deg,#c4527a 0%,#d4699a 100%) !important;
+  color:white !important;border-color:transparent !important;
+  box-shadow:0 3px 12px rgba(196,82,122,.35) !important;
+}
+.btn-sm.primary:hover{box-shadow:0 6px 20px rgba(196,82,122,.5) !important;transform:translateY(-2px) !important}
+.btn-sm.danger{height:36px !important}
+
+/* ── btn-xs 統一 ── */
+.btn-xs{
+  height:28px !important;
+  padding:0 11px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:11.5px !important;
+  font-weight:600 !important;
+  border-radius:7px !important;
+  white-space:nowrap !important;
+  transition:all .14s !important;
+}
+.btn-xs.success{background:var(--green-bg) !important;color:var(--green) !important;border-color:var(--green-light) !important}
+.btn-xs.danger{background:var(--red-bg) !important;color:var(--red) !important;border-color:#f0c0c0 !important}
+
+/* ── Filter pill 按鈕 (board-cat-btn) ── */
+.board-cat-btn{
+  height:32px !important;
+  padding:0 16px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  font-size:12.5px !important;
+  font-weight:600 !important;
+  border-radius:99px !important;
+  transition:all .15s !important;
+  white-space:nowrap !important;
+}
+.board-cat-btn.active{
+  background:linear-gradient(135deg,#c4527a,#b06090) !important;
+  color:white !important;border-color:transparent !important;
+  box-shadow:0 3px 10px rgba(196,82,122,.3) !important;
+}
+
+/* ── Task filter 按鈕 (內嵌 onclick=setTaskFilter) ── */
+button[onclick*="setTaskFilter"]{
+  height:30px !important;
+  padding:0 14px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  font-size:12px !important;
+  font-weight:600 !important;
+}
+
+/* ── Users-tab 標籤列 ── */
+.users-tab{
+  height:44px !important;
+  padding:0 20px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+  letter-spacing:.01em !important;
+  border-bottom-width:2.5px !important;
+  transition:all .15s !important;
+}
+.users-tab.active{font-weight:800 !important;color:var(--primary) !important}
+
+/* ── 新增任務區 ── */
+.add-task-area{
+  gap:8px !important;
+  padding:14px 16px !important;
+  border-radius:var(--radius) !important;
+  background:var(--s2) !important;
+  border:1.5px dashed var(--b2) !important;
+  margin-top:10px !important;
+}
+.add-task-area input,.add-task-area select{
+  height:34px !important;
+  padding:0 11px !important;
+  font-size:13px !important;
+  border-radius:8px !important;
+}
+.btn-add{
+  height:34px !important;
+  padding:0 18px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  border-radius:99px !important;
+  white-space:nowrap !important;
+}
+
+/* ── Modal 儲存/取消按鈕 ── */
+.modal-footer{gap:10px !important}
+.btn-cancel,.btn-save{
+  height:38px !important;
+  padding:0 22px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:13.5px !important;
+  font-weight:700 !important;
+  border-radius:99px !important;
+  transition:all .16s !important;
+}
+.btn-save:hover{transform:translateY(-2px) !important;box-shadow:0 8px 24px rgba(196,82,122,.44) !important}
+
+/* ── 表單 input 高度一致 ── */
+.form-row input,.form-row select{height:42px !important;padding:0 14px !important}
+.form-row textarea{height:auto !important;min-height:80px !important;padding:11px 14px !important}
+
+/* ── 頁面標題區 ── */
+.main-header{
+  padding:20px 28px !important;
+  gap:14px !important;
+}
+.main-header h1{font-size:22px !important;font-weight:900 !important;letter-spacing:-.03em !important}
+
+/* ── admin-content 統一上下間距 ── */
+.admin-content{padding:24px 28px !important}
+@media(max-width:768px){.admin-content{padding:16px 18px !important}}
+
+/* ── 表格行高 ── */
+td{padding:11px 15px !important;vertical-align:middle !important}
+th{padding:10px 15px !important}
+
+/* ── sec-label 微調 ── */
+.sec-label{
+  font-size:10.5px !important;
+  font-weight:900 !important;
+  letter-spacing:.12em !important;
+  color:var(--primary) !important;
+  margin-bottom:12px !important;
+  margin-top:22px !important;
+}
+
+/* ── 卡片按鈕群組間距 ── */
+.ann-actions{gap:8px !important}
+.dept-card-actions{gap:7px !important}
+.sign-row{gap:9px !important}
+.header-actions > *{flex-shrink:0}
+
+/* ── 深色模式修正 ── */
+body.dark .btn-sm{border-color:var(--b2) !important}
+body.dark .board-cat-btn{border-color:var(--b2) !important}
+body.dark .add-task-area{background:var(--s2) !important;border-color:var(--b2) !important}
+
+/* ── 空狀態按鈕修正 ── */
+.empty-state-btn{
+  height:38px !important;
+  padding:0 24px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  border-radius:99px !important;
+}
