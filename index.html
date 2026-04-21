@@ -152,9 +152,9 @@
 </div>
 
 <script>
-// F5 session restore: 如果 sessionStorage 有登入記錄，自動還原登入狀態
+// Session restore: 如果 localStorage 有登入記錄，自動還原登入狀態（F5、關tab、重啟皆有效）
 (function tryRestoreSession() {
-  var savedId = sessionStorage.getItem('loggedInUserId');
+  var savedId = localStorage.getItem('loggedInUserId');
   if (!savedId) return;
   var user = (store && store.users || []).find(function(u) { return u.id === savedId; });
   if (!user) return;

@@ -147,7 +147,7 @@ function doGoogleLogin() {
       saveStore();
     }
     currentUser = matched;
-    sessionStorage.setItem('loggedInUserId', matched.id);
+    localStorage.setItem('loggedInUserId', matched.id);
     document.getElementById('loginErr').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appShell').style.display = 'block';
@@ -375,7 +375,7 @@ function doLogin(){
   const user=store.users.find(u=>u.username===uname&&u.password===pass);
   if(!user){document.getElementById('loginErr').style.display='block';return;}
   currentUser=user;
-  sessionStorage.setItem('loggedInUserId', user.id); // 保存 session，F5 後自動還原
+  localStorage.setItem('loggedInUserId', user.id); // 保存 session，F5／關tab 後自動還原
   document.getElementById('loginErr').style.display='none';
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').style.display='block';
@@ -437,7 +437,7 @@ document.addEventListener('click',function(e){
   if(m&&!m.contains(e.target)&&u&&!u.contains(e.target))m.classList.remove('open');
 });
 function logout(){
-  sessionStorage.removeItem('loggedInUserId'); // 清除 session
+  localStorage.removeItem('loggedInUserId'); // 清除 session
   if(fbDb)fbDb.ref('store/_savedAt').off();
   if(fbAuth&&fbAuth.currentUser)fbAuth.signOut().catch(function(){});
   currentUser=null;currentMeetingId=null;
