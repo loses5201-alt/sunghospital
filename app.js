@@ -243,90 +243,23 @@ function saveStore(){
 }
 
 function defaultStore(){
-  const td=today();
+  // 僅包含基礎結構與一個管理員帳號，不含任何範例資料
+  // 真正的資料永遠從 Firebase 載入
   return {
     departments:[
-      {id:'d1',name:'內科部',color:'blue'},
-      {id:'d2',name:'外科部',color:'teal'},
-      {id:'d3',name:'護理部',color:'green'},
-      {id:'d4',name:'行政部',color:'amber'},
-      {id:'d5',name:'急診部',color:'red'},
+      {id:'d1',name:'婦產科',color:'pink'},
+      {id:'d2',name:'護理部',color:'green'},
+      {id:'d3',name:'行政部',color:'amber'},
     ],
-    titles:['主治醫師','住院醫師','護理師','護理長','行政人員','病房主任','科主任'],
+    titles:['主治醫師','住院醫師','護理師','護理長','行政人員','病房主任','科主任','院長'],
     users:[
-      {id:'u1',username:'admin',password:'admin123',name:'金秀賢',role:'admin',deptId:'d4',title:'行政人員',avatar:'av-a'},
-      {id:'u2',username:'gong_yoo',password:'123456',name:'孔劉',role:'admin',deptId:'d1',title:'科主任',avatar:'av-b'},
-      {id:'u3',username:'songhye',password:'123456',name:'宋慧喬',role:'member',deptId:'d3',title:'護理長',avatar:'av-c'},
-      {id:'u4',username:'leeminho',password:'123456',name:'李敏鎬',role:'member',deptId:'d2',title:'主治醫師',avatar:'av-d'},
-      {id:'u5',username:'parkbojam',password:'123456',name:'朴寶劍',role:'member',deptId:'d1',title:'住院醫師',avatar:'av-e'},
-      {id:'u6',username:'kimjiwon',password:'123456',name:'金智媛',role:'member',deptId:'d3',title:'護理師',avatar:'av-f'},
-      {id:'u7',username:'sonyejin',password:'123456',name:'孫藝珍',role:'member',deptId:'d4',title:'行政人員',avatar:'av-g'},
-      {id:'u8',username:'iu_lee',password:'123456',name:'IU 李知恩',role:'member',deptId:'d5',title:'護理師',avatar:'av-h'},
+      {id:'u1',username:'admin',password:'admin123',name:'系統管理員',role:'admin',deptId:'d3',title:'行政人員',avatar:'av-a'},
     ],
-    meetings:[
-      {id:'m1',title:'內科部主任會議',date:td,attendeeIds:['u2','u3','u4','u5'],
-       notes:'討論本月住院病患管理流程優化，確認各病房護病比調整方案，急重症病床分配原則討論。',
-       tasks:[
-         {id:'t1',text:'更新護病比評估報告',assigneeId:'u3',due:addD(td,5),status:'進行中',priority:'urgent'},
-         {id:'t2',text:'確認新進住院醫師排班',assigneeId:'u2',due:addD(td,3),status:'待辦',priority:'normal'},
-         {id:'t3',text:'送出急重症病床申請',assigneeId:'u4',due:addD(td,7),status:'待辦',priority:'critical'},
-         {id:'t4',text:'彙整上月出院統計',assigneeId:'u5',due:addD(td,2),status:'已完成',priority:'normal'},
-       ],
-       chat:[
-         {id:'c1',userId:'u3',text:'護病比報告我這週四前可以完成，請主任確認格式。',time:'09:15'},
-         {id:'c2',userId:'u2',text:'格式沿用上季版本即可，重點加上各班次分布圖。',time:'09:22'},
-       ],
-       reads:{'u2':{read:true,time:'08:50'},'u3':{read:true,time:'09:10'},'u4':{read:false,time:null},'u5':{read:false,time:null}},
-       votes:[
-         {id:'v1',question:'護病比調整方案偏好？',options:['方案 A（1:8）','方案 B（1:10）','維持現狀'],votes:{'u2':0,'u3':0,'u4':1},closed:false},
-       ]
-      },
-      {id:'m2',title:'急診部感染管控會議',date:addD(td,-2),attendeeIds:['u2','u4','u8'],
-       notes:'討論近期急診室感染管控措施，確認 COVID 相關防護流程，評估隔離病房使用狀況。',
-       tasks:[
-         {id:'t1',text:'更新感染管控 SOP 文件',assigneeId:'u4',due:addD(td,4),status:'進行中',priority:'critical'},
-         {id:'t2',text:'備齊個人防護設備清單',assigneeId:'u8',due:addD(td,1),status:'待辦',priority:'urgent'},
-       ],
-       chat:[],
-       reads:{'u2':{read:true,time:'14:00'},'u4':{read:true,time:'14:30'},'u8':{read:false,time:null}},
-       votes:[]
-      },
-    ],
-    shifts:[
-      {id:'s1',date:td,shift:'morning',unit:'內科 3A 病房',
-       fromUserId:'u3',toUserId:'u6',
-       patients:'目前收治 22 床，3 位病患今日出院，1 位新入院等待床位。',
-       keyEvents:'床位 312 病患昨夜血壓偏低，已通報值班醫師處理，目前穩定。',
-       pending:'床位 315 待做胸腔 X 光，310 家屬要求談話。',
-       meds:'胰島素 Insulin 庫存剩 3 瓶，請補充。',
-       fromSigned:true,toSigned:false,createdAt:td+' 07:45'},
-      {id:'s2',date:addD(td,-1),shift:'afternoon',unit:'護理部 B棟',
-       fromUserId:'u6',toUserId:'u3',
-       patients:'共 18 床，均穩定。',
-       keyEvents:'無特殊事件。',
-       pending:'床位 205 換藥待做。',
-       meds:'無缺藥。',
-       fromSigned:true,toSigned:true,createdAt:addD(td,-1)+' 15:30'},
-    ],
-    announcements:[
-      {id:'a1',title:'⚠ 感染管控警示：流感 H3N2 上升',body:'本週流感 H3N2 確診病例較上週上升 23%，請全院加強手部衛生、確實佩戴口罩。急診、感染科病房加強負壓病室管理。',
-       authorId:'u2',time:td+' 08:00',pinned:true,category:'infection',infectionLevel:'orange',
-       reads:{'u2':true,'u3':false,'u4':false,'u5':false,'u6':false,'u7':false,'u8':false}},
-      {id:'a2',title:'四月份全院教育訓練',body:'訂於 4/20（日）09:00 舉辦急救更新訓練（ACLS），請各科室安排人員出席，缺席請提前申請代訓。',
-       authorId:'u7',time:addD(td,-1)+' 17:00',pinned:false,category:'general',infectionLevel:'',
-       reads:{'u2':true,'u3':true,'u4':false,'u5':false,'u6':true,'u7':true,'u8':false}},
-    ],
-    incidents:[
-      {id:'i1',title:'藥物給錯事件',description:'護理師A在換班期間，將床位 312 的 Metformin 500mg 給予床位 313 病患，患者無不良反應，已向主治醫師回報。',
-       reporterId:'u6',deptId:'d3',level:'3',status:'processing',date:addD(td,-1),
-       actions:'已向主治醫師回報，病患持續觀察中。填寫藥物錯誤報告表。',
-       followUp:'追蹤 24 小時觀察，加強換班核對流程。'},
-      {id:'i2',title:'跌倒意外：床位 215',description:'病患自行下床如廁時跌倒，無骨折，輕微擦傷。病患意識清楚，無失憶情形。',
-       reporterId:'u3',deptId:'d3',level:'2',status:'closed',date:addD(td,-3),
-       actions:'立即評估傷勢，通知家屬，醫師查房確認。',
-       followUp:'已完成。加裝床邊扶手，加強跌倒預防衛教。'},
-    ],
-    emergencies:[],
+    meetings:[],shifts:[],announcements:[],incidents:[],emergencies:[],
+    babies:[],rooms:[],formRequests:[],swapRequests:[],journals:[],
+    eduItems:[],titles_custom:[],formNotifs:[],messages:[],chatRooms:[],
+    equipment:[],patients:[],sops:[],inventory:[],inventoryLogs:[],
+    skillDefs:[],skillMatrix:{},leaves:[],leaveBalance:{},
   };
 }
 function addD(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().split('T')[0];}
@@ -408,6 +341,8 @@ function initApp(){
     setPage('home');
     checkPendingEmergency();
     setTimeout(showDailySummary, 800);
+    // 每天自動備份一次（靜默，不打擾使用者）
+    setTimeout(autoBackupDaily, 3000);
   });
 }
 function updateNavUser(){
@@ -1352,6 +1287,31 @@ function exportMeetingText(){
 }
 
 // ════════════════════════════════════════════════════════
+// ── 每日自動備份（靜默存至 Firebase backups/YYYY-MM-DD）──
+function autoBackupDaily(){
+  if(!fbDb || !currentUser) return;
+  var dateKey = today();
+  fbDb.ref('backups/' + dateKey + '/meta').once('value').then(function(snap){
+    if(snap.val()) return; // 今天已備份過，跳過
+    var snapshot = JSON.parse(JSON.stringify(store));
+    snapshot._backupAt = new Date().toISOString();
+    snapshot._backupBy = 'auto';
+    fbDb.ref('backups/' + dateKey).set(snapshot).then(function(){
+      console.log('[AutoBackup] 今日備份完成：' + dateKey);
+      // 只保留最近 30 天備份，刪除舊的
+      fbDb.ref('backups').orderByKey().once('value').then(function(s){
+        var keys = [];
+        s.forEach(function(c){ keys.push(c.key); });
+        if(keys.length > 30){
+          keys.slice(0, keys.length - 30).forEach(function(k){
+            fbDb.ref('backups/' + k).remove();
+          });
+        }
+      });
+    }).catch(function(e){ console.warn('[AutoBackup] 備份失敗', e); });
+  });
+}
+
 // 資料備份 / 還原
 // ════════════════════════════════════════════════════════
 
