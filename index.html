@@ -143,10 +143,30 @@
 <script src="modules/duty.js"></script>
 <script src="modules/journal.js"></script>
 <script src="modules/messages.js"></script>
+<script src="modules/patient.js"></script>
+<script src="modules/sop.js"></script>
+<script src="modules/inventory.js"></script>
+<script src="modules/skills.js"></script>
+<script src="modules/leave.js"></script>
 <div id="nocBadge" style="position:fixed;bottom:16px;right:16px;z-index:999;background:linear-gradient(135deg,rgba(58,13,32,0.92),rgba(107,32,64,0.92));border:1px solid rgba(212,175,55,0.35);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,0.2)"><div style="width:5px;height:5px;border-radius:50%;background:#d4af37;box-shadow:0 0 6px rgba(212,175,55,0.8)"></div><span style="font-size:10px;color:rgba(212,175,55,0.85);font-weight:700;letter-spacing:.1em;font-family:'Nunito',sans-serif">Noc</span></div>
 </div>
 
 <script>
+// F5 session restore: 如果 sessionStorage 有登入記錄，自動還原登入狀態
+(function tryRestoreSession() {
+  var savedId = sessionStorage.getItem('loggedInUserId');
+  if (!savedId) return;
+  var user = (store && store.users || []).find(function(u) { return u.id === savedId; });
+  if (!user) return;
+  // 找到使用者，自動還原
+  currentUser = user;
+  var ls = document.getElementById('loginScreen');
+  var as = document.getElementById('appShell');
+  if (ls) ls.style.display = 'none';
+  if (as) as.style.display = 'block';
+  initApp();
+})();
+
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
     navigator.serviceWorker.register('/sunghospital/sw.js').then(function(reg){

@@ -24,7 +24,8 @@ function normalizeStore(s) {
   if (!s) return s;
   ['meetings','users','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
-   'eduItems','titles','formNotifs','messages','chatRooms','equipment'].forEach(function(f) {
+   'eduItems','titles','formNotifs','messages','chatRooms','equipment',
+   'patients','sops','inventory','inventoryLogs','skillDefs','leaves'].forEach(function(f) {
     s[f] = normalizeArr(s[f]);
   });
   s.meetings.forEach(function(m) {
@@ -146,6 +147,7 @@ function doGoogleLogin() {
       saveStore();
     }
     currentUser = matched;
+    sessionStorage.setItem('loggedInUserId', matched.id);
     document.getElementById('loginErr').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appShell').style.display = 'block';
@@ -158,64 +160,57 @@ function doGoogleLogin() {
 }
 
 // Firebase sync in initApp (called after login)
-function startFirebaseSync() {
-  if (!fbDb) { setSyncDot(false); return; }
+// onReady: callback fired once the first cloud fetch completes (or immediately if no Firebase)
+function startFirebaseSync(onReady) {
+  if (!fbDb) { setSyncDot(false); if (onReady) onReady(); return; }
+
+  window._lastSelfSave = 0;
+  window._lastCloudSavedAt = 0;
 
   // 策略：永遠先從雲端拉最新資料
-  // 雲端有資料 → 用雲端（確保所有裝置看到同樣的東西）
-  // 雲端沒資料 → 把本地資料推上去（第一次初始化）
   fbDb.ref('store').once('value').then(function(snap) {
     var cloudData = snap.val();
-    if (cloudData && cloudData.users && Array.isArray(cloudData.users) && cloudData.users.length > 0) {
-      // 雲端有資料，以雲端為準
+    if (cloudData && cloudData.users && cloudData.users.length > 0) {
+      // 雲端有資料，以雲端為準（覆蓋本機 localStorage 舊快取）
       store = normalizeStore(cloudData);
       try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
       mergeNewLocal();
-      renderSidebar();
-      updateAnnBadge();
-      updateIrBadge();
-      updateMarquee();
+      window._lastCloudSavedAt = store._savedAt || 0;
     } else {
-      // 雲端是空的，把本地資料推上去
+      // 雲端是空的，把本地資料推上去（初始化）
       fbDb.ref('store').set(store).catch(function() {});
     }
 
-    // 即時監聽：只要雲端資料有變動就立刻更新本地
-    // 用 _savedAt 避免自己的儲存觸發自己更新
-    var mySaveTime = 0;
-    var _origSave = saveStore;
-    // 記錄每次自己存的時間
-    window._lastSelfSave = 0;
+    // 雲端資料就緒，通知呼叫者可以渲染頁面了
+    if (onReady) onReady();
 
+    // 即時監聽：只要雲端 _savedAt 有變動就重新拉取
     fbDb.ref('store/_savedAt').on('value', function(tSnap) {
       var cloudTime = tSnap.val() || 0;
-      // 如果是自己剛存的就跳過（避免無限循環）
+      window._lastCloudSavedAt = cloudTime;
+      // 跳過自己剛存的（避免無限循環）
       if (cloudTime === window._lastSelfSave) return;
       if (!currentUser) return;
 
-      // 雲端有新資料，拉下來
       fbDb.ref('store').once('value').then(function(dSnap) {
         var d = dSnap.val();
-        if (d && d.users && Array.isArray(d.users) && d.users.length > 0) {
-          var prevAnnLen=(store.announcements||[]).length;
-          var prevIrLen=(store.incidents||[]).length;
-          store = normalizeStore(d);
-          try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(ex) {}
-          mergeNewLocal();
-          // Toast 通知：有新公告或新緊急事件
-          var newAnns=(store.announcements||[]).length-prevAnnLen;
-          var newIrs=(store.incidents||[]).length-prevIrLen;
-          if(newAnns>0){var a=store.announcements[0];showToast('新公告',a?a.title:'','📢');}
-          if(newIrs>0){var ir=store.incidents&&store.incidents[0];showToast('新事件通報',ir?ir.title:'','🚨');}
-          // 更新當前頁面
-          if (currentPage === 'meetings' || !currentPage) {
-            renderSidebar();
-            if (currentMeetingId) renderMeetingMain();
-          }
-          updateAnnBadge();
-          updateIrBadge();
-          updateCalBadge();
-          updateMarquee();
+        if (!d || !d.users) return;
+        var prevAnnLen = (store.announcements||[]).length;
+        var prevIrLen  = (store.incidents||[]).length;
+        store = normalizeStore(d);
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(ex) {}
+        mergeNewLocal();
+        var newAnns = (store.announcements||[]).length - prevAnnLen;
+        var newIrs  = (store.incidents||[]).length  - prevIrLen;
+        if (newAnns > 0) { var a = store.announcements[0]; showToast('新公告', a ? a.title : '', '📢'); }
+        if (newIrs  > 0) { var ir = store.incidents[0];    showToast('新事件通報', ir ? ir.title : '', '🚨'); }
+        // 更新當前頁面（涵蓋所有分頁）
+        renderSidebar();
+        updateAnnBadge(); updateIrBadge(); updateCalBadge(); updateMarquee();
+        if (currentPage === 'meetings' || !currentPage) {
+          if (currentMeetingId) renderMeetingMain();
+        } else if (currentPage === 'home') {
+          setPage('home');
         }
       });
     });
@@ -223,6 +218,7 @@ function startFirebaseSync() {
     setSyncDot(true);
   }).catch(function() {
     setSyncDot(false);
+    if (onReady) onReady(); // Firebase 失敗仍要讓頁面渲染
   });
 }
 
@@ -379,6 +375,7 @@ function doLogin(){
   const user=store.users.find(u=>u.username===uname&&u.password===pass);
   if(!user){document.getElementById('loginErr').style.display='block';return;}
   currentUser=user;
+  sessionStorage.setItem('loggedInUserId', user.id); // 保存 session，F5 後自動還原
   document.getElementById('loginErr').style.display='none';
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('appShell').style.display='block';
@@ -386,19 +383,32 @@ function doLogin(){
 }
 function initApp(){
   applySettings();
-  mergeNewLocal(); // 只補欄位到 localStorage，不覆蓋 Firebase
-  startFirebaseSync(); // 先從雲端讀資料，之後再存回去
+  mergeNewLocal();
   updateNavUser();
   renderNav();
-  updateAnnBadge();updateIrBadge();updateCalBadge();updateNotifBadge((store.announcements||[]).filter(a=>!a.reads[currentUser&&currentUser.id]).length);
-  renderSidebar();setPage('home');
-  checkPendingEmergency();
   startClock();
   startPresence();
   initBrowserNotifications();
   initDarkModeAuto();
-  setInterval(updateShiftCountdown,60000);updateShiftCountdown();
-  setTimeout(showDailySummary, 800);
+  setInterval(updateShiftCountdown, 60000); updateShiftCountdown();
+
+  // 顯示同步畫面，等 Firebase 回傳後才渲染主內容
+  var _pc = document.getElementById('pageContainer');
+  if (_pc) _pc.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px">'
+    + '<div style="width:38px;height:38px;border:3px solid var(--b2);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite"></div>'
+    + '<div style="font-size:14px;font-weight:700;color:var(--text)">正在同步院內資料</div>'
+    + '<div style="font-size:11px;color:var(--faint)">連線中，請稍候…</div>'
+    + '</div>';
+
+  startFirebaseSync(function() {
+    // Firebase 資料就緒後才渲染
+    updateAnnBadge(); updateIrBadge(); updateCalBadge();
+    updateNotifBadge((store.announcements||[]).filter(function(a){ return !a.reads[currentUser && currentUser.id]; }).length);
+    renderSidebar();
+    setPage('home');
+    checkPendingEmergency();
+    setTimeout(showDailySummary, 800);
+  });
 }
 function updateNavUser(){
   if(!currentUser)return;
@@ -427,6 +437,7 @@ document.addEventListener('click',function(e){
   if(m&&!m.contains(e.target)&&u&&!u.contains(e.target))m.classList.remove('open');
 });
 function logout(){
+  sessionStorage.removeItem('loggedInUserId'); // 清除 session
   if(fbDb)fbDb.ref('store/_savedAt').off();
   if(fbAuth&&fbAuth.currentUser)fbAuth.signOut().catch(function(){});
   currentUser=null;currentMeetingId=null;
@@ -458,6 +469,8 @@ var NAV_GROUPS = [
       svg:'<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>'}
   ]},
   { id:'nursing', label:'護理管理', dot:'#5ba5e0', items:[
+    { id:'navPatient',  page:'patient',       label:'病患看板',
+      svg:'<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>'},
     { id:'navBaby',     page:'baby',          label:'寶寶牆',
       svg:'<path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-5 0-9 2.25-9 5v1h18v-1c0-2.75-4-5-9-5z"/>'},
     { id:'navDelivery', page:'delivery',      label:'產房狀態',
@@ -468,6 +481,10 @@ var NAV_GROUPS = [
       svg:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>'}
   ]},
   { id:'admin', label:'行政作業', dot:'#f0b429', items:[
+    { id:'navLeave',    page:'leave',         label:'請假管理',
+      svg:'<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>'},
+    { id:'navInventory',page:'inventory',     label:'庫存管理',
+      svg:'<path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>'},
     { id:'navForms',    page:'forms',         label:'表單簽核',
       svg:'<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>'},
     { id:'navMeetings', page:'meetings',      label:'會議紀錄',
@@ -478,6 +495,10 @@ var NAV_GROUPS = [
       svg:'<path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'}
   ]},
   { id:'system', label:'系統管理', dot:'#9b8fd4', items:[
+    { id:'navSop',      page:'sop',           label:'SOP 文件',
+      svg:'<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>'},
+    { id:'navSkills',   page:'skills',        label:'技能矩陣',
+      svg:'<path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>'},
     { id:'navStats',    page:'stats',         label:'統計報表',
       svg:'<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>'},
     { id:'navEdu',      page:'edu',           label:'衛教資料',
@@ -584,6 +605,11 @@ function setPage(page){
     else if(page==='messages'){hideSidebar();renderPageInMain(renderMessagesPage);}
     else if(page==='equipment'){hideSidebar();renderPageInMain(renderEquipmentPage);}
     else if(page==='kiosk'){hideSidebar();renderPageInMain(renderKioskPage);}
+    else if(page==='patient'){hideSidebar();renderPageInMain(renderPatientPage);}
+    else if(page==='sop'){hideSidebar();renderPageInMain(renderSopPage);}
+    else if(page==='inventory'){hideSidebar();renderPageInMain(renderInventoryPage);}
+    else if(page==='skills'){hideSidebar();renderPageInMain(renderSkillsPage);}
+    else if(page==='leave'){hideSidebar();renderPageInMain(renderLeavePage);}
   }
 }
 function renderPageInMain(fn){

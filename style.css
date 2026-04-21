@@ -74,6 +74,7 @@ body.dark .ann-card.infection-red{background:var(--red-bg)}
 .marquee-item:hover{color:#d4af37;text-decoration:underline}
 .marquee-sep{color:rgba(212,175,55,0.45);padding:0 12px;font-size:10px;user-select:none}
 @keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── Nav ── */
 /* ── Nav base ── */
@@ -1374,3 +1375,295 @@ input:focus,textarea:focus,select:focus{
 .board-img-preview-wrap{position:relative;display:inline-block;margin-top:8px}
 .board-img-preview{width:120px;height:90px;object-fit:cover;border-radius:var(--radius-sm);border:1.5px solid var(--b1)}
 .board-img-remove{position:absolute;top:-6px;right:-6px;background:var(--primary);color:#fff;border:none;border-radius:99px;width:20px;height:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+
+
+/* ════════════════════════════════════════════════════════
+   DESIGN SYSTEM V3 — 全面視覺升級
+   ════════════════════════════════════════════════════════ */
+
+/* ── 1. 全域呼吸空間 ── */
+.admin-content{padding:28px 32px !important}
+@media(max-width:768px){.admin-content{padding:18px 20px !important}}
+
+/* ── 2. Main header 升級 ── */
+.main-header{
+  padding:22px 32px !important;
+  background:linear-gradient(135deg,rgba(196,82,122,.09) 0%,rgba(155,143,212,.06) 50%,var(--surface) 100%) !important;
+  border-bottom:1px solid var(--b1) !important;
+}
+.main-header h1{
+  font-size:24px !important;
+  font-weight:900 !important;
+  letter-spacing:-.03em !important;
+  background:linear-gradient(135deg,var(--text) 0%,var(--primary) 60%,var(--lavender) 100%) !important;
+  -webkit-background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+  background-clip:text !important;
+}
+.main-header-meta{font-size:12px !important;color:var(--muted) !important;margin-top:4px !important}
+
+/* ── 3. Home page 全面美化 ── */
+.home-wrap{padding:32px 36px !important;max-width:940px !important}
+@media(max-width:768px){.home-wrap{padding:20px 18px !important}}
+.home-greeting{font-size:28px !important;font-weight:900 !important;letter-spacing:-.04em !important;line-height:1.2 !important;margin-bottom:6px !important}
+.home-sub{font-size:14px !important;margin-bottom:28px !important;color:var(--muted) !important}
+.home-grid{grid-template-columns:repeat(auto-fill,minmax(185px,1fr)) !important;gap:16px !important;margin-bottom:32px !important}
+
+.home-card{
+  background:var(--surface) !important;
+  border:1.5px solid var(--b1) !important;
+  border-radius:18px !important;
+  padding:22px 20px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:6px !important;
+  position:relative !important;
+  overflow:hidden !important;
+  box-shadow:0 2px 10px rgba(196,82,122,.05),0 1px 3px rgba(0,0,0,.04) !important;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,border-color .2s !important;
+}
+.home-card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--primary),var(--lavender));
+  border-radius:18px 18px 0 0;
+}
+.home-card:hover{
+  transform:translateY(-5px) !important;
+  box-shadow:0 12px 36px rgba(196,82,122,.16),0 4px 12px rgba(0,0,0,.07) !important;
+  border-color:rgba(196,82,122,.22) !important;
+}
+.home-card:active{transform:translateY(-2px) !important}
+.home-card-icon{
+  font-size:26px !important;line-height:1 !important;
+  width:46px !important;height:46px !important;
+  background:linear-gradient(135deg,var(--primary-light),rgba(155,143,212,.15)) !important;
+  border-radius:12px !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;
+  margin-bottom:4px !important;
+}
+.home-card-num{
+  font-size:34px !important;font-weight:900 !important;letter-spacing:-.04em !important;line-height:1 !important;
+  background:linear-gradient(135deg,var(--primary),var(--lavender)) !important;
+  -webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;
+}
+.home-card-label{font-size:12px !important;color:var(--muted) !important;font-weight:700 !important}
+.home-card-action{font-size:11px !important;color:var(--faint) !important;margin-top:auto !important}
+
+.home-section{
+  font-size:11px !important;font-weight:900 !important;color:var(--primary) !important;
+  text-transform:uppercase !important;letter-spacing:.14em !important;
+  margin-bottom:14px !important;margin-top:28px !important;
+  display:flex !important;align-items:center !important;gap:8px !important;
+}
+.home-section::before{
+  content:'';display:inline-block;width:4px;height:14px;
+  border-radius:99px;background:linear-gradient(180deg,var(--primary),var(--lavender));flex-shrink:0;
+}
+.home-quick-btn{
+  padding:10px 20px !important;font-size:13px !important;font-weight:700 !important;
+  border-radius:99px !important;border:1.5px solid var(--b2) !important;
+  background:var(--surface) !important;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.05) !important;
+}
+.home-quick-btn:hover{
+  background:linear-gradient(135deg,var(--primary-light),rgba(155,143,212,.12)) !important;
+  border-color:rgba(196,82,122,.35) !important;
+  transform:translateY(-3px) scale(1.02) !important;
+  box-shadow:0 8px 22px rgba(196,82,122,.18) !important;
+}
+.home-pend-row{
+  padding:13px 18px !important;border-radius:var(--radius) !important;
+  border:1.5px solid var(--b1) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.04) !important;
+  transition:all .18s !important;
+}
+.home-pend-row:hover{
+  border-color:rgba(196,82,122,.22) !important;
+  transform:translateX(4px) !important;
+  box-shadow:0 4px 16px rgba(196,82,122,.1) !important;
+}
+
+/* ── 4. Metric boxes ── */
+.metric-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:12px !important;margin-bottom:20px !important}
+.metric-box{
+  background:var(--surface) !important;border:1.5px solid var(--b1) !important;
+  border-radius:14px !important;padding:16px 14px !important;text-align:center !important;
+  position:relative !important;overflow:hidden !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.04) !important;transition:all .18s !important;
+}
+.metric-box::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--primary),var(--lavender));opacity:.5;
+}
+.metric-box:hover{
+  transform:translateY(-3px) scale(1.02) !important;
+  box-shadow:0 8px 24px rgba(196,82,122,.14) !important;
+  border-color:rgba(196,82,122,.2) !important;
+}
+.metric-num{font-size:28px !important;font-weight:900 !important;letter-spacing:-.04em !important;line-height:1.1 !important}
+.metric-lbl{font-size:11px !important;color:var(--muted) !important;margin-top:4px !important;font-weight:600 !important}
+
+/* ── 5. Stat cards ── */
+.stat-card{
+  background:var(--surface) !important;border:1.5px solid var(--b1) !important;
+  border-radius:16px !important;padding:20px 22px !important;
+  margin-bottom:16px !important;box-shadow:0 2px 10px rgba(0,0,0,.04) !important;transition:all .18s !important;
+}
+.stat-card:hover{transform:translateY(-2px) !important;box-shadow:0 8px 28px rgba(0,0,0,.08) !important}
+.stat-card-title{
+  font-size:13px !important;font-weight:800 !important;margin-bottom:16px !important;
+  padding:6px 12px !important;border-left:3px solid var(--primary) !important;
+  background:linear-gradient(90deg,rgba(196,82,122,.07),transparent) !important;
+  border-radius:0 6px 6px 0 !important;color:var(--text) !important;
+}
+
+/* ── 6. Tables ── */
+.table-wrap{border-radius:var(--radius) !important;box-shadow:0 2px 12px rgba(0,0,0,.05) !important;border:1.5px solid var(--b1) !important;overflow:hidden !important}
+th{
+  font-size:10.5px !important;font-weight:800 !important;letter-spacing:.07em !important;
+  padding:11px 16px !important;
+  background:linear-gradient(135deg,var(--s2),var(--s3)) !important;
+  color:var(--muted) !important;border-bottom:1.5px solid var(--b2) !important;
+}
+td{font-size:13px !important;padding:12px 16px !important;border-bottom:1px solid var(--b1) !important}
+tr:hover td{background:linear-gradient(90deg,rgba(196,82,122,.03),transparent) !important}
+tr:last-child td{border-bottom:none !important}
+
+/* ── 7. Cards ── */
+.card{border-radius:var(--radius) !important;padding:18px 20px !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;border:1.5px solid var(--b1) !important}
+.card:hover{border-color:rgba(196,82,122,.2) !important;box-shadow:0 8px 28px rgba(196,82,122,.1) !important;transform:translateY(-2px) !important}
+
+/* ── 8. Announcement cards ── */
+.ann-card{border-radius:var(--radius) !important;padding:20px 22px !important;box-shadow:0 2px 10px rgba(0,0,0,.04) !important;border:1.5px solid var(--b1) !important;margin-bottom:14px !important}
+.ann-card:hover{box-shadow:0 8px 28px rgba(196,82,122,.1) !important;transform:translateY(-2px) !important}
+.ann-title-text{font-size:15px !important;font-weight:800 !important}
+.ann-body{font-size:14px !important;line-height:1.75 !important}
+
+/* ── 9. Form inputs ── */
+.form-row label{font-size:11.5px !important;font-weight:800 !important;letter-spacing:.07em !important;color:var(--muted) !important;margin-bottom:6px !important}
+.form-row input,.form-row textarea,.form-row select{padding:11px 14px !important;font-size:14px !important;border:1.5px solid var(--b2) !important;background:var(--bg) !important}
+
+/* ── 10. Buttons ── */
+.btn-sm{padding:8px 18px !important;font-size:13px !important;font-weight:700 !important;letter-spacing:.01em !important;border-radius:99px !important}
+.btn-sm.primary{background:linear-gradient(135deg,#c4527a 0%,#d4699a 100%) !important;box-shadow:0 4px 14px rgba(196,82,122,.3) !important}
+.btn-sm.primary:hover{transform:translateY(-2px) !important;box-shadow:0 8px 24px rgba(196,82,122,.44) !important}
+.btn-save{padding:9px 22px !important;border-radius:99px !important;font-size:13px !important;font-weight:800 !important;background:linear-gradient(135deg,#c4527a 0%,#d4699a 100%) !important;box-shadow:0 4px 14px rgba(196,82,122,.3) !important}
+.btn-save:hover{transform:translateY(-2px) !important;box-shadow:0 8px 24px rgba(196,82,122,.44) !important}
+
+/* ── 11. Section label ── */
+.sec-label{font-size:11px !important;font-weight:900 !important;letter-spacing:.14em !important;margin-bottom:14px !important;margin-top:26px !important;color:var(--primary) !important}
+.sec-label::before{width:4px !important;height:14px !important}
+
+/* ── 12. Modal ── */
+.modal{padding:32px !important;border-radius:20px !important;box-shadow:0 24px 80px rgba(0,0,0,.18),0 8px 24px rgba(196,82,122,.1) !important;border:1.5px solid rgba(196,82,122,.12) !important}
+.modal h2{font-size:18px !important;font-weight:900 !important;margin-bottom:22px !important;letter-spacing:-.03em !important}
+.modal-footer{margin-top:26px !important;padding-top:18px !important}
+
+/* ── 13. Stats bar ── */
+.stat-item{padding:14px 20px !important}
+.stat-num{
+  font-size:26px !important;font-weight:900 !important;letter-spacing:-.04em !important;
+  background:linear-gradient(135deg,var(--primary),var(--lavender)) !important;
+  -webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;
+}
+.stat-label{font-size:11px !important;font-weight:700 !important;letter-spacing:.03em !important}
+
+/* ── 14. Tabs ── */
+.tab{padding:13px 18px !important;font-size:13px !important;font-weight:700 !important;letter-spacing:.01em !important}
+.tab.active{background:linear-gradient(180deg,var(--primary-light) 0%,transparent 100%) !important;border-bottom-color:var(--primary) !important;color:var(--primary) !important}
+
+/* ── 15. Task cards ── */
+.task-card{padding:15px 18px !important;border-radius:var(--radius) !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:8px !important}
+.task-card:hover{border-color:rgba(196,82,122,.2) !important;box-shadow:0 6px 20px rgba(196,82,122,.1) !important;transform:translateY(-2px) !important}
+.task-text{font-size:14px !important;font-weight:600 !important}
+
+/* ── 16. Handover cards ── */
+.handover-card{border-radius:var(--radius) !important;padding:18px 20px !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:12px !important}
+.hc-title{font-size:15px !important;font-weight:800 !important}
+
+/* ── 17. Meeting sidebar ── */
+.sidebar-head{padding:20px 16px 14px !important}
+.sidebar-head h2{font-size:16px !important;font-weight:800 !important}
+.meeting-item{padding:11px 14px !important;margin-bottom:3px !important}
+.mi-title{font-size:14px !important;font-weight:700 !important}
+
+/* ── 18. Dept cards ── */
+.dept-card{border-radius:var(--radius) !important;padding:16px 18px !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;transition:all .18s !important}
+.dept-card:hover{border-color:rgba(196,82,122,.2) !important;box-shadow:0 6px 20px rgba(196,82,122,.1) !important;transform:translateY(-2px) !important}
+.dept-card-name{font-size:15px !important;font-weight:800 !important}
+
+/* ── 19. Baby cards ── */
+.baby-ph{height:120px !important;font-size:48px !important}
+.baby-name{font-size:15px !important;font-weight:900 !important}
+.baby-grid{gap:14px !important}
+
+/* ── 20. IR cards ── */
+.ir-card{padding:16px 18px !important;border-radius:var(--radius) !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:10px !important;transition:all .18s !important}
+.ir-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.08) !important;transform:translateY(-1px) !important}
+
+/* ── 21. Profile menu ── */
+.profile-menu{border-radius:var(--radius) !important;padding:10px !important;box-shadow:0 8px 32px rgba(0,0,0,.14) !important;border:1.5px solid var(--b1) !important}
+.pm-item{border-radius:var(--radius-sm) !important;padding:9px 12px !important;font-size:13px !important;font-weight:600 !important}
+
+/* ── 22. Dark mode ── */
+body.dark .metric-box{background:var(--s2) !important;border-color:var(--b1) !important}
+body.dark .home-card{background:var(--surface) !important;border-color:var(--b1) !important}
+body.dark .home-card-icon{background:linear-gradient(135deg,rgba(196,82,122,.15),rgba(155,143,212,.12)) !important}
+body.dark th{background:linear-gradient(135deg,var(--s2),var(--s3)) !important}
+body.dark .main-header{background:linear-gradient(135deg,rgba(196,82,122,.06) 0%,rgba(155,143,212,.04) 50%,var(--surface) 100%) !important}
+
+/* ── 23. Notif panel ── */
+.notif-head{padding:20px 18px !important;font-size:16px !important;font-weight:800 !important;background:linear-gradient(135deg,rgba(196,82,122,.06),var(--surface)) !important}
+.notif-item{padding:14px 18px !important}
+.notif-item-title{font-size:13px !important;font-weight:700 !important}
+
+/* ── 24. Empty state ── */
+.empty-state{padding:64px 24px !important}
+.empty-state-title{font-size:17px !important;font-weight:800 !important}
+.empty-state-desc{font-size:14px !important}
+
+/* ── 25. Toast ── */
+.toast{padding:14px 18px !important;min-width:240px !important;max-width:340px !important;box-shadow:0 8px 32px rgba(196,82,122,.22) !important;border:1.5px solid rgba(196,82,122,.15) !important}
+.toast-title{font-size:13px !important;font-weight:800 !important}
+
+/* ── 26. Badges ── */
+.prio{font-size:11.5px !important;padding:4px 10px !important;font-weight:700 !important}
+.ir-level{font-size:11.5px !important;padding:4px 10px !important;font-weight:700 !important}
+.shift-badge{font-size:12px !important;padding:4px 11px !important;font-weight:700 !important}
+
+/* ── 27. Charts ── */
+.chart-wrap{border-radius:var(--radius) !important;padding:20px 22px !important;box-shadow:0 2px 12px rgba(0,0,0,.05) !important;border:1.5px solid var(--b1) !important}
+.chart-title{font-size:14px !important;font-weight:800 !important;margin-bottom:16px !important}
+
+/* ── 28. Form request / Eq cards ── */
+.frq-card{border-radius:var(--radius) !important;padding:16px 18px !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important}
+.frq-card:hover{border-color:rgba(196,82,122,.2) !important;box-shadow:0 8px 24px rgba(196,82,122,.1) !important;transform:translateY(-2px) !important}
+.eq-card{border-radius:var(--radius) !important;padding:16px 18px !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:12px !important}
+
+/* ── 29. Board cards ── */
+.board-card{border-radius:var(--radius) !important;padding:18px 20px !important;box-shadow:0 2px 10px rgba(0,0,0,.04) !important;border:1.5px solid var(--b1) !important;margin-bottom:16px !important}
+.board-card:hover{box-shadow:0 10px 32px rgba(196,82,122,.14) !important;transform:translateY(-2px) !important;border-color:rgba(196,82,122,.18) !important}
+
+/* ── 30. Vote cards ── */
+.vote-card{border-radius:var(--radius) !important;padding:18px 20px !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:12px !important}
+.vote-question{font-size:15px !important;font-weight:800 !important}
+
+/* ── 31. Edu cards ── */
+.ecard{border-radius:var(--radius) !important;padding:16px 18px !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:10px !important}
+.ecard:hover{border-color:rgba(196,82,122,.2) !important;box-shadow:0 8px 24px rgba(196,82,122,.1) !important}
+.eico{border-radius:12px !important;width:42px !important;height:42px !important;font-size:22px !important}
+.etitle{font-size:14px !important;font-weight:800 !important}
+
+/* ── 32. Person cards ── */
+.person-card{border-radius:var(--radius) !important;padding:16px 18px !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;margin-bottom:10px !important}
+.person-card:hover{border-color:rgba(196,82,122,.18) !important;box-shadow:0 6px 20px rgba(196,82,122,.1) !important}
+
+/* ── 33. Kiosk ── */
+.kiosk-card{border-radius:var(--radius) !important;border:1.5px solid var(--b1) !important;box-shadow:0 2px 8px rgba(0,0,0,.04) !important;padding:20px !important}
+.kiosk-card-value{background:linear-gradient(135deg,var(--primary),var(--lavender)) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important}
+
+/* ── 34. Swcard / jcard ── */
+.swcard{border-radius:var(--radius) !important;padding:14px 16px !important;border:1.5px solid var(--b1) !important;margin-bottom:8px !important}
+.jcard{border-radius:var(--radius) !important;padding:16px 18px !important;border:1.5px solid var(--b1) !important;margin-bottom:10px !important}
