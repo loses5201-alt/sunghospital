@@ -1220,19 +1220,83 @@ function renderHomePage(c){
   else if(hr>=18&&hr<22)greet='晚安 🌙';
   else greet='夜深了，注意休息 🌛';
   var todayStr=today();
-  var unreadAnn=(store.announcements||[]).filter(function(a){return !a.reads[currentUser.id];}).length;
-  var allTasks=(store.meetings||[]).flatMap(function(m){return m.tasks||[];});
-  var myTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';}).length;
-  var newBabies=(store.babies||[]).filter(function(b){return b.born&&b.born.startsWith(todayStr);}).length;
-  var deliveries=(store.rooms||[]).filter(function(r){return r.status&&r.status!=='空床';}).length;
   var myShift=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][todayStr])||'';
   var shiftInfo=SHINFO[myShift];
+  var allTasks=(store.meetings||[]).flatMap(function(m){return(m.tasks||[]).map(function(t){return Object.assign({},t,{meetingTitle:m.title});});});
+  var myPendTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';});
   var pendForms=(store.formRequests||[]).filter(function(f){return f.status==='pending'&&isApp(f);});
 
-  // Stat cards
+  // ── 需要處理 Alert Board ──
+  var alerts=[];
+  // Overdue / due-today tasks
+  myPendTasks.forEach(function(t){
+    var overdue=t.due&&t.due<todayStr;
+    var dueToday=t.due===todayStr;
+    if(overdue) alerts.push({level:0,tag:'已逾期',tagCls:'tag-urgent',icon:'🔴',text:esc(t.text),sub:'截止 '+fmtDate(t.due)+(t.meetingTitle?' · 會議：'+esc(t.meetingTitle):''),action:"setPage('meetings')"});
+    else if(dueToday) alerts.push({level:1,tag:'今日到期',tagCls:'tag-warn',icon:'🟡',text:esc(t.text),sub:'今天截止'+(t.meetingTitle?' · 會議：'+esc(t.meetingTitle):''),action:"setPage('meetings')"});
+  });
+  // Urgent unread announcements
+  (store.announcements||[]).forEach(function(a){
+    if(a.urgent&&(!a.reads||!a.reads[currentUser.id]))
+      alerts.push({level:0,tag:'緊急公告',tagCls:'tag-ann',icon:'📢',text:esc(a.title),sub:'點擊查看詳情',action:"setPage('announcements')"});
+  });
+  // Pending leave approvals
+  if(hasPerm('approveLeave')){
+    var pendLeaves=(store.leaves||[]).filter(function(l){return l.status==='pending';});
+    if(pendLeaves.length) alerts.push({level:1,tag:'待審假單',tagCls:'tag-pend',icon:'📋',text:'有 '+pendLeaves.length+' 筆請假申請待審核',sub:'',action:"setPage('leave')"});
+  }
+  // Pending form approvals
+  if(pendForms.length) alerts.push({level:1,tag:'待我簽核',tagCls:'tag-pend',icon:'✍️',text:'有 '+pendForms.length+' 份表單待您簽核',sub:pendForms.slice(0,2).map(function(f){return esc(f.title);}).join('、'),action:"setPage('forms')"});
+  // Pending swap approvals
+  if(hasPerm('manageSchedule')){
+    var pendSwaps=(store.swapRequests||[]).filter(function(s){return s.status==='pending';});
+    if(pendSwaps.length) alerts.push({level:1,tag:'換班申請',tagCls:'tag-swap',icon:'🔄',text:'有 '+pendSwaps.length+' 筆換班申請待核准',sub:'',action:"setPage('duty')"});
+  }
+  // Low inventory
+  if(hasPerm('manageInventory')){
+    var lowInv=(store.inventory||[]).filter(function(i){return i.minQty!=null&&Number(i.quantity)<=Number(i.minQty);});
+    if(lowInv.length) alerts.push({level:1,tag:'庫存不足',tagCls:'tag-warn',icon:'📦',text:'有 '+lowInv.length+' 項物品庫存低於安全量',sub:lowInv.slice(0,3).map(function(i){return esc(i.name);}).join('、'),action:"setPage('inventory')"});
+  }
+  // Open incidents
+  if(hasPerm('manageIR')){
+    var openIR=(store.incidents||[]).filter(function(i){return i.status!=='closed'&&i.status!=='已結案';});
+    if(openIR.length) alerts.push({level:2,tag:'事件報告',tagCls:'tag-ir',icon:'⚠️',text:'有 '+openIR.length+' 件事件報告尚未結案',sub:'',action:"setPage('incidents')"});
+  }
+  // My form/leave status updates (recently approved/rejected)
+  (store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id&&(f.status==='approved'||f.status==='rejected');}).slice(0,3).forEach(function(f){
+    var ok=f.status==='approved';
+    alerts.push({level:2,tag:ok?'表單核准':'表單駁回',tagCls:ok?'tag-ok':'tag-rej',icon:ok?'✅':'❌',text:esc(f.title),sub:ok?'申請已核准':'申請已駁回，請確認原因',action:"setPage('forms')"});
+  });
+  (store.leaves||[]).filter(function(l){return l.userId===currentUser.id&&(l.status==='approved'||l.status==='rejected');}).slice(0,2).forEach(function(l){
+    var ok=l.status==='approved';
+    var lt=(typeof LEAVE_TYPES!=='undefined'?LEAVE_TYPES:[]).find(function(x){return x.id===l.type;});
+    alerts.push({level:2,tag:ok?'假單核准':'假單駁回',tagCls:ok?'tag-ok':'tag-rej',icon:ok?'✅':'❌',text:(lt?lt.label:'請假')+' '+fmtDate(l.startDate)+' ~ '+fmtDate(l.endDate),sub:'',action:"setPage('leave')"});
+  });
+  // General unread announcements
+  var unreadNormalAnn=(store.announcements||[]).filter(function(a){return !a.reads||!a.reads[currentUser.id];}).length;
+  if(unreadNormalAnn) alerts.push({level:3,tag:'未讀公告',tagCls:'tag-ann',icon:'📢',text:'有 '+unreadNormalAnn+' 則公告尚未閱讀',sub:'',action:"setPage('announcements')"});
+  // General pending tasks
+  var generalPendTasks=myPendTasks.filter(function(t){return !t.due||t.due>todayStr;}).length;
+  if(generalPendTasks) alerts.push({level:3,tag:'我的待辦',tagCls:'tag-task',icon:'✅',text:'有 '+generalPendTasks+' 項待辦任務尚未完成',sub:'',action:"setPage('meetings')"});
+
+  alerts.sort(function(a,b){return a.level-b.level;});
+  var alertsHtml=alerts.length
+    ?alerts.map(function(a){
+        return '<div class="home-alert-item" onclick="'+a.action+'">'
+          +'<div class="home-alert-icon">'+a.icon+'</div>'
+          +'<div class="home-alert-body"><div class="home-alert-text">'+a.text+'</div>'
+          +(a.sub?'<div class="home-alert-sub">'+a.sub+'</div>':'')
+          +'</div><span class="home-alert-tag '+a.tagCls+'">'+a.tag+'</span></div>';
+      }).join('')
+    :'<div class="home-alert-empty">🎉 太棒了！目前沒有待處理的事項</div>';
+
+  // ── Stat cards ──
+  var unreadAnn=(store.announcements||[]).filter(function(a){return !a.reads||!a.reads[currentUser.id];}).length;
+  var newBabies=(store.babies||[]).filter(function(b){return b.born&&b.born.startsWith(todayStr);}).length;
+  var deliveries=(store.rooms||[]).filter(function(r){return r.status&&r.status!=='空床';}).length;
   var cards=[
     {icon:'📢',num:unreadAnn,label:'未讀公告',page:'announcements',color:'#c4527a'},
-    {icon:'✅',num:myTasks,label:'我的待辦',page:'meetings',color:'var(--amber)'},
+    {icon:'✅',num:myPendTasks.length,label:'我的待辦',page:'meetings',color:'var(--amber)'},
     {icon:'🍼',num:newBabies,label:'今日新生兒',page:'baby',color:'var(--teal)'},
     {icon:'🛏️',num:deliveries,label:'使用中床位',page:'delivery',color:'var(--blue)'},
     {icon:'📝',num:pendForms.length,label:'待我簽核',page:'forms',color:'var(--red)'},
@@ -1245,19 +1309,7 @@ function renderHomePage(c){
       +'<div class="home-card-action">點擊查看 →</div></div>';
   }).join('');
 
-  // Quick actions
-  var quickDefs=[
-    {icon:'📋',label:'新增會議',fn:"setPage('meetings');setTimeout(openNewMeeting,80)"},
-    {icon:'📋',label:'申請表單',fn:"setPage('forms');setTimeout(openNewFrm,80)"},
-    {icon:'📝',label:'今日日誌',fn:"setPage('journal');setTimeout(openNewJ,80)"},
-    {icon:'⌨️',label:'快捷鍵',fn:'openShortcuts()'},
-  ];
-  var quickHtml=quickDefs.map(function(b){
-    return '<button class="home-quick-btn" onclick="'+b.fn+'"><span>'+b.icon+'</span>'+b.label+'</button>';
-  }).join('');
-  if(hasPerm('publishAnn')){quickHtml+='<button class="home-quick-btn" onclick="setPage(\'announcements\');setTimeout(openAddAnn,80)"><span>📢</span>發布公告</button>';}
-
-  // Week duty strip
+  // ── Week duty strip ──
   var wk=getWk();
   var weekHtml=wk.map(function(d,i){
     var sh=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][d])||'off';
@@ -1271,35 +1323,48 @@ function renderHomePage(c){
       +'</div>';
   }).join('');
 
-  // My urgent tasks (top 3)
-  var urgentTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';})
-    .sort(function(a,b){
-      var po={critical:0,urgent:1,normal:2};
-      return (po[a.priority]||2)-(po[b.priority]||2)||(a.due||'').localeCompare(b.due||'');
-    }).slice(0,3);
-  var tasksHtml=urgentTasks.map(function(t){
-    var overdue=t.due&&t.due<todayStr;
-    var dueToday=t.due===todayStr;
-    var dueLabel=t.due?('<span style="font-size:10px;color:'+(overdue?'var(--red)':dueToday?'var(--amber)':'var(--faint)')+'">'+( overdue?'已逾期 ':'截止 ')+fmtDate(t.due)+'</span>'):'';
-    var priDot=t.priority==='critical'?'🔴':t.priority==='urgent'?'🟡':'⚪';
-    return '<div class="home-task-row">'+priDot+' <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.text)+'</div>'+dueLabel+'</div></div>';
-  }).join('');
-  var tasksSection=urgentTasks.length
-    ?'<div class="home-section" style="display:flex;align-items:center;justify-content:space-between"><span>我的待辦任務</span><span style="font-size:11px;font-weight:400;color:var(--primary);cursor:pointer" onclick="showMyTasks()">全部 ›</span></div>'
-      +'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">'+(tasksHtml||'')+'</div>'
-    :'';
+  // ── Upcoming meetings this week ──
+  var upcomingMtgs=(store.meetings||[]).filter(function(m){
+    return m.date&&m.date>=todayStr&&m.date<=wk[6]&&(m.attendees||[]).indexOf(currentUser.id)>=0;
+  }).sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).slice(0,5);
+  var mtgHtml=upcomingMtgs.length
+    ?upcomingMtgs.map(function(m){
+        var isToday2=m.date===todayStr;
+        var doneC=(m.tasks||[]).filter(function(t){return t.status==='已完成';}).length;
+        var totalC=(m.tasks||[]).length;
+        return '<div class="home-mtg-item" onclick="setPage(\'meetings\')">'
+          +'<div class="home-mtg-dot'+(isToday2?' home-mtg-today':'')+'"></div>'
+          +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title)+'</div>'
+          +'<div style="font-size:11px;color:var(--muted)">'+(isToday2?'今天 ':'')+(m.time||'')+' '+fmtDate(m.date)+(m.location?' · '+esc(m.location):'')+'</div></div>'
+          +(totalC?'<div style="font-size:11px;color:var(--faint);flex-shrink:0">'+doneC+'/'+totalC+'</div>':'')
+          +'</div>';
+      }).join('')
+    :'<div style="font-size:12px;color:var(--faint);padding:8px 0">本週無安排會議</div>';
 
-  // Journal streak + my recent forms (two columns)
+  // ── Quick actions ──
+  var quickDefs=[
+    {icon:'📋',label:'新增會議',fn:"setPage('meetings');setTimeout(openNewMeeting,80)"},
+    {icon:'📝',label:'申請表單',fn:"setPage('forms');setTimeout(openNewFrm,80)"},
+    {icon:'📖',label:'今日日誌',fn:"setPage('journal');setTimeout(openNewJ,80)"},
+    {icon:'🏥',label:'申請換班',fn:"setPage('duty');setTimeout(openNewSw,80)"},
+  ];
+  if(hasPerm('publishAnn')) quickDefs.push({icon:'📢',label:'發布公告',fn:"setPage('announcements');setTimeout(openAddAnn,80)"});
+  if(hasPerm('manageSchedule')) quickDefs.push({icon:'📅',label:'編輯排班',fn:"setPage('duty');setTimeout(openDA,80)"});
+  if(isAdmin()||isPowerUser()) quickDefs.push({icon:'⚙️',label:'系統管理',fn:"setPage('users')"});
+  var quickHtml=quickDefs.map(function(b){
+    return '<button class="home-quick-btn" onclick="'+b.fn+'"><span>'+b.icon+'</span>'+b.label+'</button>';
+  }).join('');
+
+  // ── Journal streak + My recent forms ──
   var streak=calcJournalStreak(currentUser.id);
   var streakHtml='<div class="home-streak">'+(streak>0?'🔥 連續記錄 '+streak+' 天':'📝 今天記錄日誌吧')+'</div>';
-  var myForms=(store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id;}).slice(0,3);
+  var myForms=(store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id;}).slice(0,4);
   var formsHtml=myForms.map(function(f){
     var stCls={approved:'fst-a',rejected:'fst-r',withdrawn:'fst-w',pending:'fst-p'}[f.status]||'fst-p';
     var stTxt={approved:'✓ 核准',rejected:'✗ 駁回',withdrawn:'↩ 撤回',pending:'⏳ 待審'}[f.status]||'待審';
     return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b1)">'
       +'<div style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.title)+'</div>'
-      +'<span class="'+stCls+'" style="font-size:10px;flex-shrink:0">'+stTxt+'</span>'
-      +'</div>';
+      +'<span class="'+stCls+'" style="font-size:10px;flex-shrink:0">'+stTxt+'</span></div>';
   }).join('');
   var sideSection='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'
     +'<div><div class="sec-label" style="margin-bottom:6px">日誌紀錄</div>'+streakHtml
@@ -1309,10 +1374,10 @@ function renderHomePage(c){
       +'<button class="home-quick-btn" style="margin-top:8px;width:100%;justify-content:center" onclick="setPage(\'forms\')">查看全部</button></div>'
     +'</div>';
 
-  // Pending forms (sign panel)
+  // ── Pending forms inline approval panel ──
   var pendHtml='';
   if(pendForms.length){
-    var prows=pendForms.map(function(f){
+    var prows=pendForms.slice(0,5).map(function(f){
       var ft=FTYPES[f.type]||FTYPES.other;
       return '<div class="home-pend-row">'
         +'<span class="ftype '+ft.c+'" style="flex-shrink:0">'+ft.l+'</span>'
@@ -1328,9 +1393,9 @@ function renderHomePage(c){
       +'<div class="home-pend-list">'+prows+'</div>';
   }
 
-  // Admin summary bar
+  // ── Admin / Power summary bar ──
   var adminBarHtml='';
-  if(isAdmin()){
+  if(isAdmin()||isPowerUser()){
     var pendAll=(store.formRequests||[]).filter(function(f){return f.status==='pending';}).length;
     var unreadNotifs=(store.formNotifs||[]).filter(function(n){return!n.read;}).length;
     var activeRooms=(store.rooms||[]).filter(function(r){return r.status==='active';}).length;
@@ -1338,7 +1403,7 @@ function renderHomePage(c){
       +'<span>🏥 生產中 <strong>'+activeRooms+'</strong> 間</span>'
       +'<span>📋 待審表單 <strong>'+pendAll+'</strong></span>'
       +'<span>🔔 未讀通知 <strong>'+unreadNotifs+'</strong></span>'
-      +'<span onclick="setPage(\'users\')" style="cursor:pointer;color:var(--primary)">⚙️ 系統管理 ›</span>'
+      +(isAdmin()?'<span onclick="setPage(\'users\')" style="cursor:pointer;color:var(--primary)">⚙️ 系統管理 ›</span>':'')
       +'</div>';
   }
 
@@ -1348,15 +1413,18 @@ function renderHomePage(c){
     +'<div class="home-sub">今天是 '+todayStr
     +(shiftInfo?'<span class="home-duty-badge" style="background:var(--s2);margin-left:10px">'+shiftInfo.l+'</span>':'<span class="home-duty-badge" style="background:var(--s2);color:var(--faint);margin-left:10px">未排班</span>')
     +'</div>'
-    +'<div class="home-section">今日概覽</div>'
-    +'<div class="home-grid">'+cardsHtml+'</div>'
+    +'<div class="home-section">需要處理 '+(alerts.length?'<span style="font-size:10px;background:var(--red-bg);color:var(--red);padding:1px 8px;border-radius:99px;font-weight:700;text-transform:none;letter-spacing:0">'+alerts.length+'</span>':'')+'</div>'
+    +'<div class="home-alert-list">'+alertsHtml+'</div>'
     +'<div class="home-section">本週班表</div>'
     +'<div class="home-week-strip">'+weekHtml+'</div>'
     +'<div class="home-section">快速操作</div>'
     +'<div class="home-quick">'+quickHtml+'</div>'
-    +tasksSection
-    +sideSection
+    +'<div class="home-section">今日概覽</div>'
+    +'<div class="home-grid">'+cardsHtml+'</div>'
+    +'<div class="home-section">本週會議 <span style="font-size:11px;font-weight:400;color:var(--primary);text-transform:none;letter-spacing:0;cursor:pointer" onclick="setPage(\'meetings\')">全部 ›</span></div>'
+    +'<div class="home-mtg-list">'+mtgHtml+'</div>'
     +pendHtml
+    +sideSection
     +'<div id="chartsSection"></div>'
     +'</div>';
   setTimeout(function(){animateNumbers(c);renderCharts(c);},60);

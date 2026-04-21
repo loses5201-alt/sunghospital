@@ -1852,3 +1852,33 @@ body.dark .add-task-area{background:var(--s2) !important;border-color:var(--b2) 
   font-weight:700 !important;
   border-radius:99px !important;
 }
+
+/* ── 首頁 Alert Board ── */
+.home-alert-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px}
+.home-alert-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);box-shadow:var(--shadow);cursor:pointer;transition:all var(--t-fast)}
+.home-alert-item:hover{border-color:rgba(196,82,122,.22);transform:translateX(3px);box-shadow:var(--shadow-md)}
+.home-alert-icon{font-size:18px;flex-shrink:0;width:24px;text-align:center}
+.home-alert-body{flex:1;min-width:0}
+.home-alert-text{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-alert-sub{font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-alert-tag{font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;flex-shrink:0;white-space:nowrap}
+.home-alert-empty{text-align:center;padding:20px;font-size:13px;color:var(--muted);background:var(--green-bg);border-radius:var(--radius);border:1px solid var(--green-light)}
+/* Alert tag color variants */
+.tag-urgent{background:#fce8e8;color:#952020}
+.tag-warn{background:#fdf0dc;color:#8f5208}
+.tag-ann{background:var(--primary-light);color:var(--primary-dark)}
+.tag-pend{background:#fdf0dc;color:#8f5208}
+.tag-swap{background:var(--lavender-bg);color:#5530a8}
+.tag-ok{background:var(--green-bg);color:var(--green)}
+.tag-rej{background:#fce8e8;color:#952020}
+.tag-ir{background:#fdeede;color:#a04010}
+.tag-task{background:var(--blue-bg);color:var(--blue)}
+body.dark .home-alert-item{background:var(--surface)}
+body.dark .home-alert-empty{background:var(--s2);border-color:var(--b2)}
+
+/* ── 首頁本週會議 ── */
+.home-mtg-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.home-mtg-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm);cursor:pointer;transition:all var(--t-fast)}
+.home-mtg-item:hover{border-color:rgba(196,82,122,.2);transform:translateX(3px)}
+.home-mtg-dot{width:9px;height:9px;border-radius:50%;background:var(--b2);flex-shrink:0}
+.home-mtg-today{background:var(--primary) !important;box-shadow:0 0 0 3px var(--primary-light)}
