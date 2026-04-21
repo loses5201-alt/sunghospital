@@ -75,14 +75,7 @@ function exportFormsCSV(){
   });
   exportCSV(rows,'表單申請_'+today()+'.csv');
 }
-function exportDutyCSV(){
-  var wk=getWk();
-  var rows=[['姓名'].concat(wk.map(fmtDate))];
-  store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';}).forEach(function(u){
-    rows.push([u.name].concat(wk.map(function(d){return(store.dutySchedule&&store.dutySchedule[u.id]&&store.dutySchedule[u.id][d])||'off';})));
-  });
-  exportCSV(rows,'值班表_'+today()+'.csv');
-}
+// exportDutyCSV defined in modules/duty.js
 
 // ══════════════════════════════════════════
 // UTILITY: Browser Notifications
@@ -1272,6 +1265,9 @@ function renderHomePage(c){
     var lt=(typeof LEAVE_TYPES!=='undefined'?LEAVE_TYPES:[]).find(function(x){return x.id===l.type;});
     alerts.push({level:2,tag:ok?'假單核准':'假單駁回',tagCls:ok?'tag-ok':'tag-rej',icon:ok?'✅':'❌',text:(lt?lt.label:'請假')+' '+fmtDate(l.startDate)+' ~ '+fmtDate(l.endDate),sub:'',action:"setPage('leave')"});
   });
+  // Pending shift signature
+  var pendShifts=(store.shifts||[]).filter(function(s){return s.toUserId===currentUser.id&&!s.toSigned;});
+  if(pendShifts.length) alerts.push({level:1,tag:'待簽交班',tagCls:'tag-pend',icon:'📝',text:'有 '+pendShifts.length+' 筆交班紀錄待您簽收',sub:pendShifts.slice(0,2).map(function(s){return esc(s.unit)+' '+fmtDate(s.date);}).join('、'),action:"setPage('shift')"});
   // Pending equipment reports (user submitted)
   var myEqPending=(store.equipment||[]).filter(function(e){return e.reportedBy===currentUser.id&&e.status!=='resolved';});
   if(myEqPending.length) alerts.push({level:2,tag:'設備回報',tagCls:'tag-ir',icon:'🔧',text:'您有 '+myEqPending.length+' 筆設備回報尚未解決',sub:myEqPending.slice(0,2).map(function(e){return esc(e.name);}).join('、'),action:"setPage('equipment')"});

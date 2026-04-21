@@ -1882,3 +1882,189 @@ body.dark .home-alert-empty{background:var(--s2);border-color:var(--b2)}
 .home-mtg-item:hover{border-color:rgba(196,82,122,.2);transform:translateX(3px)}
 .home-mtg-dot{width:9px;height:9px;border-radius:50%;background:var(--b2);flex-shrink:0}
 .home-mtg-today{background:var(--primary) !important;box-shadow:0 0 0 3px var(--primary-light)}
+
+/* ══════════════════════════════════════════════════
+   值班表 — 班別標籤
+══════════════════════════════════════════════════ */
+.sh-m,.sh-a,.sh-n,.sh-oc,.sh-tr,.sh-leave,.sh-off{
+  display:inline-block;padding:3px 10px;border-radius:99px;
+  font-size:11px;font-weight:700;white-space:nowrap;
+}
+.sh-m   {background:#fef3c7;color:#b45309}
+.sh-a   {background:#dbeafe;color:#1d4ed8}
+.sh-n   {background:#ede9fe;color:#4f46e5}
+.sh-oc  {background:var(--primary-light);color:var(--primary-dark)}
+.sh-tr  {background:#d1fae5;color:#065f46}
+.sh-off {background:var(--s2);color:var(--muted)}
+.sh-leave{background:#fce8e8;color:#952020}
+
+/* ══════════════════════════════════════════════════
+   值班表 — 週排班格
+══════════════════════════════════════════════════ */
+.new-duty-grid{
+  display:grid;
+  /* 姓名欄固定 130px，其餘 7 天均分 */
+  grid-template-columns:130px repeat(7,1fr);
+  border-left:1px solid var(--b1);
+  border-top:1px solid var(--b1);
+}
+.duty-grid-hdr{display:contents}
+.dcell{
+  border-right:1px solid var(--b1);
+  border-bottom:1px solid var(--b1);
+  padding:8px 6px;
+  font-size:12px;
+  background:var(--surface);
+  transition:background .12s;
+  display:flex;align-items:center;
+}
+.dc-hd{
+  background:var(--s2) !important;
+  flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:8px 4px;gap:2px;
+}
+.dc-corner{font-weight:800;font-size:12px;justify-content:center}
+.dc-today{background:var(--primary-light) !important;color:var(--primary-dark)}
+.dc-warn {background:#fff8f0 !important}
+body.dark .dc-warn{background:#2a2010 !important}
+.dc-today-cell{background:var(--primary-light) !important}
+.dc-my-cell{background:#fdf5f8 !important}
+body.dark .dc-my-cell{background:#2a1820 !important}
+.dc-rl{
+  position:sticky;left:0;z-index:1;
+  background:var(--surface) !important;
+  display:flex;align-items:center;gap:6px;
+  padding:8px 10px;font-size:12px;
+}
+.dc-my-rl{background:#fdf5f8 !important;font-weight:800}
+body.dark .dc-my-rl{background:#2a1820 !important}
+
+/* 人力標籤 */
+.duty-cov-row{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:3px}
+.dcov{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:4px;
+  font-size:10px;font-weight:800;
+}
+.dcov-m {background:#fef3c7;color:#b45309}
+.dcov-a {background:#dbeafe;color:#1d4ed8}
+.dcov-n {background:#ede9fe;color:#4f46e5}
+.dcov-oc{background:var(--primary-light);color:var(--primary-dark)}
+
+/* 備註小晶片 */
+.duty-note-chip{
+  font-size:9px;color:var(--primary);background:var(--primary-light);
+  border-radius:4px;padding:2px 5px;margin-top:3px;
+  max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.duty-add-note{
+  font-size:9px;color:var(--muted);cursor:pointer;margin-top:2px;
+  padding:1px 4px;border-radius:3px;transition:background .1s;
+}
+.duty-add-note:hover{background:var(--s2);color:var(--primary)}
+
+/* 週導覽列 */
+.duty-week-nav{
+  display:flex;align-items:center;gap:8px;
+  background:var(--s2);border-radius:var(--radius-sm);padding:4px 8px;
+}
+.duty-legend{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+
+/* ══════════════════════════════════════════════════
+   值班表 — 月曆
+══════════════════════════════════════════════════ */
+.duty-month-grid{border:1px solid var(--b1);border-radius:var(--radius);overflow:hidden}
+.duty-month-hdr{display:grid;grid-template-columns:repeat(7,1fr);background:var(--s2)}
+.dmc-hdr{text-align:center;padding:8px 4px;font-size:11px;font-weight:800;color:var(--muted)}
+.duty-month-row{display:grid;grid-template-columns:repeat(7,1fr)}
+.duty-month-cell{
+  min-height:72px;padding:6px 5px;
+  border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);
+  background:var(--surface);transition:background .12s;
+}
+.duty-month-cell:nth-child(7n){border-right:none}
+.dmc-today{background:var(--primary-light) !important}
+.dmc-other{background:var(--s2) !important;opacity:.55}
+.dmc-warn{background:#fff8f0 !important}
+body.dark .dmc-warn{background:#2a2010 !important}
+.dmc-date{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
+.dmc-date-today{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--primary);color:#fff;font-size:12px;
+}
+.dmc-cov{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap}
+
+/* ══════════════════════════════════════════════════
+   值班表 — 我的班表
+══════════════════════════════════════════════════ */
+.duty-mine-list{display:flex;flex-direction:column;gap:18px}
+.dmine-week{background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);overflow:hidden}
+.dmine-week-lbl{
+  font-size:10px;font-weight:800;letter-spacing:.1em;
+  color:var(--primary);background:var(--primary-light);
+  padding:6px 14px;border-bottom:1px solid var(--b1);
+}
+.duty-mine-row{
+  display:flex;align-items:center;gap:12px;
+  padding:9px 14px;border-bottom:1px solid var(--b1);
+  transition:background .1s;font-size:13px;
+}
+.duty-mine-row:last-child{border-bottom:none}
+.duty-mine-row:hover{background:var(--s2)}
+.duty-mine-today{background:var(--primary-light) !important}
+.dmine-day{width:20px;font-size:11px;font-weight:700;flex-shrink:0;text-align:center}
+.dmine-date{width:90px;font-size:12px;color:var(--muted);flex-shrink:0}
+.dmine-time{font-size:11px;color:var(--faint);margin-left:4px}
+.dmine-note{font-size:10px;color:var(--primary);background:var(--primary-light);border-radius:4px;padding:2px 7px;margin-left:auto}
+.dmine-today-badge{
+  font-size:9px;font-weight:800;padding:2px 8px;border-radius:99px;
+  background:var(--primary);color:#fff;margin-left:auto;flex-shrink:0;
+}
+.duty-next-shift{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  background:var(--s2);border-radius:var(--radius-sm);
+  padding:10px 16px;margin-bottom:18px;font-size:13px;
+}
+
+/* ══════════════════════════════════════════════════
+   值班表 — 換班申請
+══════════════════════════════════════════════════ */
+.swap-alert-box{
+  background:#fdf0dc;border:1px solid #f0d890;border-radius:var(--radius-sm);
+  padding:8px 16px;font-size:13px;font-weight:700;color:#8f5208;
+}
+body.dark .swap-alert-box{background:#2a2010;border-color:#5a4010;color:#f0b040}
+.swcard{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--surface);border:1.5px solid var(--b1);
+  border-radius:var(--radius);padding:16px;margin-bottom:10px;
+  transition:border-color .15s;
+}
+.swcard-highlight{border-color:var(--primary) !important;background:var(--primary-light) !important}
+body.dark .swcard-highlight{background:#2a1820 !important}
+.swcard-recip-tip{
+  font-size:11px;font-weight:700;color:var(--primary);
+  background:var(--primary-light);border-radius:4px;
+  padding:4px 10px;margin-bottom:10px;
+}
+.swcard-reason{
+  font-size:12px;color:var(--muted);background:var(--s2);
+  border-radius:var(--radius-sm);padding:7px 12px;margin-top:8px;
+}
+/* Swap timeline */
+.sw-timeline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.sw-step{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius-sm);background:var(--s2)}
+.sw-step-done{background:var(--green-bg);border:1px solid #b8e8cc}
+.sw-step-rej {background:#fce8e8;border:1px solid #f0b0b0}
+.sw-step-pend{background:#fdf0dc;border:1px solid #f0d890}
+.sw-arrow{font-size:16px;color:var(--muted);flex-shrink:0}
+
+/* ── Dark mode for duty ── */
+body.dark .dcell{background:var(--surface)}
+body.dark .dc-hd{background:var(--s2) !important}
+body.dark .duty-month-cell{background:var(--surface)}
+body.dark .dmc-other{background:var(--s2) !important}
+body.dark .duty-mine-row:hover{background:var(--s2)}
+body.dark .swcard{background:var(--surface)}
+body.dark .sw-step{background:var(--s2)}
