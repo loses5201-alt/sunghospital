@@ -30,8 +30,80 @@ function switchUsersTab(tab){
   else if(tab==='stats'){renderUserStats(c);}
 }
 var userFilter={q:'',dept:'',status:'',jobType:''};
-const JOBTYPES={nurse:'護理師',doctor:'醫師',admin:'行政',it:'IT',other:'其他','':('')};
+const JOBTYPES={
+  '':'',
+  nurse:'護理師',
+  doctor:'醫師',
+  admin:'行政',
+  admin_finance:'行政-財務',
+  admin_hr:'行政-人事',
+  admin_purchase:'行政-採購',
+  admin_general:'行政-總務',
+  admin_it:'行政-資訊',
+  admin_warehouse:'行政-倉管',
+  it:'IT（資訊）',
+  other:'其他'
+};
 const STATUSLBLS={active:'在職',disabled:'停用',resigned:'離職'};
+const ROLELABELS={admin:'管理員',supervisor:'主管',member:'一般'};
+
+// ── 全功能權限定義 ──
+var PERMISSION_DEFS=[
+  {section:'病患管理',items:[
+    {k:'viewPatients',  l:'查看病患看板',  desc:'可查看病患資訊與產房狀態'},
+    {k:'editPatients',  l:'管理病患資料',  desc:'可新增、編輯、辦理出院'},
+  ]},
+  {section:'排班管理',items:[
+    {k:'viewSchedule',   l:'查看排班',          desc:'可查看本週值班表'},
+    {k:'manageSchedule', l:'管理排班/審核換班',  desc:'可編輯值班表及核准換班申請'},
+  ]},
+  {section:'請假管理',items:[
+    {k:'applyLeave',   l:'申請請假',  desc:'可提出請假申請'},
+    {k:'approveLeave', l:'審核請假',  desc:'可核准或駁回他人的請假申請'},
+  ]},
+  {section:'表單簽核',items:[
+    {k:'applyForm',   l:'申請表單',       desc:'可提出加班、物品採購等申請單'},
+    {k:'approveForm', l:'審核/簽核表單',  desc:'可核准或駁回申請單，並出現在簽核人選單中'},
+  ]},
+  {section:'公告管理',items:[
+    {k:'publishAnn', l:'發布/管理公告',  desc:'可新增、刪除、置頂公告及發出緊急廣播'},
+  ]},
+  {section:'庫存管理',items:[
+    {k:'viewInventory',   l:'查看庫存',  desc:'可查看庫存品項與數量'},
+    {k:'manageInventory', l:'管理庫存',  desc:'可新增、調整、盤點庫存'},
+  ]},
+  {section:'事件通報',items:[
+    {k:'reportIR', l:'通報事件',      desc:'可提交異常事件通報'},
+    {k:'manageIR', l:'管理事件通報',  desc:'可更新事件通報的處理狀態'},
+  ]},
+  {section:'SOP 文件',items:[
+    {k:'viewSOP',   l:'查看 SOP',  desc:'可閱讀標準作業程序文件'},
+    {k:'manageSOP', l:'管理 SOP',  desc:'可新增、編輯、刪除 SOP 文件'},
+  ]},
+  {section:'技能矩陣',items:[
+    {k:'viewSkills',   l:'查看技能矩陣',  desc:'可查看人員技能評估'},
+    {k:'manageSkills', l:'管理技能矩陣',  desc:'可更新技能評估與技能定義'},
+  ]},
+  {section:'報表匯出',items:[
+    {k:'viewReports', l:'查看報表',  desc:'可檢視統計報表頁面'},
+    {k:'exportData',  l:'匯出資料',  desc:'可匯出 CSV 表單和班表'},
+  ]},
+];
+
+// ── 職種預設權限 ──
+var JOB_TYPE_DEFAULTS={
+  doctor:        {viewPatients:1,editPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewSkills:1},
+  nurse:         {viewPatients:1,editPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewInventory:1,viewSkills:1},
+  admin:         {applyLeave:1,applyForm:1,viewSchedule:1,publishAnn:1},
+  admin_finance: {applyLeave:1,applyForm:1,approveForm:1,viewReports:1,exportData:1},
+  admin_hr:      {applyLeave:1,applyForm:1,approveLeave:1,manageSchedule:1,viewReports:1},
+  admin_purchase:{applyLeave:1,applyForm:1,approveForm:1,viewInventory:1,manageInventory:1},
+  admin_general: {applyLeave:1,applyForm:1,publishAnn:1,viewInventory:1},
+  admin_it:      {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
+  admin_warehouse:{applyLeave:1,applyForm:1,viewInventory:1,manageInventory:1},
+  it:            {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
+  other:         {applyLeave:1,applyForm:1},
+};
 function renderUserContent(){
   const c=document.getElementById('usersTabContent');if(!c)return;
   // Filter bar
@@ -55,8 +127,10 @@ function renderUserContent(){
     const stBadge=`<span class="ustatus-${st}">${STATUSLBLS[st]||st}</span>`;
     const jtLabel=JOBTYPES[u.jobType||'']||'';
     const jtBadge=jtLabel?`<span class="ujobtype-badge">${jtLabel}</span>`:'';
-    const permsHtml=u.role!=='admin'&&u.permissions
-      ?[['approveForm','簽核'],['manageSchedule','排班'],['publishAnn','公告'],['manageIR','事件'],['viewReports','報表'],['exportData','匯出']].filter(([k])=>u.permissions[k]).map(([,l])=>`<span class="perm-tag">${l}</span>`).join(''):'';
+    // 顯示最多5個已啟用的權限標籤（簡稱）
+    const PERM_SHORT={viewPatients:'看板',editPatients:'病患',viewSchedule:'排班',manageSchedule:'排班管',applyLeave:'請假',approveLeave:'假審',applyForm:'申請',approveForm:'簽核',publishAnn:'公告',viewInventory:'庫存',manageInventory:'庫管',reportIR:'通報',manageIR:'事件',viewSOP:'SOP',manageSOP:'SOP管',viewSkills:'技能',manageSkills:'技管',viewReports:'報表',exportData:'匯出'};
+    const permsHtml=u.role==='admin'?'':(u.role==='supervisor'?'<span class="perm-tag" style="background:#f0e0f8;color:#8a40a0">主管審核</span>':
+      (u.permissions?Object.keys(u.permissions).filter(k=>u.permissions[k]&&PERM_SHORT[k]).slice(0,5).map(k=>`<span class="perm-tag">${PERM_SHORT[k]}</span>`).join(''):''));
     const btns=u.id===currentUser.id
       ?'<span style="font-size:11px;color:var(--faint);padding:5px 6px">本人</span>'
       :`<button class="btn-sm" onclick="openEditUser('${u.id}')">編輯</button>
@@ -67,7 +141,7 @@ function renderUserContent(){
       <td><div style="display:flex;align-items:center;gap:9px">${avatarEl(u.id,28)}<div><div style="font-size:13px;font-weight:500">${esc(u.name)}</div><div style="font-size:11px;color:var(--faint)">@${esc(u.username)}${u.joinDate?' · 到職:'+fmtDate(u.joinDate):''}</div></div></div></td>
       <td>${u.deptId?`<span class="dept-chip">${esc(userDept(u.id))}</span>`:'—'}${jtBadge}</td>
       <td>${u.title?`<span class="title-chip">${esc(u.title)}</span>`:'—'}</td>
-      <td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span class="role-badge ${u.role==='admin'?'rb-admin':'rb-member'}">${u.role==='admin'?'管理員':'一般'}</span>${stBadge}${permsHtml}</div></td>
+      <td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span class="role-badge ${u.role==='admin'?'rb-admin':u.role==='supervisor'?'rb-supervisor':'rb-member'}">${ROLELABELS[u.role]||'一般'}</span>${stBadge}${permsHtml}</div></td>
       <td><div style="display:flex;gap:4px;flex-wrap:wrap">${btns}</div></td>
     </tr>`;
   }).join('');
@@ -82,42 +156,110 @@ function setUserStatus(id,status){
   saveStore();renderUserContent();
   showToast(STATUSLBLS[status],u.name,status==='active'?'✅':'⚠️');
 }
+function onRoleChange(sel){
+  var ps=document.getElementById('permSection');
+  var sn=document.getElementById('supervisorNote');
+  if(ps)ps.style.display=sel.value==='admin'?'none':'';
+  if(sn)sn.style.display=sel.value==='supervisor'?'':'none';
+}
+function applyJobTypeDefaults(){
+  var jt=document.getElementById('uJobType').value;
+  var defs=JOB_TYPE_DEFAULTS[jt]||{};
+  PERMISSION_DEFS.forEach(function(sec){sec.items.forEach(function(pd){var el=document.getElementById('perm_'+pd.k);if(el)el.checked=!!(defs[pd.k]);});});
+}
+function copyPermsFrom(uid){
+  if(!uid)return;
+  var src=store.users.find(function(x){return x.id===uid;});
+  if(!src||!src.permissions)return;
+  PERMISSION_DEFS.forEach(function(sec){sec.items.forEach(function(pd){var el=document.getElementById('perm_'+pd.k);if(el)el.checked=!!(src.permissions[pd.k]);});});
+  var sel=document.getElementById('copyFromUser');if(sel)sel.value='';
+  showToast('已複製','來自 '+esc(src.name),'📋');
+}
 function userFormHtml(u){
   const dOpts=store.departments.map(d=>`<option value="${d.id}" ${u&&u.deptId===d.id?'selected':''}>${esc(d.name)}</option>`).join('');
   const tOpts=store.titles.map(t=>`<option ${u&&u.title===t?'selected':''}>${esc(t)}</option>`).join('');
-  const avOpts=AVCOLORS.map((av,i)=>`<option value="${av}" ${u&&u.avatar===av?'selected':''}>\u984f\u8272 ${i+1}</option>`).join('');
+  const avOpts=AVCOLORS.map((av,i)=>`<option value="${av}" ${u&&u.avatar===av?'selected':''}>顏色 ${i+1}</option>`).join('');
   const p=u&&u.permissions?u.permissions:{};
-  const permDefs=[
-    {k:'approveForm', l:'\u5be9\u6838\u7c3d\u6838\u55ae', desc:'\u53ef\u6838\u51c6\u6216\u99b3\u56de\u4ed6\u4eba\u7684\u7533\u8acb\u55ae\uff0c\u4e26\u51fa\u73fe\u5728\u7c3d\u6838\u4eba\u9078\u55ae\u4e2d'},
-    {k:'manageSchedule', l:'\u7ba1\u7406\u6392\u73ed', desc:'\u53ef\u7de8\u8f2f\u5024\u73ed\u8868\u53ca\u8655\u7406\u63db\u73ed\u7533\u8acb'},
-    {k:'publishAnn', l:'\u767c\u5e03/\u7ba1\u7406\u516c\u544a', desc:'\u53ef\u65b0\u589e\u3001\u522a\u9664\u3001\u7f6e\u9802\u516c\u544a\u53ca\u767c\u51fa\u7dca\u6025\u5ee3\u64ad'},
-    {k:'manageIR', l:'\u7ba1\u7406\u4e8b\u4ef6\u901a\u5831', desc:'\u53ef\u66f4\u65b0\u4e8b\u4ef6\u901a\u5831\u7684\u8655\u7406\u72c0\u614b'},
-    {k:'viewReports', l:'\u67e5\u770b\u5831\u8868', desc:'\u53ef\u6aa2\u8996\u7d71\u8a08\u5831\u8868\u9801\u9762'},
-    {k:'exportData', l:'\u5319\u51fa\u8cc7\u6599', desc:'\u53ef\u5319\u51fa CSV \u8868\u55ae\u548c\u73ed\u8868'},
-  ];
-  const permHtml=permDefs.map(pd=>
-    `<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--b1);cursor:pointer;background:var(--surface)">
-      <input type="checkbox" id="perm_${pd.k}" ${p[pd.k]?'checked':''} style="margin-top:2px;accent-color:#c4527a;width:15px;height:15px;flex-shrink:0">
-      <div><div style="font-size:13px;font-weight:600">${pd.l}</div><div style="font-size:11px;color:var(--faint);margin-top:1px">${pd.desc}</div></div>
-    </label>`
-  ).join('');
-  return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-    <div class="form-row"><label>\u59d3\u540d</label><input id="uName" value="${esc(u?.name||'')}"></div>
-    <div class="form-row"><label>\u5e33\u865f</label><input id="uUsername" value="${esc(u?.username||'')}"></div>
-    <div class="form-row"><label>\u5bc6\u78bc ${u?'\uff08\u7559\u7a7a\u4e0d\u6539\uff09':''}</label><input id="uPassword" type="password" placeholder="${u?'\u7559\u7a7a\u7dad\u6301':'\u8a2d\u5b9a\u5bc6\u78bc'}"></div>
-    <div class="form-row"><label>\u982d\u50cf\u984f\u8272</label><select id="uAvatar">${avOpts}</select></div>
-    <div class="form-row"><label>\u79d1\u5225</label><select id="uDept"><option value="">\uff08\u7121\uff09</option>${dOpts}</select></div>
-    <div class="form-row"><label>\u8077\u7a31</label><select id="uTitle"><option value="">\uff08\u7121\uff09</option>${tOpts}</select></div>
-    <div class="form-row"><label>\u89d2\u8272</label><select id="uRole"><option value="member" ${u?.role==='member'?'selected':''}>\u4e00\u822c\u6210\u54e1</option><option value="admin" ${u?.role==='admin'?'selected':''}>\u7ba1\u7406\u54e1</option></select></div>
-    <div class="form-row"><label>\u8077\u985e</label><select id="uJobType"><option value="">（無）</option><option value="nurse" ${u?.jobType==='nurse'?'selected':''}>\u8b77\u7406\u5e2b</option><option value="doctor" ${u?.jobType==='doctor'?'selected':''}>\u91ab\u5e2b</option><option value="admin" ${u?.jobType==='admin'?'selected':''}>\u884c\u653f</option><option value="it" ${u?.jobType==='it'?'selected':''}>IT</option><option value="other" ${u?.jobType==='other'?'selected':''}>\u5176\u4ed6</option></select></div>
-    <div class="form-row"><label>\u5e33\u865f\u72c0\u614b</label><select id="uStatus"><option value="active" ${(u?.status||'active')==='active'?'selected':''}>\u5728\u8077</option><option value="disabled" ${u?.status==='disabled'?'selected':''}>\u505c\u7528</option><option value="resigned" ${u?.status==='resigned'?'selected':''}>\u96e2\u8077</option></select></div>
-    <div class="form-row"><label>\u5230\u8077\u65e5\u671f</label><input id="uJoinDate" type="date" value="${u?.joinDate||''}"></div>
+  const curRole=u?(u.role||'member'):'member';
+  const isAdminRole=curRole==='admin';
+  const isSvRole=curRole==='supervisor';
+
+  // 每個 section 的 checkbox 區塊
+  const permSections=PERMISSION_DEFS.map(sec=>{
+    const items=sec.items.map(pd=>
+      `<label style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;cursor:pointer">
+        <input type="checkbox" id="perm_${pd.k}" ${p[pd.k]?'checked':''} style="margin-top:3px;accent-color:#c4527a;width:14px;height:14px;flex-shrink:0">
+        <div><div style="font-size:12px;font-weight:600">${pd.l}</div><div style="font-size:10px;color:var(--faint);margin-top:1px">${pd.desc}</div></div>
+      </label>`
+    ).join('');
+    return `<div style="border:1px solid var(--b1);border-radius:8px;padding:10px 12px;background:var(--surface)">
+      <div style="font-size:10px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--b1)">${sec.section}</div>
+      ${items}
+    </div>`;
+  }).join('');
+
+  // 複製來源選項
+  const copyOpts=store.users
+    .filter(x=>x.id!==(u&&u.id)&&x.role!=='admin')
+    .map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
+
+  return`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div class="form-row"><label>姓名</label><input id="uName" value="${esc(u?.name||'')}"></div>
+    <div class="form-row"><label>帳號</label><input id="uUsername" value="${esc(u?.username||'')}"></div>
+    <div class="form-row"><label>密碼${u?' （留空不改）':''}</label><input id="uPassword" type="password" placeholder="${u?'留空維持原密碼':'設定密碼'}"></div>
+    <div class="form-row"><label>頭像顏色</label><select id="uAvatar">${avOpts}</select></div>
+    <div class="form-row"><label>科別</label><select id="uDept"><option value="">（無）</option>${dOpts}</select></div>
+    <div class="form-row"><label>職稱</label><select id="uTitle"><option value="">（無）</option>${tOpts}</select></div>
+    <div class="form-row"><label>角色</label>
+      <select id="uRole" onchange="onRoleChange(this)">
+        <option value="member" ${curRole==='member'?'selected':''}>一般成員</option>
+        <option value="supervisor" ${isSvRole?'selected':''}>主管（可審核簽核）</option>
+        <option value="admin" ${isAdminRole?'selected':''}>管理員（全部權限）</option>
+      </select>
+    </div>
+    <div class="form-row"><label>職類</label>
+      <select id="uJobType">
+        <option value="">（未指定）</option>
+        <option value="nurse"           ${u?.jobType==='nurse'?'selected':''}>護理師</option>
+        <option value="doctor"          ${u?.jobType==='doctor'?'selected':''}>醫師</option>
+        <option value="admin"           ${u?.jobType==='admin'?'selected':''}>行政</option>
+        <option value="admin_finance"   ${u?.jobType==='admin_finance'?'selected':''}>行政-財務</option>
+        <option value="admin_hr"        ${u?.jobType==='admin_hr'?'selected':''}>行政-人事</option>
+        <option value="admin_purchase"  ${u?.jobType==='admin_purchase'?'selected':''}>行政-採購</option>
+        <option value="admin_general"   ${u?.jobType==='admin_general'?'selected':''}>行政-總務</option>
+        <option value="admin_it"        ${u?.jobType==='admin_it'?'selected':''}>行政-資訊</option>
+        <option value="admin_warehouse" ${u?.jobType==='admin_warehouse'?'selected':''}>行政-倉管</option>
+        <option value="it"              ${u?.jobType==='it'?'selected':''}>IT（資訊）</option>
+        <option value="other"           ${u?.jobType==='other'?'selected':''}>其他</option>
+      </select>
+    </div>
+    <div class="form-row"><label>帳號狀態</label>
+      <select id="uStatus">
+        <option value="active"   ${(u?.status||'active')==='active'?'selected':''}>在職</option>
+        <option value="disabled" ${u?.status==='disabled'?'selected':''}>停用</option>
+        <option value="resigned" ${u?.status==='resigned'?'selected':''}>離職</option>
+      </select>
+    </div>
+    <div class="form-row"><label>到職日期</label><input id="uJoinDate" type="date" value="${u?.joinDate||''}"></div>
   </div>
-  <div class="form-row"><label>\u5099\u8a3b\uff08IT \u8a3b\u8a18\uff09</label><textarea id="uNote" style="min-height:60px" placeholder="\u5185\u90e8\u5099\u8a3b\u3001\u8a2d\u5099\u5e33\u865f\u7b49...">${esc(u?.note||'')}</textarea></div>
-  <div style="margin-top:14px">
-    <div style="font-size:12px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">\u529f\u80fd\u6b0a\u9650</div>
-    <div style="display:flex;flex-direction:column;gap:7px">${permHtml}</div>
-    <div style="font-size:11px;color:var(--faint);margin-top:8px">\u7ba1\u7406\u54e1\u81ea\u52d5\u64c1\u6709\u5168\u90e8\u6b0a\u9650\uff0c\u4ee5\u4e0b\u8a2d\u5b9a\u50c5\u9069\u7528\u4e00\u822c\u6210\u54e1</div>
+  <div class="form-row" style="margin-bottom:14px"><label>備註</label>
+    <textarea id="uNote" style="min-height:55px" placeholder="內部備註、設備帳號等...">${esc(u?.note||'')}</textarea>
+  </div>
+  <div id="permSection" style="${isAdminRole?'display:none':''}">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.08em;flex:1">功能權限</div>
+      <button type="button" class="btn-xs" onclick="applyJobTypeDefaults()" title="根據職類帶入預設勾選">套用職種預設</button>
+      <select id="copyFromUser" onchange="copyPermsFrom(this.value)"
+        style="font-size:11px;padding:4px 8px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer">
+        <option value="">複製自...</option>${copyOpts}
+      </select>
+    </div>
+    <div id="supervisorNote" style="${isSvRole?'':'display:none;'}padding:8px 12px;background:#fff3f8;border:1px solid #f0c0d0;border-radius:8px;font-size:12px;color:#9a4060;margin-bottom:10px">
+      主管自動擁有 <strong>審核請假、審核/簽核表單、管理排班換班</strong>，以下可額外賦予其他功能
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${permSections}</div>
+    <div style="font-size:11px;color:var(--faint);margin-top:8px">管理員自動擁有全部權限；主管自動擁有審核相關權限；以下設定適用一般成員與主管</div>
   </div>`;
 }
 let editingUserId=null;
@@ -129,7 +271,9 @@ function saveUser(){
   const password=document.getElementById('uPassword').value;
   if(!name||!username){alert('姓名和帳號為必填');return;}
   if(store.users.find(u=>u.username===username&&u.id!==editingUserId)){alert('帳號已被使用');return;}
-  const perms={approveForm:!!document.getElementById('perm_approveForm')?.checked,manageSchedule:!!document.getElementById('perm_manageSchedule')?.checked,publishAnn:!!document.getElementById('perm_publishAnn')?.checked,manageIR:!!document.getElementById('perm_manageIR')?.checked,viewReports:!!document.getElementById('perm_viewReports')?.checked,exportData:!!document.getElementById('perm_exportData')?.checked};
+  // 收集全部 PERMISSION_DEFS 中的勾選狀態
+  const perms={};
+  PERMISSION_DEFS.forEach(function(sec){sec.items.forEach(function(pd){var el=document.getElementById('perm_'+pd.k);perms[pd.k]=!!(el&&el.checked);});});
   const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value,permissions:perms,jobType:document.getElementById('uJobType')?.value||'',status:document.getElementById('uStatus')?.value||'active',joinDate:document.getElementById('uJoinDate')?.value||'',note:document.getElementById('uNote')?.value||''};
   if(editingUserId){
     const u=store.users.find(x=>x.id===editingUserId);
@@ -270,8 +414,9 @@ function mergeNewLocal(){
     if(u.jobType===undefined)u.jobType='';
     if(!u.joinDate)u.joinDate='';
     if(!u.note)u.note='';
-    if(u.permissions.viewReports===undefined)u.permissions.viewReports=false;
-    if(u.permissions.exportData===undefined)u.permissions.exportData=false;
+    if(!u.role)u.role='member';
+    // 補足所有新權限鍵（不覆蓋已設定的值）
+    PERMISSION_DEFS.forEach(function(sec){sec.items.forEach(function(pd){if(u.permissions[pd.k]===undefined)u.permissions[pd.k]=false;});});
   });
   (store.babies||[]).forEach(function(b){
     if(b.discharged===undefined)b.discharged=false;
@@ -324,8 +469,9 @@ function mergeNew(){
     if(u.jobType===undefined)u.jobType='';
     if(!u.joinDate)u.joinDate='';
     if(!u.note)u.note='';
-    if(u.permissions.viewReports===undefined)u.permissions.viewReports=false;
-    if(u.permissions.exportData===undefined)u.permissions.exportData=false;
+    if(!u.role)u.role='member';
+    // 補足所有新權限鍵（不覆蓋已設定的值）
+    PERMISSION_DEFS.forEach(function(sec){sec.items.forEach(function(pd){if(u.permissions[pd.k]===undefined)u.permissions[pd.k]=false;});});
   });
   (store.babies||[]).forEach(function(b){
     if(b.discharged===undefined)b.discharged=false;

@@ -286,7 +286,15 @@ function dueClass(due,status){
 function esc(s){return String(s||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,5);}
 function isAdmin(){return currentUser&&currentUser.role==='admin';}
-function hasPerm(p){return isAdmin()||!!(currentUser&&currentUser.permissions&&currentUser.permissions[p]);}
+function isSupervisor(){return currentUser&&(currentUser.role==='admin'||currentUser.role==='supervisor');}
+// 主管自動擁有審核相關權限；管理員擁有全部
+var SUPERVISOR_AUTO_PERMS=['approveForm','approveLeave','manageSchedule','manageIR'];
+function hasPerm(p){
+  if(!currentUser)return false;
+  if(currentUser.role==='admin')return true;
+  if(currentUser.role==='supervisor'&&SUPERVISOR_AUTO_PERMS.indexOf(p)>=0)return true;
+  return !!(currentUser.permissions&&currentUser.permissions[p]);
+}
 function prioBadge(p){
   if(p==='critical')return`<span class="prio prio-critical"><span class="prio-dot"></span>緊急</span>`;
   if(p==='urgent')return`<span class="prio prio-urgent"><span class="prio-dot"></span>急件</span>`;
@@ -2152,7 +2160,7 @@ function resubmitForm(id) {
   _pendingAttachment = null;
   var approvers = store.users.filter(function(u){
     return u.id !== currentUser.id && u.status !== 'disabled' && u.status !== 'resigned'
-      && (u.role === 'admin' || (u.permissions && u.permissions.approveForm));
+      && (u.role === 'admin' || u.role === 'supervisor' || (u.permissions && u.permissions.approveForm));
   });
   var aOpts = approvers.length
     ? approvers.map(function(u){ return '<option value="' + u.id + '"' + (f.approvers[0]===u.id?' selected':'') + '>' + esc(u.name) + '</option>'; }).join('')

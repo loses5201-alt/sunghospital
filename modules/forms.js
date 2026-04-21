@@ -218,7 +218,7 @@ function rnForms(){
 }
 function openNewFrm(){
   _pendingAttachment=null;
-  const approvers=store.users.filter(u=>u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'&&(u.role==='admin'||(u.permissions&&u.permissions.approveForm)));
+  const approvers=store.users.filter(u=>u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'&&(u.role==='admin'||u.role==='supervisor'||(u.permissions&&u.permissions.approveForm)));
   const aOpts=approvers.length
     ?approvers.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('')
     :'<option value="">（尚未設定可審核人員）</option>';

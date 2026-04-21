@@ -20,8 +20,8 @@ function renderLeavePage(c){
     +'</div>'
     +'<div style="display:flex;gap:0;border-bottom:2px solid var(--b1);padding:0 24px;background:var(--surface)">'
     +'<div class="users-tab" id="ltab_mine" onclick="setLeaveTab(\'mine\')">我的假期</div>'
-    +(isAdmin()?'<div class="users-tab" id="ltab_pending" onclick="setLeaveTab(\'pending\')">待審核<span id="leavePendBadge"></span></div>':'')
-    +(isAdmin()?'<div class="users-tab" id="ltab_all" onclick="setLeaveTab(\'all\')">全部假期</div>':'')
+    +(hasPerm('approveLeave')?'<div class="users-tab" id="ltab_pending" onclick="setLeaveTab(\'pending\')">待審核<span id="leavePendBadge"></span></div>':'')
+    +(hasPerm('approveLeave')?'<div class="users-tab" id="ltab_all" onclick="setLeaveTab(\'all\')">全部假期</div>':'')
     +(isAdmin()?'<div class="users-tab" id="ltab_balance" onclick="setLeaveTab(\'balance\')">餘額管理</div>':'')
     +'</div>'
     +'<div class="admin-content" id="leaveC"></div></div>';
@@ -126,7 +126,7 @@ function _leaveTable(leaves, showUser, showApprove){
   return '<div class="table-wrap"><table><thead><tr>'
     +(showUser?'<th>申請人</th>':'')
     +'<th>假別</th><th>日期</th><th>天數</th><th>原因</th><th>狀態</th>'
-    +(showApprove&&isAdmin()?'<th>操作</th>':'')
+    +(showApprove&&hasPerm('approveLeave')?'<th>操作</th>':'')
     +'</tr></thead><tbody>'
     +leaves.map(function(l){
       var lt = LEAVE_TYPES.find(function(t){ return t.id===l.type; })||{label:l.type,color:'var(--muted)'};
@@ -140,7 +140,7 @@ function _leaveTable(leaves, showUser, showApprove){
         +'<td style="font-weight:800;text-align:center">'+( l.days||0 )+'天</td>'
         +'<td style="color:var(--muted);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.reason||'')+'</td>'
         +'<td><span style="font-size:11px;padding:3px 9px;border-radius:99px;font-weight:700;background:'+stBg+';color:'+stFc+'">'+stLabel+'</span></td>'
-        +(showApprove&&isAdmin()&&l.status==='pending'
+        +(showApprove&&hasPerm('approveLeave')&&l.status==='pending'
           ?'<td><button class="btn-xs success" onclick="approveLeave(\''+l.id+'\',true)">核准</button> <button class="btn-xs danger" onclick="approveLeave(\''+l.id+'\',false)">駁回</button></td>'
           :'<td style="font-size:11px;color:var(--faint)">'+( l.approverId?'by '+esc(userName(l.approverId)):'' )+'</td>')
         +'</tr>';
