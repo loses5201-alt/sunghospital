@@ -1,4 +1,5 @@
 // ════ 會議記錄 ════
+var _taskFilter = 'all';
 function renderMeetingMain(){
   const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;
   const done=m.tasks.filter(t=>t.status==='已完成').length;
@@ -109,10 +110,20 @@ function saveNotesInline(meetingId) {
 }
 
 // ── 任務（含篩選 + 刪除）──
+function _getMtg() {
+  return store.meetings.find(function(x) { return x.id === currentMeetingId; });
+}
+function _getTask(taskId) {
+  var m = _getMtg(); if (!m) return null;
+  return (m.tasks || []).find(function(t) { return t.id === taskId; }) || null;
+}
+
 function renderTasks(c, m) {
   c.style.cssText = '';
-  var canEdit = isAdmin() || m.attendeeIds.includes(currentUser.id);
-  var sorted = [...m.tasks].sort(function(a, b) {
+  var attendees = m.attendeeIds || [];
+  var canEdit = isAdmin() || attendees.indexOf(currentUser.id) >= 0;
+  var tasks = m.tasks || [];
+  var sorted = tasks.slice().sort(function(a, b) {
     var po = {critical: 0, urgent: 1, normal: 2};
     return (po[a.priority] || 2) - (po[b.priority] || 2);
   });
@@ -139,36 +150,46 @@ function renderTasks(c, m) {
     + '</div>';
 
   var rows = filtered.map(function(t) {
-    var origI = m.tasks.indexOf(t);
+    var tid = t.id;
     var isDone = t.status === '已完成', isIP = t.status === '進行中';
     var dc = dueClass(t.due, t.status);
     var cardClass = t.priority === 'critical' && !isDone ? 't-critical' : t.priority === 'urgent' && !isDone ? 't-urgent' : '';
+    var canAct = canEdit || t.assigneeId === currentUser.id;
     return '<div class="task-card ' + cardClass + '">'
-      + '<div class="status-dot ' + (isDone ? 'done' : isIP ? 'in-progress' : '') + '" onclick="' + (canEdit || t.assigneeId === currentUser.id ? 'cycleStatus(' + origI + ')' : 'void(0)') + '" title="點擊切換">'
+      + '<div class="status-dot ' + (isDone ? 'done' : isIP ? 'in-progress' : '') + '" onclick="' + (canAct ? 'cycleStatusById(\'' + tid + '\')' : 'void(0)') + '" title="點擊切換">'
       + (isDone ? '✓' : isIP ? '◑' : '') + '</div>'
       + '<div class="task-body">'
       + '<div class="task-text ' + (isDone ? 'done-text' : '') + '">' + esc(t.text) + '</div>'
+      + (t.note ? '<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic;line-height:1.4">📝 ' + esc(t.note) + '</div>' : '')
       + '<div class="task-meta">' + avatarEl(t.assigneeId, 18) + '<span class="task-assignee">' + esc(userName(t.assigneeId)) + '</span>'
       + prioBadge(t.priority)
       + (t.due ? '<span class="due-tag ' + dc + '">' + fmtDate(t.due) + '</span>' : '')
       + '</div></div>'
-      + (canEdit || t.assigneeId === currentUser.id
-        ? '<select class="task-select" onchange="setStatus(' + origI + ',this.value)">'
-          + '<option ' + (t.status === '待辦'   ? 'selected' : '') + '>待辦</option>'
-          + '<option ' + (t.status === '進行中' ? 'selected' : '') + '>進行中</option>'
-          + '<option ' + (t.status === '已完成' ? 'selected' : '') + '>已完成</option>'
+      + (canAct
+        ? '<select class="task-select" onchange="setStatusById(\'' + tid + '\',this.value)">'
+          + '<option' + (t.status === '待辦'   ? ' selected' : '') + '>待辦</option>'
+          + '<option' + (t.status === '進行中' ? ' selected' : '') + '>進行中</option>'
+          + '<option' + (t.status === '已完成' ? ' selected' : '') + '>已完成</option>'
           + '</select>' : '')
-      + (canEdit ? '<button onclick="deleteTask(' + origI + ')" title="刪除" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--faint);padding:0 4px;line-height:1;flex-shrink:0;opacity:.4;transition:all .12s" onmouseover="this.style.opacity=1;this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=.4;this.style.color=\'var(--faint)\'">×</button>' : '')
+      + (canEdit
+        ? '<button onclick="openEditTaskById(\'' + tid + '\')" title="編輯" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--faint);padding:0 4px;line-height:1;flex-shrink:0;opacity:.5;transition:opacity .12s">✏</button>'
+          + '<button onclick="deleteTaskById(\'' + tid + '\')" title="刪除" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--faint);padding:0 4px;line-height:1;flex-shrink:0;opacity:.4;transition:opacity .12s">×</button>'
+        : '')
       + '</div>';
   }).join('');
 
+  var doneCount = tasks.filter(function(t){ return t.status === '已完成'; }).length;
   c.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-    + '<div class="sec-label" style="margin:0">任務清單（' + m.tasks.length + '項）</div></div>'
+    + '<div class="sec-label" style="margin:0">任務清單（' + tasks.length + '項）</div>'
+    + (canEdit && doneCount
+      ? '<button onclick="clearCompletedTasks()" style="font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">清除已完成（' + doneCount + '）</button>'
+      : '')
+    + '</div>'
     + filterHtml
     + (rows || '<div style="text-align:center;padding:30px;color:var(--faint);font-size:13px">沒有符合條件的任務</div>')
     + (canEdit ? '<div class="add-task-area">'
       + '<input class="input-task" id="newTask" placeholder="輸入任務..." onkeydown="if(event.key===\'Enter\')addTask()">'
-      + '<select id="newAssignee">' + m.attendeeIds.map(function(u) { return '<option value="' + u + '">' + esc(userName(u)) + '</option>'; }).join('') + '</select>'
+      + '<select id="newAssignee">' + attendees.map(function(u) { return '<option value="' + u + '">' + esc(userName(u)) + '</option>'; }).join('') + '</select>'
       + '<select id="newPrio"><option value="normal">一般</option><option value="urgent">急件</option><option value="critical">緊急</option></select>'
       + '<input id="newDue" type="date" style="width:130px">'
       + '<button class="btn-add" onclick="addTask()">新增</button>'
@@ -177,11 +198,79 @@ function renderTasks(c, m) {
 
 function setTaskFilter(f) { _taskFilter = f; renderTab(); }
 
-function deleteTask(origI) {
-  var m = store.meetings.find(function(x) { return x.id === currentMeetingId; });
-  if (!m) return;
+// ── ID-based task actions (safe after Firebase re-normalization) ──
+function cycleStatusById(taskId) {
+  var m = _getMtg(); if (!m) return;
+  var t = _getTask(taskId); if (!t) return;
+  t.status = t.status === '待辦' ? '進行中' : t.status === '進行中' ? '已完成' : '待辦';
+  saveStore(); renderSidebar(); renderMeetingMain();
+}
+function setStatusById(taskId, v) {
+  var m = _getMtg(); if (!m) return;
+  var t = _getTask(taskId); if (!t) return;
+  t.status = v;
+  saveStore(); renderSidebar(); renderMeetingMain();
+}
+function deleteTaskById(taskId) {
+  var m = _getMtg(); if (!m) return;
   if (!confirm('確定刪除此任務？')) return;
-  m.tasks.splice(origI, 1);
+  m.tasks = (m.tasks || []).filter(function(t) { return t.id !== taskId; });
+  saveStore(); renderSidebar(); renderMeetingMain();
+}
+function openEditTaskById(taskId) {
+  var m = _getMtg(); if (!m) return;
+  var t = _getTask(taskId); if (!t) return;
+  var attendees = m.attendeeIds || [];
+  var assigneeOpts = attendees.map(function(u) {
+    return '<option value="' + u + '"' + (t.assigneeId === u ? ' selected' : '') + '>' + esc(userName(u)) + '</option>';
+  }).join('');
+  showModal('編輯任務',
+    '<div class="form-row"><label>任務內容</label><input id="etText" value="' + esc(t.text || '') + '"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + '<div class="form-row"><label>負責人</label><select id="etAssignee">' + assigneeOpts + '</select></div>'
+    + '<div class="form-row"><label>優先等級</label><select id="etPrio">'
+    + '<option value="normal"' + (t.priority === 'normal' ? ' selected' : '') + '>一般</option>'
+    + '<option value="urgent"' + (t.priority === 'urgent' ? ' selected' : '') + '>急件</option>'
+    + '<option value="critical"' + (t.priority === 'critical' ? ' selected' : '') + '>緊急</option>'
+    + '</select></div></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + '<div class="form-row"><label>到期日</label><input id="etDue" type="date" value="' + (t.due || '') + '"></div>'
+    + '<div class="form-row"><label>狀態</label><select id="etStatus">'
+    + '<option' + (t.status === '待辦' ? ' selected' : '') + '>待辦</option>'
+    + '<option' + (t.status === '進行中' ? ' selected' : '') + '>進行中</option>'
+    + '<option' + (t.status === '已完成' ? ' selected' : '') + '>已完成</option>'
+    + '</select></div></div>'
+    + '<div class="form-row"><label>備註（選填）</label><input id="etNote" value="' + esc(t.note || '') + '"></div>',
+  function() {
+    var m2 = _getMtg(); if (!m2) return;
+    var t2 = _getTask(taskId); if (!t2) return;
+    var txt = document.getElementById('etText').value.trim();
+    if (!txt) return;
+    t2.text = txt;
+    t2.assigneeId = document.getElementById('etAssignee').value;
+    t2.priority = document.getElementById('etPrio').value;
+    t2.due = document.getElementById('etDue').value;
+    t2.status = document.getElementById('etStatus').value;
+    t2.note = document.getElementById('etNote').value.trim();
+    saveStore(); closeModal(); renderSidebar(); renderMeetingMain();
+    showToast('任務已更新', txt, '✅');
+  });
+}
+function clearCompletedTasks() {
+  var m = _getMtg(); if (!m) return;
+  var n = (m.tasks || []).filter(function(t) { return t.status === '已完成'; }).length;
+  if (!n) { showToast('無已完成任務', '', '⚠️'); return; }
+  if (!confirm('確定清除 ' + n + ' 項已完成任務？此操作無法復原。')) return;
+  m.tasks = (m.tasks || []).filter(function(t) { return t.status !== '已完成'; });
+  saveStore(); renderSidebar(); renderMeetingMain();
+  showToast('清除完成', '已移除 ' + n + ' 項完成任務', '✅');
+}
+
+// Keep legacy index-based functions for renderMyTasksMain compatibility
+function deleteTask(origI) {
+  var m = _getMtg(); if (!m) return;
+  if (!confirm('確定刪除此任務？')) return;
+  (m.tasks || []).splice(origI, 1);
   saveStore(); renderSidebar(); renderMeetingMain();
 }
 
