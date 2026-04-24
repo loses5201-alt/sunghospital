@@ -44,6 +44,7 @@ const navItems = [
   { path: '/incident', label: '事件通報' },
   { path: '/leave', label: '請假管理' },
   { path: '/calendar', label: '行事曆' },
+  { path: '/users', label: '系統管理' },
   // routes added here as modules migrate
 ]
 </script>
