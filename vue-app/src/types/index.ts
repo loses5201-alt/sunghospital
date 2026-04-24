@@ -34,6 +34,7 @@ export interface AppStore {
   swapRequests: SwapRequest[]
   formNotifs: FormNotif[]
   skillDefs: SkillDef[]
+  skillMatrix: SkillMatrix
   titles: Title[]
   rooms: Room[]
   emergencies: Emergency[]
@@ -73,7 +74,9 @@ export interface Sop { id: string; title: string; category: string; steps: strin
 export interface FormRequest { id: string; type: string; title: string; applicantId: string; startDate: string; endDate: string; reason: string; status: string; createdAt: string }
 export interface SwapRequest { id: string; requesterId: string; targetId: string; status: string; createdAt: string }
 export interface FormNotif { id: string; toUserId: string; title: string; body: string; createdAt: string }
-export interface SkillDef { id: string; name: string; category: string }
+export interface SkillDef { id: string; name: string; category: string; requiresExpiry?: boolean }
+export interface SkillCell { level: '' | 'certified' | 'trained' | 'learning'; expireDate: string; note: string; updatedAt: string }
+export type SkillMatrix = Record<string, Record<string, SkillCell>>
 export interface Title { id: string; name: string }
 export interface Room { id: string; name: string; capacity: number }
 export interface Emergency { id: string; title: string; level: string; createdAt: string }

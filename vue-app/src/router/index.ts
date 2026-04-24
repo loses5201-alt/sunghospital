@@ -18,6 +18,11 @@ const router = createRouter({
       component: () => import('../views/DepartmentsView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/skills',
+      component: () => import('../views/SkillsView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })
