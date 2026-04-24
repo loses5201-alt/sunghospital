@@ -41,6 +41,7 @@ const navItems = [
   { path: '/delivery', label: '產房狀態' },
   { path: '/inventory', label: '庫存管理' },
   { path: '/equipment', label: '設備回報' },
+  { path: '/incident', label: '事件通報' },
   // routes added here as modules migrate
 ]
 </script>

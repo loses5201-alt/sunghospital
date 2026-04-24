@@ -54,8 +54,10 @@ export interface Announcement {
   reads: Record<string, boolean>
 }
 export interface Incident {
-  id: string; title: string; description: string
-  level: string; status: string; comments: Comment[]
+  id: string; title: string; description?: string; level: string | number
+  status: string; comments: Comment[]
+  reporterId?: string; date?: string
+  actions?: string; followUp?: string
 }
 export interface Baby {
   id: string; name: string; gender: 'boy' | 'girl'; emoji?: string

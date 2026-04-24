@@ -77,6 +77,7 @@ const router = createRouter({
     { path: '/delivery', component: () => import('../views/DeliveryView.vue'), meta: { requiresAuth: true } },
     { path: '/inventory', component: () => import('../views/InventoryView.vue'), meta: { requiresAuth: true } },
     { path: '/equipment', component: () => import('../views/EquipmentView.vue'), meta: { requiresAuth: true } },
+    { path: '/incident', component: () => import('../views/IncidentView.vue'), meta: { requiresAuth: true } },
     // modules will be added here as they migrate
   ],
 })
