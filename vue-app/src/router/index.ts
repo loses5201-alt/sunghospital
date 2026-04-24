@@ -89,7 +89,11 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  // auth.ready is set by App.vue initializer; if not yet ready, allow navigation
+  // (App.vue loading screen blocks the UI until ready anyway)
+  if (!auth.ready) return
   if (to.meta.requiresAuth && !auth.isLoggedIn) return '/login'
+  if (to.path === '/login' && auth.isLoggedIn) return '/'
 })
 
 export default router
