@@ -12,7 +12,7 @@ Firebase RTDB untouched. Modules migrate smallest → largest.
 - [x] Pinia + Vue Router 4 installed
 - [x] Firebase composable skeleton
 - [x] Layout shell component (`AppShell.vue`)
-- [ ] Legacy index.html co-existence verified (次優先)
+- [x] Legacy index.html co-existence verified ✅ (舊系統保留)
 
 ## Phase 1 — Core Infra ✅
 - [x] `src/firebase.ts` — RTDB init (modular SDK v9)
@@ -57,6 +57,16 @@ Firebase RTDB untouched. Modules migrate smallest → largest.
 - `store.formRequests`: 舊系統，行事曆已改用 `leaves`
 - `store.equipment`: `{ id, name, category, priority, location, note, status, comments[] }`
 - `store.incidents`: `{ id, title, description, level, status, comments[] }`
+
+## Final Status (2026-04-25)
+- ✅ Production build: `npm run build` passes zero errors
+- ✅ All 22 routes registered in Vue Router
+- ✅ All 22 Views present in src/views/
+- ✅ App.vue: RTDB + Auth initialized with loading screen
+- ✅ Router guard: waits for auth.ready before redirecting
+- ✅ AppShell: 22 nav items grouped into 6 sections
+- ✅ HomeView: real dashboard with alerts + quick stats
+- ✅ TypeScript strict: zero type errors
 
 ## Legend
 - ⏳ Not started
