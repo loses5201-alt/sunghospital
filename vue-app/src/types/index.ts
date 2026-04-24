@@ -65,13 +65,18 @@ export interface Baby {
   apgar1?: number | string; apgar5?: number | string; ga?: string
   birthMethod?: 'normal' | 'csection' | string; feeding?: 'breast' | 'formula' | 'mixed' | string
 }
-export interface Patient { id: string; name: string; deptId: string; admitDate: string; note?: string }
+export interface Patient {
+  id: string; name: string; stage?: string; flags?: string[]
+  bed?: string; note?: string; admitDate?: string; deptId?: string
+  discharged?: boolean; dischargeDate?: string
+  nurseId?: string; since?: string
+}
 export interface Equipment {
   id: string; name: string; category: string; priority: string
   location: string; note: string; status: string; comments: Comment[]
 }
-export interface InventoryItem { id: string; name: string; category: string; stock: number; minStock: number; unit: string }
-export interface InventoryLog { id: string; itemId: string; type: string; qty: number; date: string; userId: string }
+export interface InventoryItem { id: string; name: string; category: string; qty: number; minQty: number; unit?: string; location?: string; note?: string }
+export interface InventoryLog { id: string; itemId: string; type: 'in' | 'out' | 'adjust'; qty: number; date: string; userId: string; note?: string }
 export interface MeetingTask {
   id: string; title: string; status: '待辦' | '進行中' | '已完成'; priority?: string
   assigneeId?: string; dueDate?: string; note?: string
@@ -128,7 +133,7 @@ export interface SkillDef { id: string; name: string; category: string; requires
 export interface SkillCell { level: '' | 'certified' | 'trained' | 'learning'; expireDate: string; note: string; updatedAt: string }
 export type SkillMatrix = Record<string, Record<string, SkillCell>>
 export interface Title { id: string; name: string }
-export interface Room { id: string; name: string; capacity: number }
+export interface Room { id: string; name: string; capacity?: number; status?: string; patient?: string; since?: string; note?: string }
 export interface Emergency {
   id: string; title: string; body?: string; level: string
   authorId?: string; time?: string; createdAt?: string

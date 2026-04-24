@@ -37,6 +37,9 @@ const navItems = [
   { path: '/forms', label: '表單簽核' },
   { path: '/edu', label: '衛教資料庫' },
   { path: '/baby', label: '寶寶牆' },
+  { path: '/patient', label: '病患動線' },
+  { path: '/delivery', label: '產房狀態' },
+  { path: '/inventory', label: '庫存管理' },
   // routes added here as modules migrate
 ]
 </script>
