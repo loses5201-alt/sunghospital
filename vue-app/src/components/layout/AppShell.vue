@@ -45,6 +45,7 @@ const navItems = [
   { path: '/leave', label: '請假管理' },
   { path: '/calendar', label: '行事曆' },
   { path: '/users', label: '系統管理' },
+  { path: '/stats', label: '統計報表' },
   // routes added here as modules migrate
 ]
 </script>

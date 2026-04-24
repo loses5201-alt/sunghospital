@@ -81,6 +81,7 @@ const router = createRouter({
     { path: '/leave', component: () => import('../views/LeaveView.vue'), meta: { requiresAuth: true } },
     { path: '/calendar', component: () => import('../views/CalendarView.vue'), meta: { requiresAuth: true } },
     { path: '/users', component: () => import('../views/UsersView.vue'), meta: { requiresAuth: true } },
+    { path: '/stats', component: () => import('../views/StatsView.vue'), meta: { requiresAuth: true } },
     // modules will be added here as they migrate
   ],
 })
