@@ -25,6 +25,7 @@ const auth = useAuthStore()
 
 const navItems = [
   { path: '/', label: '首頁' },
+  { path: '/departments', label: '科別管理' },
   // routes added here as modules migrate
 ]
 </script>

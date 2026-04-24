@@ -13,6 +13,11 @@ const router = createRouter({
       path: '/login',
       component: () => import('../views/LoginView.vue'),
     },
+    {
+      path: '/departments',
+      component: () => import('../views/DepartmentsView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })
