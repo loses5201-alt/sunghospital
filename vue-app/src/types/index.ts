@@ -71,8 +71,16 @@ export interface Meeting {
   id: string; title: string; date: string; status: string
   tasks: Task[]; chat: ChatMsg[]; votes: Vote[]
 }
-export interface Message { id: string; roomId: string; userId: string; text: string; createdAt: string }
-export interface ChatRoom { id: string; name: string; members: string[] }
+export interface Message {
+  id: string; roomId: string; from: string; to?: string; text?: string
+  ts: string; deleted?: boolean; reads?: Record<string, boolean>
+  reactions?: Record<string, string[]>
+}
+export interface ChatRoom {
+  id: string; name?: string; members: string[]
+  isGroup?: boolean; groupName?: string
+  lastMsg?: string; lastTs?: string
+}
 export interface JournalComment { id: string; userId: string; text: string; createdAt: string; likes: string[] }
 export interface Journal {
   id: string; userId: string; date: string; content: string

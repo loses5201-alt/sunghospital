@@ -43,6 +43,11 @@ const router = createRouter({
       component: () => import('../views/KioskView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/messages',
+      component: () => import('../views/MessagesView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })
