@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== Vue 3 Migration ===' && cat /c/Users/User/sunghospital/PROGRESS.md"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(node --check \"C:/Users/User/sunghospital/app.js\")",
