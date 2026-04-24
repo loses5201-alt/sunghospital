@@ -58,8 +58,12 @@ export interface Incident {
   level: string; status: string; comments: Comment[]
 }
 export interface Baby {
-  id: string; name: string; birthDate: string; gender: string
-  apgar1?: number; apgar5?: number; gestAge?: string; deliveryMethod?: string; feedMethod?: string
+  id: string; name: string; gender: 'boy' | 'girl'; emoji?: string
+  weight?: string; height?: string; born?: string
+  mom?: string; nurse?: string; note?: string
+  discharged?: boolean; dischargeDate?: string
+  apgar1?: number | string; apgar5?: number | string; ga?: string
+  birthMethod?: 'normal' | 'csection' | string; feeding?: 'breast' | 'formula' | 'mixed' | string
 }
 export interface Patient { id: string; name: string; deptId: string; admitDate: string; note?: string }
 export interface Equipment {

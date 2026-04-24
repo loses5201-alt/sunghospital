@@ -68,6 +68,11 @@ const router = createRouter({
       component: () => import('../views/EduView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/baby',
+      component: () => import('../views/BabyView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })
