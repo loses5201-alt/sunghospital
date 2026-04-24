@@ -70,7 +70,13 @@ export interface Message { id: string; roomId: string; userId: string; text: str
 export interface ChatRoom { id: string; name: string; members: string[] }
 export interface Journal { id: string; userId: string; date: string; content: string }
 export interface EduItem { id: string; title: string; category: string; content: string; authorId: string; createdAt: string }
-export interface Sop { id: string; title: string; category: string; steps: string[]; authorId: string }
+export interface Sop {
+  id: string; title: string; category: string
+  version?: string; content?: string
+  updatedAt?: string; updatedBy?: string
+  acks?: Record<string, string>
+  steps?: string[]
+}
 export interface FormRequest { id: string; type: string; title: string; applicantId: string; startDate: string; endDate: string; reason: string; status: string; createdAt: string }
 export interface SwapRequest { id: string; requesterId: string; targetId: string; status: string; createdAt: string }
 export interface FormNotif { id: string; toUserId: string; title: string; body: string; createdAt: string }

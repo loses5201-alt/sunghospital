@@ -23,6 +23,11 @@ const router = createRouter({
       component: () => import('../views/SkillsView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/sop',
+      component: () => import('../views/SopView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })
