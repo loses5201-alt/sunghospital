@@ -34,6 +34,7 @@ const navItems = [
   { path: '/messages', label: '站內訊息' },
   { path: '/duty', label: '值班表' },
   { path: '/meetings', label: '會議記錄' },
+  { path: '/forms', label: '表單簽核' },
   // routes added here as modules migrate
 ]
 </script>

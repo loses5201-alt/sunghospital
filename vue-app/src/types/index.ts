@@ -106,7 +106,13 @@ export interface Sop {
   acks?: Record<string, string>
   steps?: string[]
 }
-export interface FormRequest { id: string; type: string; title: string; applicantId: string; startDate: string; endDate: string; reason: string; status: string; createdAt: string }
+export interface FormRequest {
+  id: string; type: string; title: string; applicantId: string
+  startDate?: string; endDate?: string; reason?: string
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn'
+  approvers: string[]; statuses: string[]; comments?: string[]
+  createdAt: string
+}
 export interface SwapRequest {
   id: string; fromId: string; toId: string; status: string; createdAt: string
   fromDate?: string; fromShift?: string; toDate?: string; toShift?: string; reason?: string
