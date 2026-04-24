@@ -19,7 +19,8 @@ export function normalizeStore(s: Partial<AppStore>): AppStore {
   ] as const
   const result = { ...s } as AppStore
   arrFields.forEach((f) => {
-    (result as Record<string, unknown>)[f] = normalizeArr((s as Record<string, unknown>)[f])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(result as any)[f] = normalizeArr((s as any)[f])
   })
   result.meetings?.forEach((m) => {
     m.tasks = normalizeArr(m.tasks)

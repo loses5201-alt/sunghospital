@@ -21,7 +21,7 @@
       <div v-if="filtered.length" class="ir-list">
         <div v-for="ir in filtered" :key="ir.id" :class="['ir-card', `ir-l${ir.level}`]">
           <div class="ir-card-top">
-            <span :class="['ir-level', `ir-l${ir.level}`]">{{ IR_LEVELS[ir.level]?.label ?? `Level ${ir.level}` }}</span>
+            <span :class="['ir-level', `ir-l${ir.level}`]">{{ IR_LEVELS[Number(ir.level)]?.label ?? `Level ${ir.level}` }}</span>
             <span :class="['ir-status-chip', `ir-s-${ir.status}`]">{{ statusLabel(ir.status) }}</span>
             <span class="ir-date">{{ ir.date }}</span>
             <select v-if="auth.isManager" class="status-sel" :value="ir.status" @change="updateStatus(ir, ($event.target as HTMLSelectElement).value)">

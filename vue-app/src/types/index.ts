@@ -9,6 +9,7 @@ export interface User {
   title: string
   avatar: string
   password?: string
+  status?: 'active' | 'disabled' | 'resigned'
 }
 
 export interface AppStore {
@@ -37,6 +38,8 @@ export interface AppStore {
   skillMatrix: SkillMatrix
   eduReads?: Record<string, Record<string, boolean>>
   leaveBalance?: Record<string, Record<string, number>>
+  dutySchedule?: Record<string, Record<string, string>>
+  auditLog?: { at: string; user: string; action: string; detail: string }[]
   titles: Title[]
   rooms: Room[]
   emergencies: Emergency[]

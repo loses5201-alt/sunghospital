@@ -214,7 +214,7 @@ function deleteShift(id: string) {
   ;(rtdb.store as any).shifts = (rtdb.store as any).shifts?.filter((s: ShiftHandover) => s.id !== id) ?? []
   rtdb.save()
 }
-function toggleChecklist(s: ShiftHandover, item: ShiftChecklistItem) {
+function toggleChecklist(_s: ShiftHandover, item: ShiftChecklistItem) {
   item.done = !item.done; rtdb.save()
 }
 

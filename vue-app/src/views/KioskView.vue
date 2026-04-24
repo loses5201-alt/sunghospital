@@ -78,7 +78,7 @@ const today = computed(() => now.value.toISOString().split('T')[0])
 const users = computed(() => rtdb.store?.users ?? [])
 
 const onDutyToday = computed(() => {
-  const ds = rtdb.store?.dutySchedule as Record<string, Record<string, string>> | undefined
+  const ds = rtdb.store?.dutySchedule
   if (!ds) return []
   return Object.entries(ds)
     .filter(([, sched]) => { const s = sched[today.value]; return s && s !== 'off' })

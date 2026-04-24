@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useRtdb, normalizeStore } from '../composables/useRtdb'
-import type { AppStore } from '../types'
 
 export const useRtdbStore = defineStore('rtdb', () => {
   const { store, synced, watchStore, saveStore } = useRtdb()
