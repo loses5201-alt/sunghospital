@@ -32,6 +32,7 @@ const navItems = [
   { path: '/journal', label: '留言板' },
   { path: '/kiosk', label: '全院看板' },
   { path: '/messages', label: '站內訊息' },
+  { path: '/duty', label: '值班表' },
   // routes added here as modules migrate
 ]
 </script>

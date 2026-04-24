@@ -97,7 +97,11 @@ export interface Sop {
   steps?: string[]
 }
 export interface FormRequest { id: string; type: string; title: string; applicantId: string; startDate: string; endDate: string; reason: string; status: string; createdAt: string }
-export interface SwapRequest { id: string; requesterId: string; targetId: string; status: string; createdAt: string }
+export interface SwapRequest {
+  id: string; fromId: string; toId: string; status: string; createdAt: string
+  fromDate?: string; fromShift?: string; toDate?: string; toShift?: string; reason?: string
+  requesterId?: string; targetId?: string
+}
 export interface FormNotif { id: string; toUserId: string; title: string; body: string; createdAt: string }
 export interface SkillDef { id: string; name: string; category: string; requiresExpiry?: boolean }
 export interface SkillCell { level: '' | 'certified' | 'trained' | 'learning'; expireDate: string; note: string; updatedAt: string }
