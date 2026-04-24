@@ -44,6 +44,16 @@ export interface AppStore {
 
 export interface Department { id: string; name: string; color?: string }
 export interface Shift { id: string; userId: string; date: string; type: string; note?: string }
+export interface ShiftChecklistItem { id: string; text: string; done: boolean }
+export interface ShiftHandover {
+  id: string; date: string; shift: string; unit: string
+  fromUserId: string; toUserId: string; urgency: 'normal' | 'watch' | 'critical'
+  flags: string[]
+  patients?: string; keyEvents?: string; pending?: string; meds?: string
+  labs?: string; checklist?: ShiftChecklistItem[]
+  fromSigned?: boolean; toSigned?: boolean; toSignedAt?: string
+  createdAt: string
+}
 export interface Leave {
   id: string; userId: string; type: string
   startDate: string; endDate: string; days?: number
