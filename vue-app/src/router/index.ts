@@ -76,6 +76,7 @@ const router = createRouter({
     { path: '/patient', component: () => import('../views/PatientView.vue'), meta: { requiresAuth: true } },
     { path: '/delivery', component: () => import('../views/DeliveryView.vue'), meta: { requiresAuth: true } },
     { path: '/inventory', component: () => import('../views/InventoryView.vue'), meta: { requiresAuth: true } },
+    { path: '/equipment', component: () => import('../views/EquipmentView.vue'), meta: { requiresAuth: true } },
     // modules will be added here as they migrate
   ],
 })

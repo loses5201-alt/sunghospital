@@ -73,7 +73,8 @@ export interface Patient {
 }
 export interface Equipment {
   id: string; name: string; category: string; priority: string
-  location: string; note: string; status: string; comments: Comment[]
+  location?: string; note?: string; status: string; comments: Comment[]
+  reportedBy?: string; reportedAt?: string; resolvedAt?: string
 }
 export interface InventoryItem { id: string; name: string; category: string; qty: number; minQty: number; unit?: string; location?: string; note?: string }
 export interface InventoryLog { id: string; itemId: string; type: 'in' | 'out' | 'adjust'; qty: number; date: string; userId: string; note?: string }
@@ -139,5 +140,5 @@ export interface Emergency {
   authorId?: string; time?: string; createdAt?: string
   confirms: Record<string, boolean>
 }
-export interface Comment { id: string; userId: string; text: string; createdAt: string }
+export interface Comment { id: string; userId: string; text: string; createdAt?: string; at?: string }
 export interface Task { id: string; title: string; done: boolean; assigneeId?: string }

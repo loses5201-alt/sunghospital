@@ -40,6 +40,7 @@ const navItems = [
   { path: '/patient', label: '病患動線' },
   { path: '/delivery', label: '產房狀態' },
   { path: '/inventory', label: '庫存管理' },
+  { path: '/equipment', label: '設備回報' },
   // routes added here as modules migrate
 ]
 </script>
