@@ -35,6 +35,7 @@ export interface AppStore {
   formNotifs: FormNotif[]
   skillDefs: SkillDef[]
   skillMatrix: SkillMatrix
+  eduReads?: Record<string, Record<string, boolean>>
   titles: Title[]
   rooms: Room[]
   emergencies: Emergency[]
@@ -98,7 +99,7 @@ export interface Journal {
   likes: string[]; comments: JournalComment[]
   pinned?: boolean; image?: string; edited?: boolean
 }
-export interface EduItem { id: string; title: string; category: string; content: string; authorId: string; createdAt: string }
+export interface EduItem { id: string; title: string; icon?: string; tags: string[]; desc?: string; content?: string }
 export interface Sop {
   id: string; title: string; category: string
   version?: string; content?: string
