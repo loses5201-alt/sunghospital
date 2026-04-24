@@ -25,32 +25,32 @@ Firebase RTDB untouched. Modules migrate smallest → largest.
 - [x] `src/components/layout/AppShell.vue` — sidebar shell
 - [x] `main.ts` — Pinia + Router 掛載完畢
 
-## Module Migration (22 total — smallest → largest)
+## Module Migration (22/22 ✅ ALL DONE)
 
-| # | Module | Size | Status | Notes |
+| # | Module | Size | Status | Route |
 |---|--------|------|--------|-------|
-| 1 | departments | XS | 🔧 | 靜態清單，下一個 |
-| 2 | skills | XS | ⏳ | |
-| 3 | sop | S | ⏳ | |
-| 4 | announcements | S | ⏳ | |
-| 5 | journal | S | ⏳ | |
-| 6 | kiosk | S | ⏳ | |
-| 7 | messages | S | ⏳ | |
-| 8 | duty | M | ⏳ | |
-| 9 | meetings | M | ⏳ | |
-| 10 | forms | M | ⏳ | |
-| 11 | edu | M | ⏳ | 搜尋 + 編輯/刪除 |
-| 12 | baby | M | ⏳ | APGAR、臨床資料 |
-| 13 | patient | M | ⏳ | |
-| 14 | delivery | M | ⏳ | |
-| 15 | inventory | M | ⏳ | |
-| 16 | equipment | L | ⏳ | priority + 跟進留言 |
-| 17 | incident | L | ⏳ | 留言串 |
-| 18 | leave | L | ⏳ | store.leaves 欄位 |
-| 19 | calendar | L | ⏳ | 依賴 leave |
-| 20 | users | L | ⏳ | |
-| 21 | stats | L | ⏳ | 圖表 |
-| 22 | shift | XL | ⏳ | 最大，最後遷 |
+| 1 | departments | XS | ✅ | /departments |
+| 2 | skills | XS | ✅ | /skills |
+| 3 | sop | S | ✅ | /sop |
+| 4 | announcements | S | ✅ | /announcements |
+| 5 | journal | S | ✅ | /journal |
+| 6 | kiosk | S | ✅ | /kiosk |
+| 7 | messages | S | ✅ | /messages |
+| 8 | duty | M | ✅ | /duty |
+| 9 | meetings | M | ✅ | /meetings |
+| 10 | forms | M | ✅ | /forms |
+| 11 | edu | M | ✅ | /edu |
+| 12 | baby | M | ✅ | /baby |
+| 13 | patient | M | ✅ | /patient |
+| 14 | delivery | M | ✅ | /delivery |
+| 15 | inventory | M | ✅ | /inventory |
+| 16 | equipment | L | ✅ | /equipment |
+| 17 | incident | L | ✅ | /incident |
+| 18 | leave | L | ✅ | /leave |
+| 19 | calendar | L | ✅ | /calendar |
+| 20 | users | L | ✅ | /users |
+| 21 | stats | L | ✅ | /stats |
+| 22 | shift | XL | ✅ | /shift |
 
 ## Data Notes
 - `store.leaves`: `{ id, userId, type, startDate, endDate, status, createdAt }`
