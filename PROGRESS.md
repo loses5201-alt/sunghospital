@@ -9,22 +9,27 @@ Firebase RTDB untouched. Modules migrate smallest → largest.
 - [x] Branch: `claude/recover-conversation-history-TAfCX`
 - [x] `vue-app/` initialized (Vite 9 + vue-ts template)
 - [x] `npm install` done
-- [ ] Pinia + Vue Router 4 installed
-- [ ] Firebase composable skeleton
-- [ ] Layout shell component (`AppShell.vue`)
-- [ ] Legacy index.html co-existence verified
+- [x] Pinia + Vue Router 4 installed
+- [x] Firebase composable skeleton
+- [x] Layout shell component (`AppShell.vue`)
+- [ ] Legacy index.html co-existence verified (次優先)
 
-## Phase 1 — Core Infra
-- [ ] `src/firebase.ts` — RTDB init
-- [ ] `src/stores/auth.ts` — Pinia auth store
-- [ ] `src/router/index.ts` — Vue Router skeleton
-- [ ] `src/composables/useFirebase.ts`
+## Phase 1 — Core Infra ✅
+- [x] `src/firebase.ts` — RTDB init (modular SDK v9)
+- [x] `src/types/index.ts` — 全 AppStore 型別定義
+- [x] `src/composables/useRtdb.ts` — RTDB sync + normalizeStore
+- [x] `src/stores/auth.ts` — Pinia auth store (Google login)
+- [x] `src/stores/rtdb.ts` — Pinia RTDB store
+- [x] `src/router/index.ts` — Vue Router 4 + auth guard
+- [x] `src/views/LoginView.vue` + `HomeView.vue`
+- [x] `src/components/layout/AppShell.vue` — sidebar shell
+- [x] `main.ts` — Pinia + Router 掛載完畢
 
 ## Module Migration (22 total — smallest → largest)
 
 | # | Module | Size | Status | Notes |
 |---|--------|------|--------|-------|
-| 1 | departments | XS | ⏳ | 靜態清單 |
+| 1 | departments | XS | 🔧 | 靜態清單，下一個 |
 | 2 | skills | XS | ⏳ | |
 | 3 | sop | S | ⏳ | |
 | 4 | announcements | S | ⏳ | |
