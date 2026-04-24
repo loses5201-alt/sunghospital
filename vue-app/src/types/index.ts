@@ -36,6 +36,7 @@ export interface AppStore {
   skillDefs: SkillDef[]
   skillMatrix: SkillMatrix
   eduReads?: Record<string, Record<string, boolean>>
+  leaveBalance?: Record<string, Record<string, number>>
   titles: Title[]
   rooms: Room[]
   emergencies: Emergency[]
@@ -45,7 +46,9 @@ export interface Department { id: string; name: string; color?: string }
 export interface Shift { id: string; userId: string; date: string; type: string; note?: string }
 export interface Leave {
   id: string; userId: string; type: string
-  startDate: string; endDate: string; status: string; createdAt: string
+  startDate: string; endDate: string; days?: number
+  status: 'pending' | 'approved' | 'rejected'
+  reason?: string; createdAt: string; approvedBy?: string
 }
 export interface Announcement {
   id: string; title: string; body: string; authorId: string
