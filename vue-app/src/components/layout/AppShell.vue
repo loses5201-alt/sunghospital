@@ -33,6 +33,7 @@ const navItems = [
   { path: '/kiosk', label: '全院看板' },
   { path: '/messages', label: '站內訊息' },
   { path: '/duty', label: '值班表' },
+  { path: '/meetings', label: '會議記錄' },
   // routes added here as modules migrate
 ]
 </script>

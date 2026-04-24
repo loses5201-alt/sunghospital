@@ -67,9 +67,19 @@ export interface Equipment {
 }
 export interface InventoryItem { id: string; name: string; category: string; stock: number; minStock: number; unit: string }
 export interface InventoryLog { id: string; itemId: string; type: string; qty: number; date: string; userId: string }
+export interface MeetingTask {
+  id: string; title: string; status: '待辦' | '進行中' | '已完成'; priority?: string
+  assigneeId?: string; dueDate?: string; note?: string
+}
+export interface MeetingChatMsg { id: string; userId: string; text: string; createdAt: string }
+export interface VoteOption { id: string; text: string; votes: string[] }
+export interface MeetingVote { id: string; question: string; options: VoteOption[]; closed?: boolean }
 export interface Meeting {
   id: string; title: string; date: string; status: string
-  tasks: Task[]; chat: ChatMsg[]; votes: Vote[]
+  attendeeIds: string[]; notes?: string; resolutions?: string[]
+  tasks: MeetingTask[]; chat: MeetingChatMsg[]; votes: MeetingVote[]
+  reads?: Record<string, { read: boolean; at?: string }>
+  signoff?: { locked: boolean; signatures?: Record<string, string> }
 }
 export interface Message {
   id: string; roomId: string; from: string; to?: string; text?: string
@@ -115,6 +125,3 @@ export interface Emergency {
 }
 export interface Comment { id: string; userId: string; text: string; createdAt: string }
 export interface Task { id: string; title: string; done: boolean; assigneeId?: string }
-export interface ChatMsg { id: string; userId: string; text: string; createdAt: string }
-export interface Vote { id: string; question: string; options: VoteOption[] }
-export interface VoteOption { id: string; text: string; votes: string[] }

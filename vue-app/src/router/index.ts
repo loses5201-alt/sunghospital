@@ -53,6 +53,11 @@ const router = createRouter({
       component: () => import('../views/DutyView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/meetings',
+      component: () => import('../views/MeetingsView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })
