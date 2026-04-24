@@ -30,6 +30,7 @@ const navItems = [
   { path: '/sop', label: 'SOP 文件' },
   { path: '/announcements', label: '公告牆' },
   { path: '/journal', label: '留言板' },
+  { path: '/kiosk', label: '全院看板' },
   // routes added here as modules migrate
 ]
 </script>
