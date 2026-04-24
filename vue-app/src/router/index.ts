@@ -28,6 +28,11 @@ const router = createRouter({
       component: () => import('../views/SopView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/announcements',
+      component: () => import('../views/AnnouncementsView.vue'),
+      meta: { requiresAuth: true },
+    },
     // modules will be added here as they migrate
   ],
 })

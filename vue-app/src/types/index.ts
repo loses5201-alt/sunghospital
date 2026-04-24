@@ -46,7 +46,12 @@ export interface Leave {
   id: string; userId: string; type: string
   startDate: string; endDate: string; status: string; createdAt: string
 }
-export interface Announcement { id: string; title: string; body: string; createdAt: string; authorId: string }
+export interface Announcement {
+  id: string; title: string; body: string; authorId: string
+  time: string; pinned?: boolean
+  category?: string; infectionLevel?: '' | 'yellow' | 'orange' | 'red'
+  reads: Record<string, boolean>
+}
 export interface Incident {
   id: string; title: string; description: string
   level: string; status: string; comments: Comment[]
@@ -85,7 +90,11 @@ export interface SkillCell { level: '' | 'certified' | 'trained' | 'learning'; e
 export type SkillMatrix = Record<string, Record<string, SkillCell>>
 export interface Title { id: string; name: string }
 export interface Room { id: string; name: string; capacity: number }
-export interface Emergency { id: string; title: string; level: string; createdAt: string }
+export interface Emergency {
+  id: string; title: string; body?: string; level: string
+  authorId?: string; time?: string; createdAt?: string
+  confirms: Record<string, boolean>
+}
 export interface Comment { id: string; userId: string; text: string; createdAt: string }
 export interface Task { id: string; title: string; done: boolean; assigneeId?: string }
 export interface ChatMsg { id: string; userId: string; text: string; createdAt: string }
