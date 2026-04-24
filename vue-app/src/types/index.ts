@@ -73,7 +73,13 @@ export interface Meeting {
 }
 export interface Message { id: string; roomId: string; userId: string; text: string; createdAt: string }
 export interface ChatRoom { id: string; name: string; members: string[] }
-export interface Journal { id: string; userId: string; date: string; content: string }
+export interface JournalComment { id: string; userId: string; text: string; createdAt: string; likes: string[] }
+export interface Journal {
+  id: string; userId: string; date: string; content: string
+  title?: string; category?: string; createdAt?: string
+  likes: string[]; comments: JournalComment[]
+  pinned?: boolean; image?: string; edited?: boolean
+}
 export interface EduItem { id: string; title: string; category: string; content: string; authorId: string; createdAt: string }
 export interface Sop {
   id: string; title: string; category: string

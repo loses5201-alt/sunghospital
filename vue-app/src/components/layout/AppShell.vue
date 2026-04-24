@@ -29,6 +29,7 @@ const navItems = [
   { path: '/skills', label: '技能矩陣' },
   { path: '/sop', label: 'SOP 文件' },
   { path: '/announcements', label: '公告牆' },
+  { path: '/journal', label: '留言板' },
   // routes added here as modules migrate
 ]
 </script>
