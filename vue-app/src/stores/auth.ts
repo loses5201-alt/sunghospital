@@ -4,46 +4,56 @@ import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from
 import { auth } from '../firebase'
 import type { User } from '../types'
 
-type UsersGetter = () => User[]
-type UserAdder = (u: User) => void
-
 export const useAuthStore = defineStore('auth', () => {
   const currentUser = ref<User | null>(null)
   const firebaseUser = ref<import('firebase/auth').User | null>(null)
   const ready = ref(false)
-
-  // These are set once by App.vue so auth can always see the latest users list
-  let getUsers: UsersGetter = () => []
-  let addUser: UserAdder = () => {}
+  let listenerAttached = false
 
   const isLoggedIn = computed(() => !!currentUser.value)
   const isAdmin = computed(() => currentUser.value?.role === 'admin')
   const isManager = computed(() => ['admin', 'manager'].includes(currentUser.value?.role ?? ''))
 
-  function init(usersGetter: UsersGetter, userAdder: UserAdder) {
-    getUsers = usersGetter
-    addUser = userAdder
+  // Setup Firebase Auth listener (passive — just observe state)
+  function init() {
+    if (listenerAttached) return
+    listenerAttached = true
     onAuthStateChanged(auth, (fbUser) => {
       firebaseUser.value = fbUser
-      const users = getUsers()
-      if (fbUser) {
-        const matched = users.find((u) => u.email === fbUser.email || u.googleId === fbUser.uid)
-        currentUser.value = matched ?? null
-        if (matched) localStorage.setItem('loggedInUserId', matched.id)
-      } else {
-        // Offline fallback: restore from localStorage
-        const savedId = localStorage.getItem('loggedInUserId')
-        currentUser.value = savedId ? (users.find((u) => u.id === savedId) ?? null) : null
-      }
       ready.value = true
     })
   }
 
-  async function loginWithGoogle(): Promise<User> {
+  // Match Firebase Auth user with internal user list. Call after RTDB loads.
+  function matchUser(users: User[]) {
+    const fbUser = firebaseUser.value
+    if (fbUser) {
+      const matched = users.find((u) => u.email === fbUser.email || u.googleId === fbUser.uid)
+      currentUser.value = matched ?? null
+      if (matched) localStorage.setItem('loggedInUserId', matched.id)
+    } else {
+      const savedId = localStorage.getItem('loggedInUserId')
+      currentUser.value = savedId ? (users.find((u) => u.id === savedId) ?? null) : null
+    }
+  }
+
+  // Login with Google. Caller provides reload + getters so we can:
+  // 1) sign in with Google
+  // 2) reload RTDB (auth now permits the read)
+  // 3) look up matching user in fresh list, or create one if missing
+  async function loginWithGoogle(opts: {
+    reloadRtdb: () => Promise<void>
+    getUsers: () => User[]
+    addUser: (u: User) => Promise<void> | void
+  }): Promise<User> {
     const provider = new GoogleAuthProvider()
     const result = await signInWithPopup(auth, provider)
     const gu = result.user
-    const users = getUsers()
+
+    // Reload RTDB now that Firebase Auth is set
+    await opts.reloadRtdb()
+
+    const users = opts.getUsers()
     let matched = users.find((u) => u.email === gu.email || u.googleId === gu.uid)
     if (!matched) {
       matched = {
@@ -53,14 +63,13 @@ export const useAuthStore = defineStore('auth', () => {
         name: gu.displayName ?? gu.email?.split('@')[0] ?? '',
         email: gu.email ?? '',
         googleId: gu.uid,
-        // First user gets admin (so they can manage the system)
         role: users.length === 0 ? 'admin' : 'member',
         deptId: '',
         title: '',
         avatar: 'av-a',
         status: 'active',
       }
-      addUser(matched)
+      await opts.addUser(matched)
     }
     currentUser.value = matched
     localStorage.setItem('loggedInUserId', matched.id)
@@ -73,5 +82,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('loggedInUserId')
   }
 
-  return { currentUser, firebaseUser, ready, isLoggedIn, isAdmin, isManager, init, loginWithGoogle, logout }
+  return { currentUser, firebaseUser, ready, isLoggedIn, isAdmin, isManager, init, matchUser, loginWithGoogle, logout }
 })
