@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// https://vite.dev/config/
+// Build to ../app/ at repo root so GitHub Pages serves at
+// https://loses5201-alt.github.io/sunghospital/app/
 export default defineConfig({
   plugins: [vue()],
-  // GitHub Pages: served at /sunghospital/vue-app/ alongside legacy /sunghospital/
-  base: process.env.NODE_ENV === 'production' ? '/sunghospital/vue-app/' : '/',
+  base: process.env.NODE_ENV === 'production' ? '/sunghospital/app/' : '/',
+  build: {
+    outDir: '../app',
+    emptyOutDir: true,
+  },
 })
