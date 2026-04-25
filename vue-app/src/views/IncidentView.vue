@@ -240,4 +240,21 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .form-row label { display: block; font-size: .82rem; color: #555; margin-bottom: 4px; }
 .form-row input, .form-row select, .form-row textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: .88rem; font-family: inherit; resize: vertical; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-header .btn-primary { align-self: flex-end; }
+  .filter-row { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .cat-btn { white-space: nowrap; flex-shrink: 0; padding: 6px 12px; font-size: .8rem; min-height: 32px; }
+  .ir-card { padding: 12px; }
+  .ir-card-top { gap: 6px; }
+  .status-sel { width: 100%; margin-left: 0; margin-top: 4px; }
+  .ir-fields { grid-template-columns: 1fr; gap: 6px; }
+  .ir-footer { flex-direction: column; align-items: stretch; gap: 8px; }
+  .ir-actions { justify-content: flex-end; }
+  .modal { min-width: 0; width: calc(100vw - 24px); max-width: none; padding: 18px 16px; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions button { flex: 1; min-height: 44px; }
+}
 </style>

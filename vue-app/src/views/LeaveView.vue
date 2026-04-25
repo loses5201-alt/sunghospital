@@ -208,4 +208,37 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .form-row input, .form-row select, .form-row textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: .88rem; font-family: inherit; resize: vertical; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+/* ---------- Mobile (≤768px) ---------- */
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-header .btn-primary { align-self: flex-end; }
+
+  /* Tabs scroll horizontally */
+  .tabs { overflow-x: auto; flex-wrap: nowrap; margin: 0 -14px 14px; padding: 0 14px; }
+  .tab { white-space: nowrap; flex-shrink: 0; padding: 10px 14px; font-size: .85rem; min-height: 40px; }
+
+  /* Balance cards: 3 per row, compact */
+  .balance-cards { gap: 8px; }
+  .bal-card { flex: 1 1 calc(33% - 8px); min-width: 0; padding: 10px 8px; }
+  .bal-type { font-size: .65rem; margin: 4px 0; }
+  .bal-remain { font-size: 1.5rem; }
+  .bal-detail { font-size: .58rem; }
+
+  /* Balance table: smaller font */
+  .balance-table th, .balance-table td { padding: 6px 8px; font-size: .76rem; }
+  .bal-input { width: 40px; font-size: .76rem; }
+
+  /* Modal mobile */
+  .modal { min-width: 0; width: calc(100vw - 24px); max-width: none; padding: 18px 16px; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions button { flex: 1; min-height: 44px; }
+}
+
+@media (max-width: 440px) {
+  .bal-card { flex: 1 1 calc(50% - 4px); }
+  .balance-cards { gap: 8px; }
+}
 </style>

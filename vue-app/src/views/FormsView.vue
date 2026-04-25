@@ -299,4 +299,36 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 .btn-danger { background: #c0392b; color: white; border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }
 .btn-ghost { background: transparent; border: 1px solid #ddd; color: #555; border-radius: 5px; padding: 8px 14px; font-size: .82rem; cursor: pointer; }
+
+/* ---------- Mobile (≤768px) ---------- */
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-header .btn-primary { align-self: flex-end; }
+
+  .filter-tabs { gap: 6px; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; margin: 0 -14px 14px; padding-left: 14px; padding-right: 14px; }
+  .filter-tabs::-webkit-scrollbar { height: 0; }
+  .ftab { white-space: nowrap; flex-shrink: 0; padding: 8px 14px; font-size: .85rem; min-height: 36px; }
+
+  /* Form list cards stack vertically */
+  .form-card { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; }
+  .form-left { gap: 10px; }
+  .form-right { justify-content: space-between; }
+
+  /* Modal almost full-screen */
+  .modal { min-width: 0; width: calc(100vw - 24px); max-width: none; padding: 18px 16px; max-height: 92vh; }
+  .modal-wide { max-width: none; }
+
+  /* Detail layout 1-col */
+  .detail-grid { grid-template-columns: 1fr; }
+  .dfield.full { grid-column: span 1; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+
+  /* Approval action buttons full-width */
+  .modal-actions { flex-wrap: wrap; gap: 10px; }
+  .modal-actions button { flex: 1; min-height: 44px; font-size: .9rem; }
+
+  /* Bigger touch on form list */
+  .form-card { min-height: 64px; }
+}
 </style>

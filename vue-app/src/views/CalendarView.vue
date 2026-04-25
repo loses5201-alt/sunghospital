@@ -137,4 +137,17 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .ev-meeting { background: #dbeafe; }
 .ev-duty { background: #fef3c7; }
 .ev-leave { background: #fde8e8; }
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .cal-header { flex-wrap: wrap; gap: 8px; }
+  .cal-title { font-size: .92rem; min-width: 90px; }
+  .cal-cell { min-height: 56px; padding: 3px; }
+  .cal-date-num { font-size: .72rem; margin-bottom: 2px; }
+  .cal-event { font-size: .58rem; padding: 0 3px; }
+  .cal-dow { padding: 4px; font-size: .65rem; }
+  .legend { gap: 8px; }
+  .leg-item { font-size: .68rem; }
+}
 </style>

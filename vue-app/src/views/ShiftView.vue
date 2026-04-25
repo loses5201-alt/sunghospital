@@ -323,4 +323,39 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .flag-checks { display: flex; flex-wrap: wrap; gap: 8px; }
 .checkbox-row { display: flex; align-items: center; gap: 5px; font-size: .82rem; cursor: pointer; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+/* ---------- Mobile (≤768px) ---------- */
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-header .btn-primary { align-self: flex-end; }
+
+  /* Metrics: 2x2 grid, more compact */
+  .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .metric { padding: 10px 12px; }
+  .m-num { font-size: 1.35rem; }
+  .m-lbl { font-size: .68rem; }
+
+  /* Controls: stack search & chips */
+  .controls { flex-direction: column; align-items: stretch; gap: 8px; }
+  .search-input { width: 100%; }
+  .filter-chips { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .chip { white-space: nowrap; flex-shrink: 0; padding: 6px 12px; font-size: .8rem; min-height: 32px; }
+
+  /* Card adjustments */
+  .shift-card { padding: 14px 12px; }
+  .sc-fields { grid-template-columns: 1fr; gap: 6px; }
+  .sc-header { gap: 6px; }
+  .sc-unit { flex: 1 1 100%; order: -1; }
+  .sc-sign-row { gap: 6px; flex-wrap: wrap; }
+  .sc-actions { width: 100%; justify-content: flex-end; margin-left: 0; margin-top: 4px; }
+  .btn-primary.btn-sm { min-height: 38px; padding: 6px 14px; }
+
+  /* Modal mobile */
+  .modal { min-width: 0; width: calc(100vw - 24px); max-width: none; padding: 16px 14px; max-height: 92vh; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .flag-checks { gap: 10px 16px; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions button { flex: 1; min-height: 44px; }
+}
 </style>

@@ -213,4 +213,16 @@ function save() {
 .form-row input, .form-row select, .form-row textarea { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: .88rem; font-family: inherit; resize: vertical; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-wrap: wrap; gap: 8px; }
+  .controls { flex-wrap: wrap; }
+  .baby-grid { grid-template-columns: 1fr; gap: 10px; }
+  .baby-card { padding: 12px; }
+  .modal { min-width: 0; width: calc(100vw - 24px); max-width: none; padding: 18px 16px; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions button { flex: 1; min-height: 44px; }
+}
 </style>

@@ -163,4 +163,22 @@ h1 { font-size: 1.4rem; margin: 0 0 4px; color: #1a3c5e; }
 .ann-meta { font-size: .72rem; color: #aaa; }
 .unread-dot { width: 7px; height: 7px; border-radius: 50%; background: #c0392b; flex-shrink: 0; }
 .empty-hint { text-align: center; padding: 20px; color: #aaa; font-size: .85rem; }
+
+/* ---------- Mobile (≤768px) ---------- */
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  h1 { font-size: 1.2rem; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card { padding: 12px 8px; }
+  .sc-val { font-size: 1.4rem; }
+  .sc-label { font-size: .68rem; }
+  .alert-card { padding: 10px 12px; gap: 10px; flex-wrap: wrap; }
+  .alert-content { min-width: 0; flex: 1 1 calc(100% - 36px); }
+  .alert-link { width: 100%; padding-top: 4px; }
+  .section { padding: 14px; }
+}
+
+@media (max-width: 380px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}
 </style>

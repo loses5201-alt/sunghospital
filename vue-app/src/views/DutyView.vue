@@ -8,11 +8,20 @@
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="tabs">
+      <!-- Tabs (desktop) -->
+      <div class="tabs hide-mobile">
         <button v-for="tab in TABS" :key="tab.key" :class="['tab', activeTab === tab.key ? 'active' : '']" @click="activeTab = tab.key">
           {{ tab.label }}<span v-if="tab.key === 'swap' && swapBadge" class="tab-badge">{{ swapBadge }}</span>
         </button>
+      </div>
+
+      <!-- Tab selector (mobile) -->
+      <div class="tab-mobile-select">
+        <select v-model="activeTab" class="tab-select">
+          <option v-for="tab in TABS" :key="tab.key" :value="tab.key">
+            {{ tab.label }}{{ tab.key === 'swap' && swapBadge ? ` (${swapBadge})` : '' }}
+          </option>
+        </select>
       </div>
 
       <!-- WEEK TAB -->
@@ -257,7 +266,10 @@ const TABS = [
   { key: 'stats', label: '排班統計' },
 ]
 
-const activeTab = ref('week')
+// Mobile users land on "我的班表" (most useful single-screen view).
+// Desktop defaults to "週排班" (overview).
+const initialTab = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'mine' : 'week'
+const activeTab = ref(initialTab)
 const weekOffset = ref(0)
 const monthYear = ref(new Date().getFullYear())
 const monthMonth = ref(new Date().getMonth())
@@ -507,4 +519,65 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .shift-options { display: flex; flex-wrap: wrap; gap: 8px; }
 .shift-opt { border: 2px solid #ddd; background: transparent; border-radius: 8px; padding: 6px 12px; font-size: .82rem; cursor: pointer; transition: all .15s; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+/* ---------- Mobile tab selector ---------- */
+.tab-mobile-select { display: none; margin-bottom: 14px; }
+.tab-select {
+  width: 100%; border: 1.5px solid #1a3c5e; border-radius: 8px;
+  padding: 8px 12px; font-size: .9rem; background: white;
+  color: #1a3c5e; font-weight: 700;
+}
+
+/* ---------- Mobile (≤768px) ---------- */
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .tab-mobile-select { display: block; }
+
+  .week-nav { gap: 6px; flex-wrap: wrap; }
+  .week-nav .week-label { min-width: 100px; font-size: .82rem; flex: 1; }
+  .week-nav .btn-sm { padding: 6px 10px; font-size: .78rem; }
+
+  /* Make week table scroll horizontally with shorter columns */
+  .duty-wrap { margin: 0 -14px; padding: 0 14px; }
+  .day-col { min-width: 60px; }
+  .day-col .day-label { font-size: .72rem; }
+  .day-col .day-date { font-size: .65rem; }
+  .name-col { min-width: 70px; }
+  .name-cell { font-size: .76rem; }
+  .work-cnt { font-size: .65rem; }
+  .sh-chip { font-size: .65rem; padding: 2px 4px; }
+  .cov { font-size: .6rem; padding: 1px 3px; }
+
+  /* My schedule list: enlarge touch targets */
+  .my-shift-row { padding: 14px; gap: 12px; min-height: 56px; }
+  .my-shift-date { font-size: .9rem; min-width: 70px; }
+  .my-shift-time { font-size: .75rem; }
+
+  /* Calendar month view: drop cell height & font size */
+  .cal-cell { min-height: 48px; padding: 3px; }
+  .cal-day { font-size: .68rem; margin-bottom: 1px; }
+  .cal-shift-chip { font-size: .58rem; }
+  .cal-name { display: none; }
+  .cal-sh { font-size: .58rem; padding: 0 2px; }
+
+  /* Stats: convert to scrollable */
+  .stats-table { font-size: .76rem; }
+  .stats-table th, .stats-table td { padding: 6px 8px; }
+
+  /* Shift modal: stack 2x2 (or 3x2) for 6 shift options */
+  .shift-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .shift-opt { padding: 10px 6px; font-size: .85rem; }
+
+  /* Modal becomes near-full-screen */
+  .modal { padding: 18px 16px; min-width: 0; width: calc(100vw - 24px); max-width: none; max-height: 92vh; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+
+  /* Swap card stacking */
+  .swap-card { flex-direction: column; align-items: stretch; gap: 10px; }
+  .swap-status { justify-content: flex-start; }
+
+  /* Header */
+  .page-header { flex-direction: column; align-items: stretch; gap: 8px; }
+  .header-actions { justify-content: flex-end; }
+}
 </style>

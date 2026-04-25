@@ -74,4 +74,11 @@ function userName(id: string) { return props.users.find((u) => u.id === id)?.nam
 .btn-reject { background: transparent; border: 1px solid #c0392b; color: #c0392b; border-radius: 5px; padding: 4px 10px; font-size: .75rem; cursor: pointer; }
 .empty-hint { text-align: center; padding: 40px; color: #aaa; }
 .empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+@media (max-width: 768px) {
+  .leave-card { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px; }
+  .leave-card-right { flex-direction: row; align-items: center; justify-content: space-between; }
+  .approve-btns { gap: 8px; }
+  .btn-approve, .btn-reject { padding: 8px 14px; font-size: .82rem; min-height: 38px; }
+}
 </style>

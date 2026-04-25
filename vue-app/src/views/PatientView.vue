@@ -176,4 +176,22 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .flag-checks { display: flex; flex-wrap: wrap; gap: 8px; }
 .checkbox-row { display: flex; align-items: center; gap: 5px; font-size: .82rem; cursor: pointer; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .page-header { flex-direction: column; align-items: stretch; gap: 10px; }
+
+  /* Horizontal scroll hint: shadow on right edge */
+  .board-scroll { position: relative; margin: 0 -14px; padding: 0 14px; }
+  .board-scroll::after {
+    content: ''; position: sticky; right: 0; top: 0; bottom: 0;
+    width: 24px; pointer-events: none;
+    background: linear-gradient(to left, rgba(245,247,250,1), rgba(245,247,250,0));
+  }
+  .stage-col { width: 180px; }
+  .modal { min-width: 0; width: calc(100vw - 24px); max-width: none; padding: 18px 16px; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .modal-actions { flex-wrap: wrap; }
+  .modal-actions button { flex: 1; min-height: 44px; }
+}
 </style>

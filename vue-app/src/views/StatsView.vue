@@ -253,4 +253,14 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .shift-item { text-align: center; }
 .shift-name { font-size: .72rem; color: #888; }
 .shift-count { font-size: 1.4rem; font-weight: 800; }
+
+@media (max-width: 768px) {
+  .page { padding: 14px; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .metric-card { padding: 12px 10px; }
+  .mc-val { font-size: 1.5rem; }
+  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+  .stat-card { padding: 14px; }
+  .bar-label { min-width: 60px; font-size: .72rem; }
+}
 </style>
