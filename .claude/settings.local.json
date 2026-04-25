@@ -1,5 +1,19 @@
 {
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== Vue 3 Migration ===' && cat /c/Users/User/sunghospital/PROGRESS.md"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(node --check \"C:/Users/User/sunghospital/app.js\")",
       "Bash(curl -s \"https://loses5201-alt.github.io/sunghospital/\")",
