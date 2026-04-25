@@ -35,7 +35,7 @@ async function handleGoogleLogin() {
         if (!rtdbStore.store) throw new Error('Cannot create user: store not loaded')
         if (!rtdbStore.store.users) rtdbStore.store.users = []
         rtdbStore.store.users.push(u)
-        await rtdbStore.save()
+        await rtdbStore.saveCollection('users', rtdbStore.store.users)
       },
     })
     router.push('/')
