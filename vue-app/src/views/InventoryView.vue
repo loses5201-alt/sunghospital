@@ -112,6 +112,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -181,7 +182,7 @@ function saveAdjust() {
   if (adjustModal.type === 'in') item.qty += adjustModal.qty
   else item.qty = Math.max(0, item.qty - adjustModal.qty)
   if (!rtdb.store.inventoryLogs) rtdb.store.inventoryLogs = []
-  rtdb.store.inventoryLogs.unshift({ id: rtdb.uid(), itemId: adjustModal.itemId, type: adjustModal.type, qty: adjustModal.qty, date: new Date().toISOString().split('T')[0], userId: currentUserId.value, note: adjustModal.note })
+  rtdb.store.inventoryLogs.unshift({ id: rtdb.uid(), itemId: adjustModal.itemId, type: adjustModal.type, qty: adjustModal.qty, date: todayStr(), userId: currentUserId.value, note: adjustModal.note })
   rtdb.save(); adjustModal.open = false
 }
 </script>

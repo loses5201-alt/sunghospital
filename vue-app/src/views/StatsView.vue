@@ -137,12 +137,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { todayStr, formatDate } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 
 const rtdb = useRtdbStore()
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayStr()
 const thisMonth = today.slice(0, 7)
 
 const users = computed(() => rtdb.store?.users ?? [])
@@ -198,7 +199,7 @@ const irLevelStats = computed(() =>
 const days7 = computed(() => {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i))
-    const ds = d.toISOString().split('T')[0]
+    const ds = formatDate(d)
     return { label: `${d.getMonth() + 1}/${d.getDate()}`, count: incidents.value.filter((ir) => ir.date === ds).length }
   })
 })

@@ -19,7 +19,7 @@
           :class="['ann-card', infClass(ann)]"
           :data-ann-id="ann.id"
         >
-          <div v-if="annBadge(ann)" class="ann-badge" v-html="annBadge(ann)" />
+          <span v-if="badgeOf(ann)" :class="['badge', badgeOf(ann)!.cls]">{{ badgeOf(ann)!.text }}</span>
           <div class="ann-header">
             <span class="ann-author-dot" />
             <span class="ann-title">{{ ann.title }}</span>
@@ -126,6 +126,7 @@
 
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -158,12 +159,12 @@ function infClass(ann: Announcement) {
   if (ann.pinned) return 'pinned'
   return ''
 }
-function annBadge(ann: Announcement) {
-  if (ann.infectionLevel === 'red') return '<span class="badge badge-red">🔴 感染紅色警示</span>'
-  if (ann.infectionLevel === 'orange') return '<span class="badge badge-orange">🟠 感染橙色警示</span>'
-  if (ann.infectionLevel === 'yellow') return '<span class="badge badge-yellow">🟡 感染黃色警示</span>'
-  if (ann.pinned) return '<span class="badge badge-pin">📌 置頂</span>'
-  return ''
+function badgeOf(ann: Announcement): { text: string; cls: string } | null {
+  if (ann.infectionLevel === 'red') return { text: '🔴 感染紅色警示', cls: 'badge-red' }
+  if (ann.infectionLevel === 'orange') return { text: '🟠 感染橙色警示', cls: 'badge-orange' }
+  if (ann.infectionLevel === 'yellow') return { text: '🟡 感染黃色警示', cls: 'badge-yellow' }
+  if (ann.pinned) return { text: '📌 置頂', cls: 'badge-pin' }
+  return null
 }
 function readCount(ann: Announcement) { return users.value.filter((u) => ann.reads[u.id]).length }
 function readPct(ann: Announcement) { return totalUsers.value ? Math.round(readCount(ann) / totalUsers.value * 100) : 0 }
@@ -186,7 +187,7 @@ function nowTime() {
   const d = new Date()
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
-function today() { return new Date().toISOString().split('T')[0] }
+function today() { return todayStr() }
 
 function save() {
   if (!modal.title.trim() || !modal.body.trim() || !rtdb.store) return
@@ -236,11 +237,11 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .ann-card.inf-yellow { border-left: 4px solid #f1c40f; background: #fffde7; }
 .ann-card.pinned { border-left: 4px solid #f1c40f; }
 .ann-badge { margin-bottom: 8px; }
-:deep(.badge) { font-size: .72rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
-:deep(.badge-red) { background: #fde8e8; color: #c0392b; }
-:deep(.badge-orange) { background: #fef0e0; color: #e67e22; }
-:deep(.badge-yellow) { background: #fffde7; color: #f39c12; }
-:deep(.badge-pin) { background: #fffde7; color: #f39c12; }
+.badge { font-size: .72rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; margin-bottom: 6px; }
+.badge-red { background: #fde8e8; color: #c0392b; }
+.badge-orange { background: #fef0e0; color: #e67e22; }
+.badge-yellow { background: #fffde7; color: #f39c12; }
+.badge-pin { background: #fffde7; color: #f39c12; }
 .ann-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .ann-title { font-size: .95rem; font-weight: 800; color: #1a3c5e; }
 .ann-body { font-size: .88rem; color: #444; line-height: 1.7; margin-bottom: 6px; white-space: pre-wrap; }

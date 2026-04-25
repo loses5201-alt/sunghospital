@@ -111,6 +111,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -143,7 +144,7 @@ const filtered = computed(() => {
 })
 
 function userName(id?: string) { return users.value.find((u) => u.id === id)?.name ?? '未知' }
-function now() { return new Date().toISOString().split('T')[0] }
+function now() { return todayStr() }
 
 function setStatus(e: Equipment, status: string) {
   e.status = status

@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import PostDetail from '../components/journal/PostDetail.vue'
 import { useRtdbStore } from '../stores/rtdb'
@@ -182,7 +183,7 @@ function deleteComment({ postId, commentId }: { postId: string; commentId: strin
 }
 
 function now() { return new Date().toISOString().slice(0, 16).replace('T', ' ') }
-function today() { return new Date().toISOString().split('T')[0] }
+function today() { return todayStr() }
 
 const modal = reactive({ open: false, editId: '', title: '', content: '', category: 'chat' })
 function openNew() { Object.assign(modal, { open: true, editId: '', title: '', content: '', category: 'chat' }) }

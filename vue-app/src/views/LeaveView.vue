@@ -94,6 +94,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import LeaveList from '../components/leave/LeaveList.vue'
 import { useRtdbStore } from '../stores/rtdb'
@@ -166,7 +167,7 @@ function save() {
     startDate: modal.startDate, endDate: modal.endDate,
     days: calcDays(modal.startDate, modal.endDate),
     reason: modal.reason.trim(), status: 'pending',
-    createdAt: new Date().toISOString().split('T')[0],
+    createdAt: todayStr(),
   })
   rtdb.save(); modal.open = false
 }

@@ -39,6 +39,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { todayStr, formatDate } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -49,7 +50,7 @@ const auth = useAuthStore()
 const DOW = ['日', '一', '二', '三', '四', '五', '六']
 const SHIFT_LABELS: Record<string, string> = { morning: '早', afternoon: '午', night: '夜', oncall: 'C', training: '訓', off: '' }
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayStr()
 const year = ref(new Date().getFullYear())
 const month = ref(new Date().getMonth())
 
@@ -78,7 +79,7 @@ const cells = computed(() => {
   // month days
   for (let day = 1; day <= last.getDate(); day++) {
     const date = new Date(year.value, month.value, day)
-    const ds = date.toISOString().split('T')[0]
+    const ds = formatDate(date)
     const isToday = ds === today
     const events: { key: string; type: string; label: string; title: string }[] = []
 

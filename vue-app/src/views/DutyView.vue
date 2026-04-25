@@ -232,6 +232,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr, formatDate } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -261,7 +262,7 @@ const weekOffset = ref(0)
 const monthYear = ref(new Date().getFullYear())
 const monthMonth = ref(new Date().getMonth())
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
-const today = computed(() => new Date().toISOString().split('T')[0])
+const today = computed(() => todayStr())
 
 const users = computed(() => rtdb.store?.users ?? [])
 const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned'))
@@ -281,7 +282,7 @@ function onLeave(userId: string, date: string) {
 // Week view
 const weekDates = computed(() => {
   const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + weekOffset.value * 7)
-  return Array.from({ length: 7 }, (_, i) => { const dd = new Date(d); dd.setDate(d.getDate() + i); return dd.toISOString().split('T')[0] })
+  return Array.from({ length: 7 }, (_, i) => { const dd = new Date(d); dd.setDate(d.getDate() + i); return formatDate(dd) })
 })
 const weekLabel = computed(() => `${weekDates.value[0].slice(0, 7).replace('-', '年')}月 ${weekDates.value[0].slice(8)}日 ~ ${weekDates.value[6].slice(8)}日`)
 const weekCoverage = computed(() => {
@@ -324,7 +325,7 @@ function calShiftsForDay(date: string) {
 const myUpcomingShifts = computed(() => {
   const result: { date: string; shift: string; leaveInfo: boolean }[] = []
   const start = today.value
-  const end = new Date(); end.setDate(end.getDate() + 30); const endStr = end.toISOString().split('T')[0]
+  const end = new Date(); end.setDate(end.getDate() + 30); const endStr = formatDate(end)
   const sched = dutySchedule.value[currentUserId.value] ?? {}
   Object.entries(sched).filter(([d]) => d >= start && d <= endStr).sort(([a], [b]) => a.localeCompare(b))
     .forEach(([d, sh]) => result.push({ date: d, shift: sh, leaveInfo: onLeave(currentUserId.value, d) }))
@@ -395,7 +396,7 @@ function saveBatch() {
   const cur = new Date(batchModal.startDate)
   const end = new Date(batchModal.endDate)
   while (cur <= end) {
-    ds[batchModal.userId][cur.toISOString().split('T')[0]] = batchModal.shift
+    ds[batchModal.userId][formatDate(cur)] = batchModal.shift
     cur.setDate(cur.getDate() + 1)
   }
   rtdb.save(); batchModal.open = false
@@ -452,14 +453,14 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .shift-cell { text-align: center; padding: 6px; }
 .today-cell { background: #f0faf5; }
 .my-row td { background: #fffde7 !important; }
-:deep(.sh-chip) { font-size: .72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap; display: inline-block; }
-:deep(.sh-m) { background: #fef3c7; color: #92400e; }
-:deep(.sh-a) { background: #dbeafe; color: #1e40af; }
-:deep(.sh-n) { background: #ede9fe; color: #4c1d95; }
-:deep(.sh-oc) { background: #fce7f3; color: #9d174d; }
-:deep(.sh-tr) { background: #d1fae5; color: #065f46; }
-:deep(.sh-off) { background: #f5f5f5; color: #aaa; }
-:deep(.sh-leave) { background: #fde8e8; color: #c0392b; }
+.sh-chip { font-size: .72rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; white-space: nowrap; display: inline-block; }
+.sh-m { background: #fef3c7; color: #92400e; }
+.sh-a { background: #dbeafe; color: #1e40af; }
+.sh-n { background: #ede9fe; color: #4c1d95; }
+.sh-oc { background: #fce7f3; color: #9d174d; }
+.sh-tr { background: #d1fae5; color: #065f46; }
+.sh-off { background: #f5f5f5; color: #aaa; }
+.sh-leave { background: #fde8e8; color: #c0392b; }
 .month-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .month-label { font-size: .95rem; font-weight: 700; min-width: 120px; text-align: center; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #eee; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }

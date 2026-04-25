@@ -80,6 +80,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -87,7 +88,7 @@ import { useAuthStore } from '../stores/auth'
 const rtdb = useRtdbStore()
 const auth = useAuthStore()
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayStr()
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 const d = new Date()
 const todayLabel = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 星期${WEEKDAYS[d.getDay()]}`

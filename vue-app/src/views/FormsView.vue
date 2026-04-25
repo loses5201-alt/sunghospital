@@ -36,32 +36,32 @@
 
     <!-- Detail modal -->
     <Teleport to="body">
-      <div v-if="detail.open" class="modal-backdrop" @click.self="detail.open = false">
+      <div v-if="detail.open && detail.form" class="modal-backdrop" @click.self="detail.open = false">
         <div class="modal modal-wide">
           <div class="modal-head">
-            <span :class="['ftype', FTYPES[detail.form!.type]?.c ?? 'ft-ot2']">{{ FTYPES[detail.form!.type]?.l }}</span>
-            <span class="detail-title">{{ detail.form!.title }}</span>
-            <span :class="['status-chip', `s-${detail.form!.status}`]">{{ statusLabel(detail.form!.status) }}</span>
+            <span :class="['ftype', FTYPES[detail.form.type]?.c ?? 'ft-ot2']">{{ FTYPES[detail.form.type]?.l }}</span>
+            <span class="detail-title">{{ detail.form.title }}</span>
+            <span :class="['status-chip', `s-${detail.form.status}`]">{{ statusLabel(detail.form.status) }}</span>
             <button class="close-btn" @click="detail.open = false">×</button>
           </div>
 
           <div class="detail-grid">
-            <div class="dfield"><label>申請人</label><div>{{ userName(detail.form!.applicantId) }}</div></div>
-            <div class="dfield"><label>申請日期</label><div>{{ detail.form!.createdAt?.slice(0, 10) }}</div></div>
-            <div v-if="detail.form!.startDate" class="dfield full"><label>日期區間</label><div>{{ detail.form!.startDate }} {{ detail.form!.endDate && detail.form!.endDate !== detail.form!.startDate ? `～ ${detail.form!.endDate}` : '' }}</div></div>
+            <div class="dfield"><label>申請人</label><div>{{ userName(detail.form.applicantId) }}</div></div>
+            <div class="dfield"><label>申請日期</label><div>{{ detail.form.createdAt?.slice(0, 10) }}</div></div>
+            <div v-if="detail.form.startDate" class="dfield full"><label>日期區間</label><div>{{ detail.form.startDate }} {{ detail.form.endDate && detail.form.endDate !== detail.form.startDate ? `～ ${detail.form.endDate}` : '' }}</div></div>
           </div>
-          <div v-if="detail.form!.reason" class="dfield"><label>原因說明</label><div class="reason-box">{{ detail.form!.reason }}</div></div>
+          <div v-if="detail.form.reason" class="dfield"><label>原因說明</label><div class="reason-box">{{ detail.form.reason }}</div></div>
 
           <!-- Approval timeline -->
           <div class="dfield">
             <label>審核流程</label>
             <div class="timeline">
-              <div v-for="(uid, i) in detail.form!.approvers" :key="uid" class="tl-step">
-                <div :class="['tl-dot', `tl-${detail.form!.statuses?.[i] ?? 'pending'}`]">{{ i + 1 }}</div>
+              <div v-for="(uid, i) in detail.form.approvers" :key="uid" class="tl-step">
+                <div :class="['tl-dot', `tl-${detail.form.statuses?.[i] ?? 'pending'}`]">{{ i + 1 }}</div>
                 <div class="tl-info">
                   <div class="tl-name">{{ userName(uid) }}</div>
-                  <div :class="['tl-status', `tl-${detail.form!.statuses?.[i] ?? 'pending'}`]">{{ tlLabel(detail.form!.statuses?.[i] ?? 'pending') }}</div>
-                  <div v-if="detail.form!.comments?.[i]" class="tl-comment">「{{ detail.form!.comments[i] }}」</div>
+                  <div :class="['tl-status', `tl-${detail.form.statuses?.[i] ?? 'pending'}`]">{{ tlLabel(detail.form.statuses?.[i] ?? 'pending') }}</div>
+                  <div v-if="detail.form.comments?.[i]" class="tl-comment">「{{ detail.form.comments[i] }}」</div>
                 </div>
               </div>
             </div>
@@ -132,6 +132,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -227,7 +228,7 @@ function submitForm() {
     startDate: newModal.startDate, endDate: newModal.endDate, reason: newModal.reason.trim(),
     status: 'pending', approvers: [...newModal.approvers],
     statuses: newModal.approvers.map(() => 'pending'),
-    createdAt: new Date().toISOString().split('T')[0],
+    createdAt: todayStr(),
   })
   rtdb.save(); newModal.open = false
 }

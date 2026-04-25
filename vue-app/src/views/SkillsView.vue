@@ -138,6 +138,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -148,7 +149,7 @@ const auth = useAuthStore()
 
 const SKILL_CATS = ['臨床技能', '急救', '特殊操作', '證照/認證']
 const SOON_MS = 60 * 24 * 60 * 60 * 1000
-const TODAY = new Date().toISOString().split('T')[0]
+const TODAY = todayStr()
 
 const levelList = [
   { key: 'certified', label: '✓ 認證', bg: '#e8f5e9', color: '#2e7d32' },

@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { formatDate } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 
@@ -74,7 +75,7 @@ const shiftNow = computed(() => {
   return '🌙 夜班'
 })
 
-const today = computed(() => now.value.toISOString().split('T')[0])
+const today = computed(() => formatDate(now.value))
 const users = computed(() => rtdb.store?.users ?? [])
 
 const onDutyToday = computed(() => {

@@ -77,6 +77,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import MeetingDetail from '../components/meetings/MeetingDetail.vue'
 import { useRtdbStore } from '../stores/rtdb'
@@ -92,8 +93,8 @@ const activeMeeting = computed(() => meetings.value.find((m) => m.id === detailI
 
 function statusLabel(s: string) { return { upcoming: '即將舉行', ongoing: '進行中', done: '已完成' }[s] ?? s }
 
-const modal = reactive({ open: false, title: '', date: new Date().toISOString().split('T')[0], status: 'upcoming', attendeeIds: [] as string[] })
-function openNew() { Object.assign(modal, { open: true, title: '', date: new Date().toISOString().split('T')[0], status: 'upcoming', attendeeIds: [] }) }
+const modal = reactive({ open: false, title: '', date: todayStr(), status: 'upcoming', attendeeIds: [] as string[] })
+function openNew() { Object.assign(modal, { open: true, title: '', date: todayStr(), status: 'upcoming', attendeeIds: [] }) }
 function createMeeting() {
   if (!modal.title.trim() || !rtdb.store) return
   if (!rtdb.store.meetings) rtdb.store.meetings = []

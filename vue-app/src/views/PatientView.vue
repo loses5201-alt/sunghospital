@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -112,7 +113,7 @@ function stagePatients(stage: string) { return activePatients.value.filter((p) =
 function moveStage(p: Patient, stage: string) { p.stage = stage; rtdb.save() }
 function discharge(p: Patient) {
   if (!confirm('確定出院？')) return
-  p.discharged = true; p.dischargeDate = new Date().toISOString().split('T')[0]; rtdb.save()
+  p.discharged = true; p.dischargeDate = todayStr(); rtdb.save()
 }
 
 const modal = reactive({ open: false, editId: '', name: '', bed: '', stage: STAGES[0], flags: [] as string[], note: '' })
@@ -125,7 +126,7 @@ function save() {
     const p = rtdb.store.patients.find((x) => x.id === modal.editId)
     if (p) { p.name = modal.name.trim(); p.bed = modal.bed; p.stage = modal.stage; p.flags = [...modal.flags]; p.note = modal.note }
   } else {
-    rtdb.store.patients.push({ id: rtdb.uid(), name: modal.name.trim(), bed: modal.bed, stage: modal.stage, flags: [...modal.flags], note: modal.note, admitDate: new Date().toISOString().split('T')[0] })
+    rtdb.store.patients.push({ id: rtdb.uid(), name: modal.name.trim(), bed: modal.bed, stage: modal.stage, flags: [...modal.flags], note: modal.note, admitDate: todayStr() })
   }
   rtdb.save(); modal.open = false
 }

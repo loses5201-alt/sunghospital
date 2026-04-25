@@ -149,6 +149,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -177,7 +178,7 @@ const FILTERS = [
 
 const search = ref('')
 const activeFilter = ref('all')
-const today = new Date().toISOString().split('T')[0]
+const today = todayStr()
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
 const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned'))
@@ -247,7 +248,7 @@ function save() {
     patients: modal.patients, keyEvents: modal.keyEvents, pending: modal.pending,
     meds: modal.meds, labs: modal.labs,
     fromSigned: modal.fromUserId === currentUserId.value,
-    toSigned: false, createdAt: new Date().toISOString().split('T')[0],
+    toSigned: false, createdAt: todayStr(),
   }
   if (modal.editId) {
     const idx = rtdb.store.shifts.findIndex((x) => x.id === modal.editId)

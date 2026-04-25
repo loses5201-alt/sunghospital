@@ -108,6 +108,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -164,7 +165,7 @@ function save() {
     id: rtdb.uid(), title: modal.title.trim(), level: modal.level,
     description: modal.description, actions: modal.actions, followUp: modal.followUp,
     status: 'new', comments: [],
-    reporterId: currentUserId.value, date: new Date().toISOString().split('T')[0],
+    reporterId: currentUserId.value, date: todayStr(),
   })
   rtdb.save(); modal.open = false
 }
@@ -176,7 +177,7 @@ function saveComment() {
   const ir = rtdb.store.incidents.find((x) => x.id === commentModal.irId)
   if (!ir) return
   if (!ir.comments) ir.comments = []
-  ir.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text: commentModal.text.trim(), at: new Date().toISOString().split('T')[0] })
+  ir.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text: commentModal.text.trim(), at: todayStr() })
   rtdb.save(); commentModal.open = false
 }
 </script>

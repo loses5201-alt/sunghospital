@@ -101,6 +101,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -109,7 +110,7 @@ import type { Baby } from '../types'
 const rtdb = useRtdbStore()
 const auth = useAuthStore()
 
-const today = new Date().toISOString().split('T')[0]
+const today = todayStr()
 const search = ref('')
 const showAll = ref(false)
 
