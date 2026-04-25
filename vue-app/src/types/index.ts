@@ -144,13 +144,18 @@ export interface FormRequest {
   status: 'pending' | 'approved' | 'rejected' | 'withdrawn'
   approvers: string[]; statuses: string[]; comments?: string[]
   createdAt: string
+  urgent?: boolean
+  leaveType?: string   // for type='leave'
+  hours?: number       // for type='overtime'
+  itemName?: string    // for type='supply'
+  itemQty?: number     // for type='supply'
 }
 export interface SwapRequest {
   id: string; fromId: string; toId: string; status: string; createdAt: string
   fromDate?: string; fromShift?: string; toDate?: string; toShift?: string; reason?: string
   requesterId?: string; targetId?: string
 }
-export interface FormNotif { id: string; toUserId: string; title: string; body: string; createdAt: string }
+export interface FormNotif { id: string; toUserId: string; title: string; body: string; createdAt: string; read?: boolean }
 export interface SkillDef { id: string; name: string; category: string; requiresExpiry?: boolean }
 export interface SkillCell { level: '' | 'certified' | 'trained' | 'learning'; expireDate: string; note: string; updatedAt: string }
 export type SkillMatrix = Record<string, Record<string, SkillCell>>

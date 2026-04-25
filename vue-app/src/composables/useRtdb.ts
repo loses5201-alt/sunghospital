@@ -147,18 +147,26 @@ export function useRtdb() {
 
   // 只更新單一集合，不覆蓋其他集合 — 大幅降低多人同時操作的資料衝突風險
   async function saveCollection(key: keyof AppStore, value: unknown): Promise<void> {
+    await saveMultiple({ [key]: value } as Partial<Record<keyof AppStore, unknown>>)
+  }
+
+  // 原子更新多個集合，適合「送表單同時寫通知」等需要一致性的場景
+  async function saveMultiple(updates: Partial<Record<keyof AppStore, unknown>>): Promise<void> {
     if (!guardSave()) return
     const ts = Date.now()
     lastSelfSave = ts
     try {
-      await update(dbRef(db, 'store'), { [key]: value, _savedAt: ts })
-      // 同步更新本地 store，避免觸發 live-listener 的自我回饋
-      if (store.value) (store.value as Record<string, unknown>)[key as string] = value
+      await update(dbRef(db, 'store'), { ...updates, _savedAt: ts })
+      if (store.value) {
+        Object.entries(updates).forEach(([k, v]) => {
+          (store.value as Record<string, unknown>)[k] = v
+        })
+      }
     } catch (err) {
-      console.error('[useRtdb] saveCollection failed:', err)
+      console.error('[useRtdb] saveMultiple failed:', err)
       alert('儲存失敗：' + (err instanceof Error ? err.message : '未知錯誤'))
     }
   }
 
-  return { store, synced, loadFailed, cloudWasEmpty, watchStore, saveStore, saveCollection }
+  return { store, synced, loadFailed, cloudWasEmpty, watchStore, saveStore, saveCollection, saveMultiple }
 }

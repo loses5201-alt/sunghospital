@@ -13,6 +13,7 @@
           >
             <span class="nav-icon">{{ item.icon }}</span>
             {{ item.label }}
+            <span v-if="item.badge?.value" class="nav-badge">{{ item.badge.value }}</span>
           </RouterLink>
         </div>
       </div>
@@ -80,7 +81,10 @@
                   active-class="active"
                   @click="moreOpen = false"
                 >
-                  <span class="mi-icon">{{ item.icon }}</span>
+                  <span class="mi-icon">
+                    {{ item.icon }}
+                    <span v-if="item.badge?.value" class="mi-badge">{{ item.badge.value }}</span>
+                  </span>
                   <span class="mi-label">{{ item.label }}</span>
                 </RouterLink>
               </div>
@@ -96,10 +100,25 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useRtdbStore } from '../../stores/rtdb'
 
 const auth = useAuthStore()
+const rtdb = useRtdbStore()
 const route = useRoute()
 const moreOpen = ref(false)
+
+// 待審核表單數（輪到我審的）
+const pendingFormsCount = computed(() => {
+  const uid = auth.currentUser?.id
+  if (!uid) return 0
+  return (rtdb.store?.formRequests ?? []).filter(f => {
+    if (f.status !== 'pending') return false
+    const i = f.approvers.indexOf(uid)
+    if (i < 0) return false
+    if (i === 0) return f.statuses[0] === 'pending'
+    return f.statuses[i - 1] === 'approved' && f.statuses[i] === 'pending'
+  }).length
+})
 
 const navGroups = [
   {
@@ -147,7 +166,7 @@ const navGroups = [
   {
     label: '管理',
     items: [
-      { path: '/forms',       icon: '✍️', label: '表單簽核' },
+      { path: '/forms', icon: '✍️', label: '表單簽核', badge: pendingFormsCount },
       { path: '/incident',    icon: '🚨', label: '事件通報' },
       { path: '/equipment',   icon: '🔧', label: '設備回報' },
       { path: '/inventory',   icon: '📦', label: '庫存管理' },
@@ -198,6 +217,7 @@ const routableTabs = computed(() => {
 .nav-link:hover { background: rgba(255,255,255,.08); color: white; }
 .nav-link.active { background: rgba(255,255,255,.14); color: white; font-weight: 700; }
 .nav-icon { font-size: .85rem; width: 16px; text-align: center; flex-shrink: 0; }
+.nav-badge { background: #c0392b; color: white; border-radius: 99px; font-size: .6rem; font-weight: 700; padding: 1px 5px; margin-left: auto; }
 .sidebar-footer {
   padding: 10px 14px; border-top: 1px solid rgba(255,255,255,.12);
   display: flex; align-items: center; gap: 8px;
@@ -297,6 +317,7 @@ const routableTabs = computed(() => {
 }
 .more-item:active { background: #eef2f6; }
 .more-item.active { border-color: #1a3c5e; }
-.mi-icon { font-size: 1.5rem; line-height: 1; }
+.mi-icon { font-size: 1.5rem; line-height: 1; position: relative; display: inline-block; }
+.mi-badge { position: absolute; top: -4px; right: -6px; background: #c0392b; color: white; border-radius: 99px; font-size: .55rem; font-weight: 700; padding: 1px 4px; }
 .mi-label { font-size: .76rem; font-weight: 600; color: #1a3c5e; }
 </style>
