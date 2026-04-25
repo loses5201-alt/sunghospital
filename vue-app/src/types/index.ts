@@ -10,6 +10,8 @@ export interface User {
   avatar: string
   password?: string
   status?: 'active' | 'disabled' | 'resigned'
+  needsReview?: boolean   // true = 新 Google 用戶，待管理員確認身分
+  firstLoginAt?: string   // Google 首次登入時間
 }
 
 export interface AppStore {

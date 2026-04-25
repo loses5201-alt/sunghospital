@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRtdb, normalizeStore } from '../composables/useRtdb'
 
 export const useRtdbStore = defineStore('rtdb', () => {
-  const { store, synced, loadFailed, cloudWasEmpty, watchStore, saveStore } = useRtdb()
+  const { store, synced, loadFailed, cloudWasEmpty, watchStore, saveStore, saveCollection } = useRtdb()
   const loading = ref(true)
 
   function init(): Promise<void> {
@@ -24,5 +24,5 @@ export const useRtdbStore = defineStore('rtdb', () => {
     return crypto.randomUUID().replace(/-/g, '').slice(0, 16)
   }
 
-  return { store, synced, loadFailed, cloudWasEmpty, loading, init, save, uid, normalizeStore }
+  return { store, synced, loadFailed, cloudWasEmpty, loading, init, save, saveCollection, uid, normalizeStore }
 })

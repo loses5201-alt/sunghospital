@@ -14,6 +14,21 @@
           <button class="btn-primary" @click="openAdd">＋ 新增人員</button>
         </div>
 
+        <!-- 待確認新用戶 banner -->
+        <div v-if="pendingUsers.length" class="pending-banner">
+          <div class="pending-title">🔔 有 {{ pendingUsers.length }} 位新用戶透過 Google 登入，請確認身分後設定姓名與角色</div>
+          <div class="pending-list">
+            <div v-for="u in pendingUsers" :key="u.id" class="pending-row">
+              <div class="pending-info">
+                <span class="pending-name">{{ u.name }}</span>
+                <span class="pending-email">{{ u.email }}</span>
+                <span class="pending-time">{{ u.firstLoginAt ? new Date(u.firstLoginAt).toLocaleString('zh-TW') : '' }}</span>
+              </div>
+              <button class="btn-xs primary" @click="openEdit(u)">設定身分</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Tabs -->
         <div class="tabs">
           <button :class="['tab', activeTab === 'users' ? 'active' : '']" @click="activeTab = 'users'">👥 人員管理</button>
@@ -149,8 +164,12 @@ const users = computed(() => rtdb.store?.users ?? [])
 const departments = computed(() => rtdb.store?.departments ?? [])
 const auditLog = computed(() => rtdb.store?.auditLog ?? [])
 
+// 待確認：有 googleId 且 needsReview 為 true 的新登入用戶
+const pendingUsers = computed(() => users.value.filter((u) => u.needsReview))
+
 const filteredUsers = computed(() =>
   users.value.filter((u) => {
+    if (u.needsReview) return false  // 待確認用戶不混入主列表
     const qOk = !filterQ.value || u.name?.toLowerCase().includes(filterQ.value.toLowerCase()) || u.username?.toLowerCase().includes(filterQ.value.toLowerCase())
     const dOk = !filterDept.value || u.deptId === filterDept.value
     const sOk = !filterStatus.value || (u.status ?? 'active') === filterStatus.value
@@ -160,13 +179,16 @@ const filteredUsers = computed(() =>
 
 function deptName(id?: string) { return departments.value.find((d) => d.id === id)?.name ?? '' }
 
+function saveUsers() { rtdb.saveCollection('users', rtdb.store!.users) }
+
 function setStatus(u: User, status: string) {
-  u.status = status as User['status']; rtdb.save()
+  u.status = status as User['status']
+  saveUsers()
 }
 function deleteUser(id: string) {
   if (!rtdb.store || !confirm('確定刪除此人員？')) return
   rtdb.store.users = rtdb.store.users.filter((u) => u.id !== id)
-  rtdb.save()
+  saveUsers()
 }
 
 const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '' })
@@ -176,7 +198,15 @@ function save() {
   if (!modal.name.trim() || !modal.username.trim() || !rtdb.store) return
   if (modal.editId) {
     const u = rtdb.store.users.find((x) => x.id === modal.editId)
-    if (u) { u.name = modal.name.trim(); u.username = modal.username.trim(); u.email = modal.email; u.deptId = modal.deptId; u.title = modal.title; u.role = modal.role as User['role'] }
+    if (u) {
+      u.name = modal.name.trim()
+      u.username = modal.username.trim()
+      u.email = modal.email
+      u.deptId = modal.deptId
+      u.title = modal.title
+      u.role = modal.role as User['role']
+      u.needsReview = false  // 管理員確認後清除旗標
+    }
   } else {
     rtdb.store.users.push({
       id: rtdb.uid(), name: modal.name.trim(), username: modal.username.trim(),
@@ -184,7 +214,8 @@ function save() {
       role: modal.role as User['role'], password: modal.password, avatar: 'av-a',
     })
   }
-  rtdb.save(); modal.open = false
+  saveUsers()
+  modal.open = false
 }
 </script>
 
@@ -227,6 +258,15 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 .btn-xs { background: transparent; border: 1px solid #ddd; color: #555; border-radius: 4px; padding: 3px 7px; font-size: .75rem; cursor: pointer; }
 .btn-xs.danger { color: #c0392b; }
+.btn-xs.primary { background: #2e7d5a; color: white; border-color: #2e7d5a; }
+.pending-banner { background: #fff8e1; border: 1px solid #f9c946; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+.pending-title { font-size: .88rem; font-weight: 700; color: #7a5c00; margin-bottom: 10px; }
+.pending-list { display: flex; flex-direction: column; gap: 8px; }
+.pending-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: white; border: 1px solid #f0d060; border-radius: 7px; padding: 8px 12px; }
+.pending-info { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 1; min-width: 0; }
+.pending-name { font-weight: 600; font-size: .88rem; color: #1a3c5e; }
+.pending-email { font-size: .78rem; color: #888; }
+.pending-time { font-size: .72rem; color: #bbb; }
 .btn-ghost { background: transparent; border: 1px solid #ddd; color: #555; border-radius: 5px; padding: 5px 10px; font-size: .78rem; cursor: pointer; }
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal { background: white; border-radius: 12px; padding: 24px; min-width: 380px; max-width: 560px; width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,.15); }

@@ -1,4 +1,4 @@
-import { ref as dbRef, onValue, set, get } from 'firebase/database'
+import { ref as dbRef, onValue, set, get, update } from 'firebase/database'
 import { ref } from 'vue'
 import { db, auth as firebaseAuth } from '../firebase'
 import type { AppStore } from '../types'
@@ -117,19 +117,23 @@ export function useRtdb() {
   }
 
   let lastSelfSave = 0
-  async function saveStore(data: AppStore): Promise<void> {
-    // SAFETY GUARDS — refuse to save if it would wipe cloud data
+
+  function guardSave(): boolean {
     if (loadFailed.value) {
       const msg = '⚠ 雲端讀取失敗，無法儲存 (避免覆蓋既有資料)。請重新整理頁面。'
       console.error(msg)
       alert(msg)
-      throw new Error('Save blocked: cloud load failed')
+      return false
     }
+    return true
+  }
+
+  async function saveStore(data: AppStore): Promise<void> {
+    if (!guardSave()) throw new Error('Save blocked: cloud load failed')
     if (!data || typeof data !== 'object') {
       console.error('[useRtdb] Refusing to save invalid data')
       return
     }
-
     const ts = Date.now()
     data._savedAt = ts
     lastSelfSave = ts
@@ -141,5 +145,20 @@ export function useRtdb() {
     }
   }
 
-  return { store, synced, loadFailed, cloudWasEmpty, watchStore, saveStore }
+  // 只更新單一集合，不覆蓋其他集合 — 大幅降低多人同時操作的資料衝突風險
+  async function saveCollection(key: keyof AppStore, value: unknown): Promise<void> {
+    if (!guardSave()) return
+    const ts = Date.now()
+    lastSelfSave = ts
+    try {
+      await update(dbRef(db, 'store'), { [key]: value, _savedAt: ts })
+      // 同步更新本地 store，避免觸發 live-listener 的自我回饋
+      if (store.value) (store.value as Record<string, unknown>)[key as string] = value
+    } catch (err) {
+      console.error('[useRtdb] saveCollection failed:', err)
+      alert('儲存失敗：' + (err instanceof Error ? err.message : '未知錯誤'))
+    }
+  }
+
+  return { store, synced, loadFailed, cloudWasEmpty, watchStore, saveStore, saveCollection }
 }

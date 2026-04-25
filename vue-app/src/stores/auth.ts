@@ -56,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
     const users = opts.getUsers()
     let matched = users.find((u) => u.email === gu.email || u.googleId === gu.uid)
     if (!matched) {
+      const isFirst = users.length === 0
       matched = {
         id: crypto.randomUUID(),
         username: gu.email?.split('@')[0] ?? '',
@@ -63,11 +64,13 @@ export const useAuthStore = defineStore('auth', () => {
         name: gu.displayName ?? gu.email?.split('@')[0] ?? '',
         email: gu.email ?? '',
         googleId: gu.uid,
-        role: users.length === 0 ? 'admin' : 'member',
+        role: isFirst ? 'admin' : 'member',
         deptId: '',
         title: '',
         avatar: 'av-a',
         status: 'active',
+        needsReview: !isFirst,   // 管理員本人不需審核；其他人需要
+        firstLoginAt: new Date().toISOString(),
       }
       await opts.addUser(matched)
     }
