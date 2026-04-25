@@ -57,7 +57,7 @@ const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
 const leaves = computed(() => rtdb.store?.leaves ?? [])
 const meetings = computed(() => rtdb.store?.meetings ?? [])
-const dutySchedule = computed(() => (rtdb.store as any)?.dutySchedule as Record<string, Record<string, string>> ?? {})
+const dutySchedule = computed(() => rtdb.store?.dutySchedule ?? {})
 
 function userName(id: string) { return users.value.find((u) => u.id === id)?.name ?? '' }
 function goToday() { const d = new Date(); year.value = d.getFullYear(); month.value = d.getMonth() }

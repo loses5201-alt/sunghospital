@@ -10,6 +10,18 @@ function normalizeArr<T>(val: unknown): T[] {
   return Object.values(val as object) as T[]
 }
 
+function emptyStore(): AppStore {
+  return {
+    users: [], departments: [], shifts: [], leaves: [],
+    announcements: [], incidents: [], babies: [], patients: [],
+    equipment: [], inventory: [], inventoryLogs: [],
+    meetings: [], messages: [], chatRooms: [],
+    journals: [], eduItems: [], sops: [],
+    formRequests: [], swapRequests: [], formNotifs: [],
+    skillDefs: [], skillMatrix: {}, titles: [], rooms: [], emergencies: [],
+  }
+}
+
 export function normalizeStore(s: Partial<AppStore>): AppStore {
   const arrFields = [
     'meetings', 'users', 'departments', 'shifts', 'announcements', 'incidents',
@@ -17,10 +29,10 @@ export function normalizeStore(s: Partial<AppStore>): AppStore {
     'eduItems', 'titles', 'formNotifs', 'messages', 'chatRooms', 'equipment',
     'patients', 'sops', 'inventory', 'inventoryLogs', 'skillDefs', 'leaves',
   ] as const
-  const result = { ...s } as AppStore
+  const result = { ...emptyStore(), ...s } as AppStore
   arrFields.forEach((f) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(result as any)[f] = normalizeArr((s as any)[f])
+    ;(result as any)[f] = normalizeArr((s as any)?.[f])
   })
   result.meetings?.forEach((m) => {
     m.tasks = normalizeArr(m.tasks)
@@ -39,26 +51,39 @@ export function useRtdb() {
     const storeRef = dbRef(db, 'store')
     get(storeRef).then((snap) => {
       const data = snap.val()
-      if (data && normalizeArr(data.users).length > 0) {
-        store.value = normalizeStore(data)
-      }
+      // Always initialize store (empty if no cloud data)
+      store.value = data ? normalizeStore(data) : emptyStore()
       synced.value = true
       onReady()
 
-      onValue(dbRef(db, 'store/_savedAt'), () => {
+      onValue(dbRef(db, 'store/_savedAt'), (tSnap) => {
+        const cloudTime = tSnap.val() ?? 0
+        // skip our own saves (avoid infinite loop)
+        if (cloudTime === lastSelfSave) return
         get(storeRef).then((s) => {
           const d = s.val()
-          if (d?.users) store.value = normalizeStore(d)
+          if (d) store.value = normalizeStore(d)
         })
       })
-    }).catch(() => { synced.value = false; onReady() })
+    }).catch((err) => {
+      console.warn('Firebase load failed, using empty store:', err)
+      store.value = emptyStore()
+      synced.value = false
+      onReady()
+    })
   }
 
+  let lastSelfSave = 0
   async function saveStore(data: AppStore) {
     const ts = Date.now()
     data._savedAt = ts
-    await set(dbRef(db, 'store'), data)
-    store.value = data
+    lastSelfSave = ts
+    try {
+      await set(dbRef(db, 'store'), data)
+    } catch (err) {
+      console.error('Firebase save failed:', err)
+    }
+    // Vue's ref already tracks nested mutations; no manual reassignment needed
   }
 
   return { store, synced, watchStore, saveStore }

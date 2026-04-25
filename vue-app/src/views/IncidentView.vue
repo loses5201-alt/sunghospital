@@ -161,11 +161,11 @@ function save() {
   if (!modal.title.trim() || !rtdb.store) return
   if (!rtdb.store.incidents) rtdb.store.incidents = []
   rtdb.store.incidents.unshift({
-    id: rtdb.uid(), title: modal.title.trim(), level: modal.level as unknown as string,
+    id: rtdb.uid(), title: modal.title.trim(), level: modal.level,
     description: modal.description, actions: modal.actions, followUp: modal.followUp,
     status: 'new', comments: [],
     reporterId: currentUserId.value, date: new Date().toISOString().split('T')[0],
-  } as any)
+  })
   rtdb.save(); modal.open = false
 }
 
@@ -176,7 +176,7 @@ function saveComment() {
   const ir = rtdb.store.incidents.find((x) => x.id === commentModal.irId)
   if (!ir) return
   if (!ir.comments) ir.comments = []
-  ir.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text: commentModal.text.trim(), at: new Date().toISOString().split('T')[0] } as any)
+  ir.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text: commentModal.text.trim(), at: new Date().toISOString().split('T')[0] })
   rtdb.save(); commentModal.open = false
 }
 </script>

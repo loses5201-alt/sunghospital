@@ -194,7 +194,7 @@ const props = defineProps<{
   currentUserId: string
   isAdmin: boolean
 }>()
-const emit = defineEmits<{ save: [] }>()
+const emit = defineEmits<{ save: []; delete: [string] }>()
 
 const TABS = computed(() => [
   { key: 'notes', label: '紀錄摘要', count: 0 },
@@ -224,9 +224,9 @@ const taskBreakdown = computed(() => [
 ])
 
 function saveNotes() {
-  if (!props.meeting.notes !== undefined) props.meeting.notes = notesDraft.value
-  else props.meeting.notes = notesDraft.value
-  editingNotes.value = false; emit('save')
+  props.meeting.notes = notesDraft.value
+  editingNotes.value = false
+  emit('save')
 }
 function markRead() {
   if (!props.meeting.reads) props.meeting.reads = {}
@@ -235,8 +235,7 @@ function markRead() {
 }
 function deleteMeeting() {
   if (!confirm('確定刪除此會議？')) return
-  // parent handles via store — just emit back
-  emit('save')
+  emit('delete', props.meeting.id)
 }
 
 // Tasks

@@ -180,8 +180,8 @@ const activeFilter = ref('all')
 const today = new Date().toISOString().split('T')[0]
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
-const activeNurses = computed(() => users.value.filter((u) => (u as any).status !== 'disabled' && (u as any).status !== 'resigned'))
-const shifts = computed(() => (rtdb.store?.shifts ?? []) as unknown as ShiftHandover[])
+const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned'))
+const shifts = computed(() => rtdb.store?.shifts ?? [])
 
 const todayCount = computed(() => shifts.value.filter((s) => s.date === today).length)
 const pendingCount = computed(() => shifts.value.filter((s) => !s.toSigned).length)
@@ -211,7 +211,7 @@ function signShift(s: ShiftHandover) {
 }
 function deleteShift(id: string) {
   if (!rtdb.store || !confirm('確定刪除此交班紀錄？')) return
-  ;(rtdb.store as any).shifts = (rtdb.store as any).shifts?.filter((s: ShiftHandover) => s.id !== id) ?? []
+  rtdb.store.shifts = (rtdb.store.shifts ?? []).filter((s) => s.id !== id)
   rtdb.save()
 }
 function toggleChecklist(_s: ShiftHandover, item: ShiftChecklistItem) {
@@ -238,7 +238,7 @@ function openEdit(s: ShiftHandover) {
 }
 function save() {
   if (!modal.unit.trim() || !rtdb.store) return
-  if (!(rtdb.store as any).shifts) (rtdb.store as any).shifts = []
+  if (!rtdb.store.shifts) rtdb.store.shifts = []
   const data: ShiftHandover = {
     id: modal.editId || rtdb.uid(),
     date: modal.date, shift: modal.shift, unit: modal.unit.trim(),
@@ -250,10 +250,10 @@ function save() {
     toSigned: false, createdAt: new Date().toISOString().split('T')[0],
   }
   if (modal.editId) {
-    const idx = (rtdb.store as any).shifts.findIndex((x: ShiftHandover) => x.id === modal.editId)
-    if (idx >= 0) (rtdb.store as any).shifts[idx] = data
+    const idx = rtdb.store.shifts.findIndex((x) => x.id === modal.editId)
+    if (idx >= 0) rtdb.store.shifts[idx] = data
   } else {
-    (rtdb.store as any).shifts.unshift(data)
+    rtdb.store.shifts.unshift(data)
   }
   rtdb.save(); modal.open = false
 }

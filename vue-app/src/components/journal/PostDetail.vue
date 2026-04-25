@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Journal, User } from '../../types'
 
 const props = defineProps<{
@@ -59,7 +59,7 @@ const emit = defineEmits<{
 }>()
 
 const commentText = ref('')
-const isLiked = ref((props.post.likes ?? []).includes(props.currentUserId))
+const isLiked = computed(() => (props.post.likes ?? []).includes(props.currentUserId))
 
 function userName(id?: string) { return props.users.find((u) => u.id === id)?.name ?? '' }
 function formatTs(ts?: string) { return ts ? ts.slice(0, 16).replace('T', ' ') : '' }

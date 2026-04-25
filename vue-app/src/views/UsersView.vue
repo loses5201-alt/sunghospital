@@ -147,7 +147,7 @@ const filterStatus = ref('')
 
 const users = computed(() => rtdb.store?.users ?? [])
 const departments = computed(() => rtdb.store?.departments ?? [])
-const auditLog = computed(() => (rtdb.store as any)?.auditLog ?? [])
+const auditLog = computed(() => rtdb.store?.auditLog ?? [])
 
 const filteredUsers = computed(() =>
   users.value.filter((u) => {
@@ -161,7 +161,7 @@ const filteredUsers = computed(() =>
 function deptName(id?: string) { return departments.value.find((d) => d.id === id)?.name ?? '' }
 
 function setStatus(u: User, status: string) {
-  (u as any).status = status; rtdb.save()
+  u.status = status as User['status']; rtdb.save()
 }
 function deleteUser(id: string) {
   if (!rtdb.store || !confirm('確定刪除此人員？')) return

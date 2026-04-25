@@ -93,18 +93,18 @@ const d = new Date()
 const todayLabel = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 星期${WEEKDAYS[d.getDay()]}`
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 
-const shifts = computed(() => (rtdb.store as any)?.shifts ?? [])
+const shifts = computed(() => rtdb.store?.shifts ?? [])
 const patients = computed(() => rtdb.store?.patients ?? [])
 const leaves = computed(() => rtdb.store?.leaves ?? [])
 const forms = computed(() => rtdb.store?.formRequests ?? [])
 const incidents = computed(() => rtdb.store?.incidents ?? [])
 const equipment = computed(() => rtdb.store?.equipment ?? [])
 const announcements = computed(() => rtdb.store?.announcements ?? [])
-const dutySchedule = computed(() => (rtdb.store as any)?.dutySchedule as Record<string, Record<string, string>> ?? {})
+const dutySchedule = computed(() => rtdb.store?.dutySchedule ?? {})
 
 const SHIFT_LABELS: Record<string, string> = { morning: '早班', afternoon: '午班', night: '夜班', oncall: 'ON CALL', off: '休假' }
 
-const todayShifts = computed(() => shifts.value.filter((s: any) => s.date === today).length)
+const todayShifts = computed(() => shifts.value.filter((s) => s.date === today).length)
 const activePatients = computed(() => patients.value.filter((p) => !p.discharged).length)
 const pendingLeaves = computed(() => leaves.value.filter((l) => l.status === 'pending').length)
 const pendingForms = computed(() => forms.value.filter((f) => f.status === 'pending').length)
@@ -118,7 +118,7 @@ const latestAnn = computed(() => announcements.value.slice(0, 5))
 
 const alerts = computed(() => {
   const list: { key: string; level: string; icon: string; title: string; sub: string; path: string }[] = []
-  const critShifts = shifts.value.filter((s: any) => !s.toSigned && s.urgency === 'critical').length
+  const critShifts = shifts.value.filter((s) => !s.toSigned && s.urgency === 'critical').length
   if (critShifts) list.push({ key: 'crit-shift', level: 'red', icon: '🚨', title: `${critShifts} 筆警示交班待簽收`, sub: '請盡快確認', path: '/shift' })
   const pendingEq = equipment.value.filter((e) => e.status !== 'resolved').length
   if (pendingEq) list.push({ key: 'eq', level: 'amber', icon: '🔧', title: `${pendingEq} 筆設備問題待處理`, sub: '', path: '/equipment' })

@@ -17,19 +17,26 @@ onMounted(async () => {
   const rtdb = useRtdbStore()
   const auth = useAuthStore()
 
-  // 1. Load Firebase data first
+  // 1. Load Firebase data first (store is never null after this)
   await rtdb.init()
 
-  // 2. Then wire up auth (needs users list from store)
-  auth.init(rtdb.store?.users ?? [])
+  // 2. Wire up auth with live users getter + adder
+  auth.init(
+    () => rtdb.store?.users ?? [],
+    (u) => {
+      if (!rtdb.store) return
+      if (!rtdb.store.users) rtdb.store.users = []
+      rtdb.store.users.push(u)
+      rtdb.save()
+    },
+  )
 
-  // 3. Wait for Firebase auth state to settle (onAuthStateChanged fires once)
+  // 3. Wait for Firebase auth state to settle
   await new Promise<void>((resolve) => {
-    const stop = setInterval(() => {
-      if (auth.ready) { clearInterval(stop); resolve() }
+    const timer = setInterval(() => {
+      if (auth.ready) { clearInterval(timer); resolve() }
     }, 50)
-    // safety timeout — if Firebase is unreachable, proceed anyway
-    setTimeout(() => { clearInterval(stop); resolve() }, 3000)
+    setTimeout(() => { clearInterval(timer); resolve() }, 3000)
   })
 
   ready.value = true

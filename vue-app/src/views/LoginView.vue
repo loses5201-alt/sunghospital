@@ -16,11 +16,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useRtdbStore } from '../stores/rtdb'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const rtdbStore = useRtdbStore()
 const loading = ref(false)
 const error = ref('')
 
@@ -28,10 +26,7 @@ async function handleGoogleLogin() {
   loading.value = true
   error.value = ''
   try {
-    await authStore.loginWithGoogle(
-      rtdbStore.store?.users ?? [],
-      (u) => { rtdbStore.store?.users.push(u); rtdbStore.save() },
-    )
+    await authStore.loginWithGoogle()
     router.push('/')
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : '登入失敗'

@@ -16,7 +16,7 @@ export interface AppStore {
   _savedAt?: number
   users: User[]
   departments: Department[]
-  shifts: Shift[]
+  shifts: ShiftHandover[]
   leaves: Leave[]
   announcements: Announcement[]
   incidents: Incident[]
@@ -39,6 +39,7 @@ export interface AppStore {
   eduReads?: Record<string, Record<string, boolean>>
   leaveBalance?: Record<string, Record<string, number>>
   dutySchedule?: Record<string, Record<string, string>>
+  dutyMinStaff?: Record<string, number>
   auditLog?: { at: string; user: string; action: string; detail: string }[]
   titles: Title[]
   rooms: Room[]

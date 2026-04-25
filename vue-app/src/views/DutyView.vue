@@ -235,6 +235,7 @@ import { computed, reactive, ref } from 'vue'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
+import type { SwapRequest } from '../types'
 
 const rtdb = useRtdbStore()
 const auth = useAuthStore()
@@ -265,10 +266,10 @@ const today = computed(() => new Date().toISOString().split('T')[0])
 const users = computed(() => rtdb.store?.users ?? [])
 const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned'))
 const otherNurses = computed(() => activeNurses.value.filter((u) => u.id !== currentUserId.value))
-const dutySchedule = computed(() => (rtdb.store as any)?.dutySchedule as Record<string, Record<string, string>> ?? {})
+const dutySchedule = computed(() => rtdb.store?.dutySchedule ?? {})
 const leaves = computed(() => rtdb.store?.leaves ?? [])
 const swapRequests = computed(() => rtdb.store?.swapRequests ?? [])
-const minStaff = computed(() => (rtdb.store as any)?.dutyMinStaff ?? { morning: 2, afternoon: 2, night: 1 })
+const minStaff = computed(() => rtdb.store?.dutyMinStaff ?? { morning: 2, afternoon: 2, night: 1 })
 
 function shInfo(key?: string) { return SHINFO[(key ?? 'off') as ShiftKey] ?? SHINFO.off }
 function getShift(userId: string, date: string): string { return dutySchedule.value[userId]?.[date] ?? 'off' }
@@ -339,18 +340,22 @@ const swapBadge = computed(() => {
   return mine.length || undefined
 })
 function statusLabel(s: string) { return { pending: '待確認', approved: '已通過', rejected: '已拒絕', cancelled: '已取消' }[s] ?? s }
-function approveSwap(sw: any) {
+function approveSwap(sw: SwapRequest) {
   sw.status = 'approved'
-  // swap shifts
   if (!rtdb.store) return
-  if (!(rtdb.store as any).dutySchedule) (rtdb.store as any).dutySchedule = {}
-  const ds = (rtdb.store as any).dutySchedule
-  if (!ds[sw.fromId]) ds[sw.fromId] = {}; if (!ds[sw.toId]) ds[sw.toId] = {}
-  const tmp = ds[sw.fromId][sw.fromDate]; ds[sw.fromId][sw.fromDate] = ds[sw.toId][sw.toDate] ?? 'off'; ds[sw.toId][sw.toDate] = tmp ?? 'off'
+  if (!rtdb.store.dutySchedule) rtdb.store.dutySchedule = {}
+  const ds = rtdb.store.dutySchedule
+  if (!ds[sw.fromId]) ds[sw.fromId] = {}
+  if (!ds[sw.toId]) ds[sw.toId] = {}
+  if (sw.fromDate && sw.toDate) {
+    const tmp = ds[sw.fromId][sw.fromDate]
+    ds[sw.fromId][sw.fromDate] = ds[sw.toId][sw.toDate] ?? 'off'
+    ds[sw.toId][sw.toDate] = tmp ?? 'off'
+  }
   rtdb.save()
 }
-function rejectSwap(sw: any) { sw.status = 'rejected'; rtdb.save() }
-function cancelSwap(sw: any) { sw.status = 'cancelled'; rtdb.save() }
+function rejectSwap(sw: SwapRequest) { sw.status = 'rejected'; rtdb.save() }
+function cancelSwap(sw: SwapRequest) { sw.status = 'cancelled'; rtdb.save() }
 
 // Stats (current month)
 function monthShiftCount(userId: string, shift: string) {
@@ -372,8 +377,8 @@ function editShift(userId: string, date: string) {
 }
 function saveShift() {
   if (!rtdb.store) return
-  if (!(rtdb.store as any).dutySchedule) (rtdb.store as any).dutySchedule = {}
-  const ds = (rtdb.store as any).dutySchedule
+  if (!rtdb.store.dutySchedule) rtdb.store.dutySchedule = {}
+  const ds = rtdb.store.dutySchedule
   if (!ds[shiftModal.userId]) ds[shiftModal.userId] = {}
   ds[shiftModal.userId][shiftModal.date] = shiftModal.shift
   rtdb.save(); shiftModal.open = false
@@ -384,8 +389,8 @@ const batchModal = reactive({ open: false, userId: '', startDate: '', endDate: '
 function openBatch() { Object.assign(batchModal, { open: true, userId: activeNurses.value[0]?.id ?? '', startDate: '', endDate: '', shift: 'morning' }) }
 function saveBatch() {
   if (!rtdb.store || !batchModal.startDate || !batchModal.endDate) return
-  if (!(rtdb.store as any).dutySchedule) (rtdb.store as any).dutySchedule = {}
-  const ds = (rtdb.store as any).dutySchedule
+  if (!rtdb.store.dutySchedule) rtdb.store.dutySchedule = {}
+  const ds = rtdb.store.dutySchedule
   if (!ds[batchModal.userId]) ds[batchModal.userId] = {}
   const cur = new Date(batchModal.startDate)
   const end = new Date(batchModal.endDate)
@@ -407,7 +412,7 @@ function submitSwap() {
     fromDate: swapModal.fromDate, fromShift: swapModal.fromShift,
     toDate: swapModal.toDate, toShift: swapModal.toShift,
     reason: swapModal.reason.trim(), status: 'pending', createdAt: new Date().toISOString(),
-  } as any)
+  })
   rtdb.save(); swapModal.open = false
 }
 </script>
