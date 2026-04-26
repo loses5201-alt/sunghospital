@@ -149,11 +149,11 @@ const filtered = computed(() => {
 
 function userName(id?: string) { return users.value.find((u) => u.id === id)?.name ?? '未知' }
 function statusLabel(s: string) { return { new: '新通報', processing: '處理中', closed: '已結案' }[s] ?? s }
-function updateStatus(ir: Incident, status: string) { ir.status = status; rtdb.save() }
+function updateStatus(ir: Incident, status: string) { ir.status = status; rtdb.saveCollection('incidents', rtdb.store!.incidents) }
 function deleteIR(id: string) {
   if (!rtdb.store || !confirm('確定刪除此通報？')) return
   rtdb.store.incidents = rtdb.store.incidents.filter((i) => i.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('incidents', rtdb.store!.incidents)
 }
 
 const modal = reactive({ open: false, title: '', level: 1, description: '', actions: '', followUp: '' })
@@ -167,7 +167,7 @@ function save() {
     status: 'new', comments: [],
     reporterId: currentUserId.value, date: todayStr(),
   })
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('incidents', rtdb.store!.incidents); modal.open = false
 }
 
 const commentModal = reactive({ open: false, irId: '', text: '' })
@@ -178,7 +178,7 @@ function saveComment() {
   if (!ir) return
   if (!ir.comments) ir.comments = []
   ir.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text: commentModal.text.trim(), at: todayStr() })
-  rtdb.save(); commentModal.open = false
+  rtdb.saveCollection('incidents', rtdb.store!.incidents); commentModal.open = false
 }
 </script>
 

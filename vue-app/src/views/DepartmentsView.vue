@@ -87,7 +87,7 @@ function save() {
   } else {
     rtdb.store.departments.push({ id: rtdb.uid(), name: modal.name.trim() })
   }
-  rtdb.save()
+  rtdb.saveCollection('departments', rtdb.store!.departments)
   modal.open = false
 }
 
@@ -97,7 +97,7 @@ function confirmDelete(dept: Department) {
   if (count > 0 && !confirm(`此科別有 ${count} 位成員，確定刪除？`)) return
   rtdb.store.departments = rtdb.store.departments.filter((d) => d.id !== dept.id)
   rtdb.store.users.forEach((u) => { if (u.deptId === dept.id) u.deptId = '' })
-  rtdb.save()
+  rtdb.saveCollection('departments', rtdb.store!.departments)
 }
 </script>
 

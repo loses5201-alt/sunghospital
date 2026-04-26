@@ -144,14 +144,14 @@ function updateBalance(userId: string, typeId: string, val: number) {
   if (!rtdb.store.leaveBalance) rtdb.store.leaveBalance = {}
   if (!rtdb.store.leaveBalance[userId]) rtdb.store.leaveBalance[userId] = {}
   rtdb.store.leaveBalance[userId][typeId] = val
-  rtdb.save()
+  rtdb.saveCollection('leaveBalance', rtdb.store.leaveBalance)
 }
 
 function approveLeave(leave: Leave) {
-  leave.status = 'approved'; leave.approvedBy = currentUserId.value; rtdb.save()
+  leave.status = 'approved'; leave.approvedBy = currentUserId.value; rtdb.saveCollection('leaves', rtdb.store!.leaves)
 }
 function rejectLeave(leave: Leave) {
-  leave.status = 'rejected'; rtdb.save()
+  leave.status = 'rejected'; rtdb.saveCollection('leaves', rtdb.store!.leaves)
 }
 
 const modal = reactive({ open: false, type: 'annual', startDate: '', endDate: '', reason: '' })
@@ -169,7 +169,7 @@ function save() {
     reason: modal.reason.trim(), status: 'pending',
     createdAt: todayStr(),
   })
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('leaves', rtdb.store!.leaves); modal.open = false
 }
 </script>
 

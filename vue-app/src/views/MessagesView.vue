@@ -178,7 +178,7 @@ function getOrCreateDM(otherId: string): ChatRoom {
   if (!rtdb.store.chatRooms) rtdb.store.chatRooms = []
   const room: ChatRoom = { id: rtdb.uid(), members: [currentUserId.value, otherId] }
   rtdb.store.chatRooms.push(room)
-  rtdb.save()
+  rtdb.saveCollection('chatRooms', rtdb.store.chatRooms)
   return room
 }
 
@@ -196,7 +196,7 @@ function openRoom(roomId: string) {
       m.reads[currentUserId.value] = true
     }
   })
-  rtdb.save()
+  rtdb.saveCollection('messages', rtdb.store!.messages)
   nextTick(() => {
     if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight
     inputEl.value?.focus()
@@ -214,14 +214,14 @@ function send() {
   const room = rtdb.store.chatRooms.find((r) => r.id === activeRoomId.value)
   if (room) { room.lastMsg = inputText.value.trim(); room.lastTs = msg.ts }
   inputText.value = ''
-  rtdb.save()
+  rtdb.saveMultiple({ messages: rtdb.store!.messages, chatRooms: rtdb.store!.chatRooms })
   nextTick(() => { if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight })
 }
 
 function deleteMsg(msg: Message) {
   if (!confirm('確定刪除此訊息？')) return
   msg.deleted = true; msg.text = undefined
-  rtdb.save()
+  rtdb.saveCollection('messages', rtdb.store!.messages)
 }
 
 const groupModal = reactive({ open: false, name: '', members: [] as string[] })
@@ -231,7 +231,7 @@ function createGroup() {
   if (!rtdb.store.chatRooms) rtdb.store.chatRooms = []
   const room: ChatRoom = { id: rtdb.uid(), isGroup: true, groupName: groupModal.name.trim(), members: [currentUserId.value, ...groupModal.members] }
   rtdb.store.chatRooms.push(room)
-  rtdb.save(); groupModal.open = false
+  rtdb.saveCollection('chatRooms', rtdb.store!.chatRooms); groupModal.open = false
   openRoom(room.id)
 }
 

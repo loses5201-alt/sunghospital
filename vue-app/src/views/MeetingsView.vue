@@ -5,7 +5,7 @@
       <!-- Detail view -->
       <template v-if="detailId">
         <button class="btn-back" @click="detailId = ''">← 會議列表</button>
-        <MeetingDetail v-if="activeMeeting" :meeting="activeMeeting" :users="users" :current-user-id="currentUserId" :is-admin="auth.isAdmin" @save="rtdb.save()" @delete="deleteMeeting" />
+        <MeetingDetail v-if="activeMeeting" :meeting="activeMeeting" :users="users" :current-user-id="currentUserId" :is-admin="auth.isAdmin" @save="() => rtdb.saveCollection('meetings', rtdb.store!.meetings)" @delete="deleteMeeting" />
       </template>
 
       <!-- List view -->
@@ -102,12 +102,12 @@ function createMeeting() {
     id: rtdb.uid(), title: modal.title.trim(), date: modal.date, status: modal.status,
     attendeeIds: [...modal.attendeeIds], tasks: [], chat: [], votes: [],
   })
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('meetings', rtdb.store!.meetings); modal.open = false
 }
 function deleteMeeting(id: string) {
   if (!rtdb.store) return
   rtdb.store.meetings = rtdb.store.meetings.filter((m) => m.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('meetings', rtdb.store!.meetings)
   detailId.value = ''
 }
 </script>

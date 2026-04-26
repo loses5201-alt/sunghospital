@@ -208,15 +208,15 @@ function canSign(s: ShiftHandover) { return s.toUserId === currentUserId.value &
 function signShift(s: ShiftHandover) {
   if (!confirm('確認已閱讀本次交班內容並完成接班？')) return
   s.toSigned = true; s.toSignedAt = new Date().toISOString().slice(0, 16).replace('T', ' ')
-  rtdb.save()
+  rtdb.saveCollection('shifts', rtdb.store!.shifts)
 }
 function deleteShift(id: string) {
   if (!rtdb.store || !confirm('確定刪除此交班紀錄？')) return
   rtdb.store.shifts = (rtdb.store.shifts ?? []).filter((s) => s.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('shifts', rtdb.store!.shifts)
 }
 function toggleChecklist(_s: ShiftHandover, item: ShiftChecklistItem) {
-  item.done = !item.done; rtdb.save()
+  item.done = !item.done; rtdb.saveCollection('shifts', rtdb.store!.shifts)
 }
 
 type ModalState = {
@@ -256,7 +256,7 @@ function save() {
   } else {
     rtdb.store.shifts.unshift(data)
   }
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('shifts', rtdb.store!.shifts); modal.open = false
 }
 </script>
 

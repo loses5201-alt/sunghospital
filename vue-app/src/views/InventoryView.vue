@@ -153,7 +153,7 @@ function userName(id: string) { return users.value.find((u) => u.id === id)?.nam
 function deleteItem(id: string) {
   if (!rtdb.store || !confirm('確定刪除此品項？')) return
   rtdb.store.inventory = rtdb.store.inventory.filter((i) => i.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('inventory', rtdb.store.inventory)
 }
 
 // Item modal
@@ -169,7 +169,7 @@ function save() {
   } else {
     rtdb.store.inventory.push({ id: rtdb.uid(), name: modal.name.trim(), category: modal.category, qty: modal.qty, minQty: modal.minQty, unit: modal.unit, location: modal.location })
   }
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('inventory', rtdb.store!.inventory); modal.open = false
 }
 
 // Adjust modal
@@ -183,7 +183,7 @@ function saveAdjust() {
   else item.qty = Math.max(0, item.qty - adjustModal.qty)
   if (!rtdb.store.inventoryLogs) rtdb.store.inventoryLogs = []
   rtdb.store.inventoryLogs.unshift({ id: rtdb.uid(), itemId: adjustModal.itemId, type: adjustModal.type, qty: adjustModal.qty, date: todayStr(), userId: currentUserId.value, note: adjustModal.note })
-  rtdb.save(); adjustModal.open = false
+  rtdb.saveMultiple({ inventory: rtdb.store!.inventory, inventoryLogs: rtdb.store!.inventoryLogs }); adjustModal.open = false
 }
 </script>
 

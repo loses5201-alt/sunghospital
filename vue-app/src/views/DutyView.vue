@@ -365,10 +365,10 @@ function approveSwap(sw: SwapRequest) {
     ds[sw.fromId][sw.fromDate] = ds[sw.toId][sw.toDate] ?? 'off'
     ds[sw.toId][sw.toDate] = tmp ?? 'off'
   }
-  rtdb.save()
+  rtdb.saveMultiple({ dutySchedule: rtdb.store!.dutySchedule, swapRequests: rtdb.store!.swapRequests })
 }
-function rejectSwap(sw: SwapRequest) { sw.status = 'rejected'; rtdb.save() }
-function cancelSwap(sw: SwapRequest) { sw.status = 'cancelled'; rtdb.save() }
+function rejectSwap(sw: SwapRequest) { sw.status = 'rejected'; rtdb.saveCollection('swapRequests', rtdb.store!.swapRequests) }
+function cancelSwap(sw: SwapRequest) { sw.status = 'cancelled'; rtdb.saveCollection('swapRequests', rtdb.store!.swapRequests) }
 
 // Stats (current month)
 function monthShiftCount(userId: string, shift: string) {
@@ -394,7 +394,7 @@ function saveShift() {
   const ds = rtdb.store.dutySchedule
   if (!ds[shiftModal.userId]) ds[shiftModal.userId] = {}
   ds[shiftModal.userId][shiftModal.date] = shiftModal.shift
-  rtdb.save(); shiftModal.open = false
+  rtdb.saveCollection('dutySchedule', rtdb.store!.dutySchedule); shiftModal.open = false
 }
 
 // Batch modal
@@ -411,7 +411,7 @@ function saveBatch() {
     ds[batchModal.userId][formatDate(cur)] = batchModal.shift
     cur.setDate(cur.getDate() + 1)
   }
-  rtdb.save(); batchModal.open = false
+  rtdb.saveCollection('dutySchedule', rtdb.store!.dutySchedule); batchModal.open = false
 }
 
 // Swap modal
@@ -426,7 +426,7 @@ function submitSwap() {
     toDate: swapModal.toDate, toShift: swapModal.toShift,
     reason: swapModal.reason.trim(), status: 'pending', createdAt: new Date().toISOString(),
   })
-  rtdb.save(); swapModal.open = false
+  rtdb.saveCollection('swapRequests', rtdb.store!.swapRequests); swapModal.open = false
 }
 </script>
 

@@ -156,12 +156,12 @@ function toggleBody(id: string) {
 function ackSop(sop: Sop) {
   if (!sop.acks) sop.acks = {}
   sop.acks[currentUserId.value] = new Date().toISOString()
-  rtdb.save()
+  rtdb.saveCollection('sops', rtdb.store!.sops)
 }
 function deleteSop(id: string) {
   if (!rtdb.store || !confirm('確定刪除此 SOP？')) return
   rtdb.store.sops = rtdb.store.sops.filter((s) => s.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('sops', rtdb.store!.sops)
 }
 
 const modal = reactive({ open: false, editId: '', title: '', category: SOP_CATS[0], version: '1.0', content: '' })
@@ -189,7 +189,7 @@ function save() {
       updatedAt: new Date().toISOString(), updatedBy: currentUserId.value, acks: {},
     })
   }
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('sops', rtdb.store!.sops); modal.open = false
 }
 </script>
 

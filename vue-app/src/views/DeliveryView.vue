@@ -109,7 +109,7 @@ function saveRoom() {
   if (!rtdb.store || modal.idx < 0) return
   const r = rtdb.store.rooms[modal.idx]
   r.status = modal.status; r.patient = modal.patient; r.since = modal.since; r.note = modal.note
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('rooms', rtdb.store!.rooms); modal.open = false
 }
 
 const addModal = reactive({ open: false, name: '' })
@@ -118,7 +118,7 @@ function saveAddRoom() {
   if (!addModal.name.trim() || !rtdb.store) return
   if (!rtdb.store.rooms) rtdb.store.rooms = []
   rtdb.store.rooms.push({ id: rtdb.uid(), name: addModal.name.trim(), status: 'empty' })
-  rtdb.save(); addModal.open = false
+  rtdb.saveCollection('rooms', rtdb.store!.rooms); addModal.open = false
 }
 </script>
 

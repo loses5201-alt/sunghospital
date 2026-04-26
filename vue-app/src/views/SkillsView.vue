@@ -232,13 +232,13 @@ function saveDef() {
   } else {
     rtdb.store.skillDefs.push({ id: rtdb.uid(), name: defModal.name.trim(), category: defModal.category, requiresExpiry: defModal.requiresExpiry })
   }
-  rtdb.save(); defModal.open = false
+  rtdb.saveCollection('skillDefs', rtdb.store!.skillDefs); defModal.open = false
 }
 function deleteDef(id: string) {
   if (!rtdb.store || !confirm('確定刪除此技能欄位？（相關資料也將刪除）')) return
   rtdb.store.skillDefs = rtdb.store.skillDefs.filter((s) => s.id !== id)
   if (rtdb.store.skillMatrix) Object.values(rtdb.store.skillMatrix).forEach((um) => { delete um[id] })
-  rtdb.save()
+  rtdb.saveMultiple({ skillDefs: rtdb.store.skillDefs, skillMatrix: rtdb.store.skillMatrix })
 }
 
 // Cell modal
@@ -261,7 +261,7 @@ function saveCell() {
     note: cellModal.note.trim(),
     updatedAt: new Date().toISOString(),
   }
-  rtdb.save(); cellModal.open = false
+  rtdb.saveCollection('skillMatrix', rtdb.store!.skillMatrix); cellModal.open = false
 }
 </script>
 

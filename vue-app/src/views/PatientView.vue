@@ -110,10 +110,10 @@ const activePatients = computed(() => patients.value.filter((p) => !p.discharged
 const discharged = computed(() => patients.value.filter((p) => p.discharged))
 
 function stagePatients(stage: string) { return activePatients.value.filter((p) => (p.stage ?? STAGES[0]) === stage) }
-function moveStage(p: Patient, stage: string) { p.stage = stage; rtdb.save() }
+function moveStage(p: Patient, stage: string) { p.stage = stage; rtdb.saveCollection('patients', rtdb.store!.patients) }
 function discharge(p: Patient) {
   if (!confirm('確定出院？')) return
-  p.discharged = true; p.dischargeDate = todayStr(); rtdb.save()
+  p.discharged = true; p.dischargeDate = todayStr(); rtdb.saveCollection('patients', rtdb.store!.patients)
 }
 
 const modal = reactive({ open: false, editId: '', name: '', bed: '', stage: STAGES[0], flags: [] as string[], note: '' })
@@ -128,7 +128,7 @@ function save() {
   } else {
     rtdb.store.patients.push({ id: rtdb.uid(), name: modal.name.trim(), bed: modal.bed, stage: modal.stage, flags: [...modal.flags], note: modal.note, admitDate: todayStr() })
   }
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('patients', rtdb.store!.patients); modal.open = false
 }
 </script>
 

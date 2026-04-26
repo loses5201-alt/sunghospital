@@ -149,12 +149,12 @@ function now() { return todayStr() }
 function setStatus(e: Equipment, status: string) {
   e.status = status
   if (status === 'resolved') e.resolvedAt = now()
-  rtdb.save()
+  rtdb.saveCollection('equipment', rtdb.store!.equipment)
 }
 function deleteEq(id: string) {
   if (!rtdb.store || !confirm('確定刪除此回報？')) return
   rtdb.store.equipment = rtdb.store.equipment.filter((e) => e.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('equipment', rtdb.store!.equipment)
 }
 
 const modal = reactive({ open: false, name: '', category: 'device', priority: 'medium', location: '', note: '' })
@@ -167,7 +167,7 @@ function save() {
     location: modal.location, note: modal.note, status: 'open', comments: [],
     reportedBy: currentUserId.value, reportedAt: now(),
   })
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('equipment', rtdb.store!.equipment); modal.open = false
 }
 
 const commentModal = reactive({ open: false, eqId: '', text: '' })
@@ -178,7 +178,7 @@ function saveComment() {
   if (!e) return
   if (!e.comments) e.comments = []
   e.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text: commentModal.text.trim(), at: now() })
-  rtdb.save(); commentModal.open = false
+  rtdb.saveCollection('equipment', rtdb.store!.equipment); commentModal.open = false
 }
 </script>
 

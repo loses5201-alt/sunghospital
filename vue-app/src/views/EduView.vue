@@ -134,14 +134,14 @@ function toggleExpand(id: string) {
   if (!rtdb.store.eduReads[id]) rtdb.store.eduReads[id] = {}
   if (!rtdb.store.eduReads[id][currentUserId.value]) {
     rtdb.store.eduReads[id][currentUserId.value] = true
-    rtdb.save()
+    rtdb.saveCollection('eduItems', rtdb.store!.eduItems)
   }
 }
 
 function deleteEdu(id: string) {
   if (!rtdb.store || !confirm('確定刪除此衛教資料？')) return
   rtdb.store.eduItems = rtdb.store.eduItems.filter((e) => e.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('eduItems', rtdb.store!.eduItems)
 }
 
 const modal = reactive({ open: false, editId: '', title: '', icon: '', tags: [] as string[], desc: '', content: '' })
@@ -156,7 +156,7 @@ function save() {
   } else {
     rtdb.store.eduItems.push({ id: rtdb.uid(), title: modal.title.trim(), icon: modal.icon || '📄', tags: [...modal.tags], desc: modal.desc, content: modal.content })
   }
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('eduItems', rtdb.store!.eduItems); modal.open = false
 }
 </script>
 

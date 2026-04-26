@@ -171,13 +171,13 @@ function readPct(ann: Announcement) { return totalUsers.value ? Math.round(readC
 
 function markRead(ann: Announcement) {
   ann.reads[currentUserId.value] = true
-  rtdb.save()
+  rtdb.saveCollection('announcements', rtdb.store!.announcements)
 }
-function togglePin(ann: Announcement) { ann.pinned = !ann.pinned; rtdb.save() }
+function togglePin(ann: Announcement) { ann.pinned = !ann.pinned; rtdb.saveCollection('announcements', rtdb.store!.announcements) }
 function deleteAnn(id: string) {
   if (!rtdb.store || !confirm('確定刪除？')) return
   rtdb.store.announcements = rtdb.store.announcements.filter((a) => a.id !== id)
-  rtdb.save()
+  rtdb.saveCollection('announcements', rtdb.store!.announcements)
 }
 
 const modal = reactive({ open: false, title: '', body: '', category: 'general', infectionLevel: '' as Announcement['infectionLevel'], pinned: false })
@@ -199,7 +199,7 @@ function save() {
     pinned: modal.pinned, category: modal.category,
     infectionLevel: modal.infectionLevel, reads,
   })
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('announcements', rtdb.store!.announcements); modal.open = false
 }
 
 const emModal = reactive({ open: false, level: 'red', title: '', body: '' })
@@ -220,7 +220,7 @@ function sendEmergency() {
     authorId: currentUserId.value, time: `${today()} ${nowTime()}`,
     confirms: { [currentUserId.value]: true },
   })
-  rtdb.save(); emModal.open = false
+  rtdb.saveCollection('announcements', rtdb.store!.announcements); emModal.open = false
 }
 </script>
 

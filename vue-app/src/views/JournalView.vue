@@ -145,26 +145,26 @@ const sorted = computed(() => {
 function toggleMenu(id: string) {
   menuOpenId.value = menuOpenId.value === id ? '' : id
 }
-function togglePin(post: Journal) { post.pinned = !post.pinned; rtdb.save(); menuOpenId.value = '' }
+function togglePin(post: Journal) { post.pinned = !post.pinned; rtdb.saveCollection('journals', rtdb.store!.journals); menuOpenId.value = '' }
 function likePost(postId: string) {
   const j = (rtdb.store?.journals ?? []).find((x) => x.id === postId)
   if (!j) return
   if (!j.likes) j.likes = []
   const i = j.likes.indexOf(currentUserId.value)
   if (i >= 0) j.likes.splice(i, 1); else j.likes.push(currentUserId.value)
-  rtdb.save()
+  rtdb.saveCollection('journals', rtdb.store!.journals)
 }
 function deletePost(id: string) {
   if (!rtdb.store || !confirm('確定刪除此貼文？')) return
   rtdb.store.journals = rtdb.store.journals.filter((j) => j.id !== id)
-  rtdb.save(); menuOpenId.value = ''
+  rtdb.saveCollection('journals', rtdb.store!.journals); menuOpenId.value = ''
 }
 function addComment({ postId, text }: { postId: string; text: string }) {
   const j = (rtdb.store?.journals ?? []).find((x) => x.id === postId)
   if (!j) return
   if (!j.comments) j.comments = []
   j.comments.push({ id: rtdb.uid(), userId: currentUserId.value, text, createdAt: now(), likes: [] })
-  rtdb.save()
+  rtdb.saveCollection('journals', rtdb.store!.journals)
 }
 function likeComment({ postId, commentId }: { postId: string; commentId: string }) {
   const j = (rtdb.store?.journals ?? []).find((x) => x.id === postId)
@@ -173,13 +173,13 @@ function likeComment({ postId, commentId }: { postId: string; commentId: string 
   if (!cm.likes) cm.likes = []
   const i = cm.likes.indexOf(currentUserId.value)
   if (i >= 0) cm.likes.splice(i, 1); else cm.likes.push(currentUserId.value)
-  rtdb.save()
+  rtdb.saveCollection('journals', rtdb.store!.journals)
 }
 function deleteComment({ postId, commentId }: { postId: string; commentId: string }) {
   const j = (rtdb.store?.journals ?? []).find((x) => x.id === postId)
   if (!j) return
   j.comments = (j.comments ?? []).filter((c) => c.id !== commentId)
-  rtdb.save()
+  rtdb.saveCollection('journals', rtdb.store!.journals)
 }
 
 function now() { return new Date().toISOString().slice(0, 16).replace('T', ' ') }
@@ -204,7 +204,7 @@ function save() {
       createdAt: now(), likes: [], comments: [], pinned: false, edited: false,
     })
   }
-  rtdb.save(); modal.open = false
+  rtdb.saveCollection('journals', rtdb.store!.journals); modal.open = false
 }
 </script>
 
