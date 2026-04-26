@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1a3c5e"/>
+  <!-- Medical cross -->
+  <rect x="216" y="120" width="80" height="272" rx="16" fill="white"/>
+  <rect x="120" y="216" width="272" height="80" rx="16" fill="white"/>
+  <!-- Small heart at bottom -->
+  <path d="M256 410 c-2 0 -60-38-60-80 0-22 18-38 38-38 10 0 18 5 22 12 4-7 12-12 22-12 20 0 38 16 38 38 0 42-58 80-60 80z" fill="#c4527a"/>
+</svg>
