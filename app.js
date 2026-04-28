@@ -120,31 +120,52 @@ function calcJournalStreak(userId){
   return streak;
 }
 
+// ── 先確保 store 從 Firebase 載入再執行 callback ──
+function _loadStoreBeforeLogin(callback) {
+  if (fbDb) {
+    fbDb.ref('store').once('value').then(function(snap) {
+      var cloudData = snap.val();
+      if (cloudData && normalizeArr(cloudData.users).length > 0) {
+        store = normalizeStore(cloudData);
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
+      }
+      callback();
+    }).catch(function() {
+      callback();
+    });
+  } else {
+    callback();
+  }
+}
+
 // Google Login
 function doGoogleLogin() {
   if (!fbAuth) { alert('Firebase 連線中，請稍後再試'); return; }
   var provider = new firebase.auth.GoogleAuthProvider();
   fbAuth.signInWithPopup(provider).then(function(result) {
     var gu = result.user;
-    var matched = store.users.find(function(u) {
-      return u.email === gu.email || u.googleId === gu.uid;
+    _loadStoreBeforeLogin(function() {
+      var users = store.users || [];
+      var matched = users.find(function(u) {
+        return u.email === gu.email || u.googleId === gu.uid;
+      });
+      if (!matched) {
+        matched = {
+          id: uid(), username: gu.email.split('@')[0], password: '',
+          name: gu.displayName || gu.email.split('@')[0],
+          email: gu.email, googleId: gu.uid,
+          role: 'member', deptId: '', title: '', avatar: 'av-a'
+        };
+        store.users.push(matched);
+        saveStore();
+      }
+      currentUser = matched;
+      localStorage.setItem('loggedInUserId', matched.id);
+      document.getElementById('loginErr').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appShell').style.display = 'block';
+      initApp();
     });
-    if (!matched) {
-      matched = {
-        id: uid(), username: gu.email.split('@')[0], password: '',
-        name: gu.displayName || gu.email.split('@')[0],
-        email: gu.email, googleId: gu.uid,
-        role: 'member', deptId: '', title: '', avatar: 'av-a'
-      };
-      store.users.push(matched);
-      saveStore();
-    }
-    currentUser = matched;
-    localStorage.setItem('loggedInUserId', matched.id);
-    document.getElementById('loginErr').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('appShell').style.display = 'block';
-    initApp();
   }).catch(function(e) {
     var el = document.getElementById('loginErr');
     el.textContent = 'Google 登入失敗：' + e.message;
@@ -418,18 +439,31 @@ function avatarEl(uid,size=26){
 // LOGIN
 // ══════════════════════════════════════════
 function doLogin(){
-  var uEl=document.getElementById('loginUser');var pEl=document.getElementById('loginPass');
-  if(!uEl||!pEl)return;
-  const uname=uEl.value.trim();
-  const pass=pEl.value;
-  const user=store.users.find(u=>u.username===uname&&u.password===pass);
-  if(!user){document.getElementById('loginErr').style.display='block';return;}
-  currentUser=user;
-  localStorage.setItem('loggedInUserId', user.id); // 保存 session，F5／關tab 後自動還原
-  document.getElementById('loginErr').style.display='none';
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appShell').style.display='block';
-  initApp();
+  var username = document.getElementById('loginUser').value.trim();
+  var password = document.getElementById('loginPass').value;
+  var el = document.getElementById('loginErr');
+  if (!username || !password) {
+    el.textContent = '請輸入帳號與密碼';
+    el.style.display = 'block';
+    return;
+  }
+  _loadStoreBeforeLogin(function() {
+    var users = store.users || [];
+    var matched = users.find(function(u) {
+      return u.username === username && u.password === password;
+    });
+    if (!matched) {
+      el.textContent = '帳號或密碼錯誤';
+      el.style.display = 'block';
+      return;
+    }
+    currentUser = matched;
+    localStorage.setItem('loggedInUserId', matched.id);
+    el.style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    initApp();
+  });
 }
 function initApp(){
   applySettings();
