@@ -7,36 +7,38 @@
 
 :root{
   /* 主色系 */
-  --sakura: #e8709a;
-  --sakura-light: #fde8f0;
-  --sakura-dark: #c4527a;
-  --lavender: #9b7fd4;
-  --lavender-light: #ede8f8;
-  --lavender-dark: #7b5fb4;
+  --sakura: #EA627A;
+  --sakura-light: #ffeef1;
+  --sakura-dark: #C04A62;
+  --lavender: #9B6FD4;
+  --lavender-light: #f0eaff;
+  --lavender-dark: #7A52B8;
+  --peach: #F5916A;
+  --peach-light: #fff0ea;
+  --sky: #6AAFD4;
+  --sky-light: #eaf4ff;
   --mint: #3db89a;
   --mint-light: #e0f5f0;
-  --sky: #5a9ef5;
-  --sky-light: #e8f1fd;
 
   /* 背景 / 表面 */
-  --bg: #fdf5f9;
+  --bg: #fff5f7;
   --surface: #ffffff;
   --s2: #faf0f5;
   --s3: #f5e8ef;
 
   /* 導覽 */
-  --nav: #2a0d1e;
+  --nav: #2A0C18;
   --nav-hover: rgba(255,255,255,0.08);
-  --nav-active: rgba(232,112,154,0.18);
+  --nav-active: rgba(234,98,122,0.20);
   --nav-border: rgba(255,255,255,0.07);
   --nav-text: rgba(255,255,255,0.5);
   --nav-text-active: #ffffff;
-  --nav-accent: #e8709a;
+  --nav-accent: #EA627A;
 
   /* 邊框 */
-  --b1: rgba(180,80,120,0.10);
-  --b2: rgba(180,80,120,0.18);
-  --b3: rgba(180,80,120,0.32);
+  --b1: rgba(234,98,122,0.10);
+  --b2: rgba(234,98,122,0.18);
+  --b3: rgba(234,98,122,0.32);
 
   /* 文字 */
   --text: #2d1a24;
@@ -73,10 +75,10 @@
   --t-spring: .3s cubic-bezier(.34,1.56,.64,1);
 
   /* 卡片漸層條顏色（循環使用） */
-  --card-g1: linear-gradient(90deg, #e8709a, #9b7fd4);
-  --card-g2: linear-gradient(90deg, #9b7fd4, #5a9ef5);
-  --card-g3: linear-gradient(90deg, #5a9ef5, #3db89a);
-  --card-g4: linear-gradient(90deg, #3db89a, #e8709a);
+  --card-g1: linear-gradient(90deg, #EA627A, #9B6FD4);
+  --card-g2: linear-gradient(90deg, #9B6FD4, #6AAFD4);
+  --card-g3: linear-gradient(90deg, #6AAFD4, #3db89a);
+  --card-g4: linear-gradient(90deg, #F5916A, #EA627A);
 }
 
 /* ── Dark Mode ── */
