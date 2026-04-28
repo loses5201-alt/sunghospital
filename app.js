@@ -21,7 +21,7 @@ function normalizeArr(val) {
   return Object.values(val);
 }
 function normalizeStore(s) {
-  if (!s) return s;
+  if (!s || typeof s !== 'object') return s;
   ['meetings','users','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
    'eduItems','titles','formNotifs','messages','chatRooms','equipment',

@@ -15,64 +15,74 @@ var fbDb = null;
 var fbAuth = null;
 var store = null;
 var currentUser = null;
+var _storeReady = null; // Promise，resolve 後 store 必然是有效物件
 
-// ── Firebase 初始化 ──
+// ══════════════════════════════════════
+// Firebase 初始化
+// ══════════════════════════════════════
 window.addEventListener('load', function() {
   try {
-    if (typeof firebase === 'undefined') return;
-    firebase.initializeApp(FB_CONFIG);
-    fbDb = firebase.database();
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase SDK 未載入');
+      return;
+    }
+
+    // 防止重複 initializeApp
+    try { firebase.app(); } catch(e) { firebase.initializeApp(FB_CONFIG); }
+
+    fbDb   = firebase.database();
     fbAuth = firebase.auth();
 
-    // 立即載入 store（帳密登入需要，不等 auth 狀態）
-    fbDb.ref('store').once('value', function(snap) {
-      store = normalizeStore(snap.val() || defaultStore());
-
-      // store 載好後，嘗試用 localStorage session 恢復（帳密登入）
-      if (!fbAuth.currentUser) {
-        var savedId = localStorage.getItem('loggedInUserId');
-        if (savedId) {
-          var u = store.users.find(function(u) { return u.id === savedId; });
-          if (u) {
-            currentUser = u;
-            if (!window.location.pathname.endsWith('dashboard.html')) {
-              window.location.href = 'dashboard.html';
-            }
-          }
-        }
-      }
+    // 立即從 Firebase 讀取 store，並記錄為 Promise
+    _storeReady = fbDb.ref('store').once('value').then(function(snap) {
+      var raw = snap.val();
+      store = (raw && typeof raw === 'object') ? normalizeStore(raw) : defaultStore();
+      return store;
+    }).catch(function(err) {
+      console.warn('store 讀取失敗，使用預設值', err);
+      store = defaultStore();
+      return store;
     });
 
-    // Google auth 狀態監聽（已登入的 Google 帳號自動恢復）
+    // ── Google session 自動恢復 ──
+    // 僅處理「已存在帳號」的恢復；新用戶由 signInWithPopup 建立
     fbAuth.onAuthStateChanged(function(firebaseUser) {
       if (!firebaseUser) return;
-      var tryRedirect = function() {
-        var matched = store && store.users.find(function(u) {
+      // 已在 dashboard 不重複跳轉
+      if (window.location.href.indexOf('dashboard.html') !== -1) return;
+
+      _storeReady.then(function() {
+        var matched = store.users.find(function(u) {
           return u.googleId === firebaseUser.uid || u.email === firebaseUser.email;
         });
-        if (!matched) return; // 新用戶交由 signInWithPopup 處理
+        if (!matched) return; // 新用戶，等 signInWithPopup 流程建立
         currentUser = matched;
         localStorage.setItem('loggedInUserId', matched.id);
-        if (!window.location.pathname.endsWith('dashboard.html')) {
-          window.location.href = 'dashboard.html';
-        }
-      };
-      // store 可能還沒載好，等它
-      if (store) {
-        tryRedirect();
-      } else {
-        var t = setInterval(function() {
-          if (store) { clearInterval(t); tryRedirect(); }
-        }, 80);
+        window.location.href = 'dashboard.html';
+      });
+    });
+
+    // ── 帳密 session 恢復（F5 重整用）──
+    _storeReady.then(function() {
+      if (fbAuth.currentUser) return; // Google session 由 onAuthStateChanged 處理
+      var savedId = localStorage.getItem('loggedInUserId');
+      if (!savedId) return;
+      var u = store.users.find(function(u) { return u.id === savedId; });
+      if (!u) return;
+      currentUser = u;
+      if (window.location.href.indexOf('dashboard.html') === -1) {
+        window.location.href = 'dashboard.html';
       }
     });
 
   } catch(e) {
-    console.warn('Firebase 初始化失敗', e);
+    console.error('Firebase 初始化失敗', e);
   }
 });
 
-// ── 帳號密碼登入 ──
+// ══════════════════════════════════════
+// 帳號密碼登入
+// ══════════════════════════════════════
 function doLogin() {
   var uEl = document.getElementById('loginUser');
   var pEl = document.getElementById('loginPass');
@@ -82,41 +92,42 @@ function doLogin() {
   var pass  = pEl.value;
   if (!uname || !pass) { showLoginErr('請輸入帳號和密碼'); return; }
 
-  // store 還沒好就先嘗試讀一次
-  if (!store) {
-    showLoginErr('連線中，請稍候...');
-    if (!fbDb) return;
-    fbDb.ref('store').once('value', function(snap) {
-      store = normalizeStore(snap.val() || defaultStore());
-      doLogin(); // 重試
+  var proceed = function() {
+    var user = store.users.find(function(u) {
+      return u.username === uname && u.password === pass;
     });
-    return;
+    if (!user) { showLoginErr('帳號或密碼錯誤'); return; }
+    currentUser = user;
+    localStorage.setItem('loggedInUserId', user.id);
+    window.location.href = 'dashboard.html';
+  };
+
+  if (store) {
+    proceed();
+  } else if (_storeReady) {
+    _storeReady.then(proceed);
+  } else {
+    showLoginErr('Firebase 尚未連線，請重新整理頁面');
   }
-
-  var user = store.users.find(function(u) {
-    return u.username === uname && u.password === pass;
-  });
-  if (!user) { showLoginErr('帳號或密碼錯誤'); return; }
-
-  currentUser = user;
-  localStorage.setItem('loggedInUserId', user.id);
-  window.location.href = 'dashboard.html';
 }
 
-// ── Google 登入 ──
+// ══════════════════════════════════════
+// Google 登入
+// ══════════════════════════════════════
 function loginWithGoogle() {
   if (!fbAuth) { showLoginErr('Firebase 連線中，請稍後再試'); return; }
-  var provider = new firebase.auth.GoogleAuthProvider();
   setLoginLoading(true);
 
+  var provider = new firebase.auth.GoogleAuthProvider();
   fbAuth.signInWithPopup(provider).then(function(result) {
     var gu = result.user;
+
     var finish = function() {
       var matched = store.users.find(function(u) {
         return u.googleId === gu.uid || u.email === gu.email;
       });
       if (!matched) {
-        // 新用戶，建立帳號
+        // 新用戶：建立帳號並寫回 Firebase
         var isFirst = store.users.length === 0;
         matched = {
           id: uid(),
@@ -129,7 +140,9 @@ function loginWithGoogle() {
           needsReview: !isFirst
         };
         store.users.push(matched);
-        fbDb.ref('store/users').set(store.users);
+        fbDb.ref('store/users').set(store.users).catch(function(e) {
+          console.warn('新用戶寫入失敗', e);
+        });
       }
       currentUser = matched;
       localStorage.setItem('loggedInUserId', matched.id);
@@ -139,29 +152,32 @@ function loginWithGoogle() {
     if (store) {
       finish();
     } else {
-      fbDb.ref('store').once('value', function(snap) {
-        store = normalizeStore(snap.val() || defaultStore());
-        finish();
-      });
+      (_storeReady || Promise.resolve()).then(finish);
     }
   }).catch(function(e) {
     setLoginLoading(false);
-    var msg = e.code === 'auth/popup-closed-by-user' ? '登入視窗已關閉，請重試'
-            : e.code === 'auth/popup-blocked'        ? '彈出視窗被封鎖，請允許後重試'
+    var msg = e.code === 'auth/popup-closed-by-user'
+            ? '登入視窗已關閉，請重試'
+            : e.code === 'auth/popup-blocked'
+            ? '彈出視窗被封鎖，請允許後重試'
             : 'Google 登入失敗：' + e.message;
     showLoginErr(msg);
   });
 }
 
-// ── 登出 ──
+// ══════════════════════════════════════
+// 登出
+// ══════════════════════════════════════
 function doLogout() {
   currentUser = null;
   localStorage.removeItem('loggedInUserId');
-  if (fbAuth) fbAuth.signOut();
+  if (fbAuth) fbAuth.signOut().catch(function(){});
   window.location.href = 'index.html';
 }
 
-// ── 頁面保護 ──
+// ══════════════════════════════════════
+// 頁面保護（dashboard.html 用）
+// ══════════════════════════════════════
 function requireAuth() {
   var savedId = localStorage.getItem('loggedInUserId');
   if (!savedId) {
@@ -171,7 +187,9 @@ function requireAuth() {
   return true;
 }
 
-// ── UI helpers ──
+// ══════════════════════════════════════
+// UI Helpers
+// ══════════════════════════════════════
 function showLoginErr(msg) {
   var el = document.getElementById('loginErr');
   if (el) { el.textContent = msg; el.style.display = 'block'; }
@@ -183,25 +201,33 @@ function setLoginLoading(on) {
   if (txt) txt.textContent = on ? '登入中...' : '以 Google 帳號登入';
 }
 
-// ── 工具函式 ──
+// ══════════════════════════════════════
+// 工具函式
+// ══════════════════════════════════════
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
+
 function normalizeArr(val) {
   if (!val) return [];
   if (Array.isArray(val)) return val;
-  return Object.values(val);
+  if (typeof val === 'object') return Object.values(val);
+  return [];
 }
+
 function normalizeStore(s) {
-  if (!s) return s;
-  ['meetings','users','departments','shifts','announcements','incidents',
+  if (!s || typeof s !== 'object') return null;
+  // 確保所有陣列欄位一定存在（即使 Firebase 裡沒有這個 key）
+  ['users','meetings','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
    'eduItems','titles','formNotifs','messages','chatRooms','equipment',
-   'patients','sops','inventory','inventoryLogs','skillDefs','leaves'].forEach(function(f) {
-    if (s[f] !== undefined) s[f] = normalizeArr(s[f]);
+   'patients','sops','inventory','inventoryLogs','skillDefs','leaves'
+  ].forEach(function(f) {
+    s[f] = normalizeArr(s[f]);
   });
   return s;
 }
+
 function defaultStore() {
   return {
     users:[], departments:[], meetings:[], shifts:[], announcements:[],
