@@ -52,7 +52,18 @@ window.addEventListener('load', function() {
       if (window.location.href.indexOf('dashboard.html') !== -1) return;
 
       _storeReady.then(function() {
-        var matched = store.users.find(function(u) {
+        var users = (store && store.users) || [];
+        if (users.length === 0) {
+          try {
+            var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
+            if (cached && cached.users) {
+              var cu = cached.users;
+              users = Array.isArray(cu) ? cu : Object.values(cu);
+              if (store && users.length > 0) store.users = users;
+            }
+          } catch(e) {}
+        }
+        var matched = users.find(function(u) {
           return u.googleId === firebaseUser.uid || u.email === firebaseUser.email;
         });
         if (!matched) return; // 新用戶，等 signInWithPopup 流程建立
@@ -67,7 +78,18 @@ window.addEventListener('load', function() {
       if (fbAuth.currentUser) return; // Google session 由 onAuthStateChanged 處理
       var savedId = localStorage.getItem('loggedInUserId');
       if (!savedId) return;
-      var u = store.users.find(function(u) { return u.id === savedId; });
+      var users = store.users || [];
+      if (users.length === 0) {
+        try {
+          var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
+          if (cached && cached.users) {
+            var cu = cached.users;
+            users = Array.isArray(cu) ? cu : Object.values(cu);
+            if (users.length > 0) store.users = users;
+          }
+        } catch(e) {}
+      }
+      var u = users.find(function(u) { return u.id === savedId; });
       if (!u) return;
       currentUser = u;
       if (window.location.href.indexOf('dashboard.html') === -1) {
@@ -93,7 +115,22 @@ function doLogin() {
   if (!uname || !pass) { showLoginErr('請輸入帳號和密碼'); return; }
 
   var proceed = function() {
-    var user = store.users.find(function(u) {
+    var users = store.users || [];
+
+    // Firebase 空時，從舊系統 localStorage 快取補回
+    if (users.length === 0) {
+      try {
+        var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
+        if (cached && cached.users) {
+          var cu = cached.users;
+          users = Array.isArray(cu) ? cu : Object.values(cu);
+          // 順便補回 store，避免後面繼續空
+          if (users.length > 0) { store.users = users; }
+        }
+      } catch(e) {}
+    }
+
+    var user = users.find(function(u) {
       return u.username === uname && u.password === pass;
     });
     if (!user) { showLoginErr('帳號或密碼錯誤'); return; }
@@ -123,7 +160,19 @@ function loginWithGoogle() {
     var gu = result.user;
 
     var finish = function() {
-      var matched = store.users.find(function(u) {
+      var users = store.users || [];
+      // Firebase 空時從 localStorage 補回
+      if (users.length === 0) {
+        try {
+          var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
+          if (cached && cached.users) {
+            var cu = cached.users;
+            users = Array.isArray(cu) ? cu : Object.values(cu);
+            if (users.length > 0) store.users = users;
+          }
+        } catch(e) {}
+      }
+      var matched = users.find(function(u) {
         return u.googleId === gu.uid || u.email === gu.email;
       });
       if (!matched) {
