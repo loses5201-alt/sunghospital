@@ -25,7 +25,7 @@ window.addEventListener('load', function() {
     fbAuth = firebase.auth();
 
     // 立即載入 store（帳密登入需要，不等 auth 狀態）
-    fbDb.ref('/').once('value', function(snap) {
+    fbDb.ref('store').once('value', function(snap) {
       store = normalizeStore(snap.val() || defaultStore());
 
       // store 載好後，嘗試用 localStorage session 恢復（帳密登入）
@@ -86,7 +86,7 @@ function doLogin() {
   if (!store) {
     showLoginErr('連線中，請稍候...');
     if (!fbDb) return;
-    fbDb.ref('/').once('value', function(snap) {
+    fbDb.ref('store').once('value', function(snap) {
       store = normalizeStore(snap.val() || defaultStore());
       doLogin(); // 重試
     });
@@ -129,7 +129,7 @@ function loginWithGoogle() {
           needsReview: !isFirst
         };
         store.users.push(matched);
-        fbDb.ref('users').set(store.users);
+        fbDb.ref('store/users').set(store.users);
       }
       currentUser = matched;
       localStorage.setItem('loggedInUserId', matched.id);
@@ -139,7 +139,7 @@ function loginWithGoogle() {
     if (store) {
       finish();
     } else {
-      fbDb.ref('/').once('value', function(snap) {
+      fbDb.ref('store').once('value', function(snap) {
         store = normalizeStore(snap.val() || defaultStore());
         finish();
       });
