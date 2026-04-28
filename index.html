@@ -211,5 +211,64 @@ body{
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="js/auth.js"></script>
+<style>
+.director-fly{
+  position:fixed; width:80px; height:80px; border-radius:50%;
+  object-fit:cover; cursor:pointer; z-index:200; user-select:none;
+  border:3px solid rgba(232,112,154,0.75);
+  box-shadow:0 4px 20px rgba(232,112,154,0.5),0 0 0 4px rgba(255,255,255,0.6);
+  transition:transform .12s,box-shadow .12s;
+}
+.director-fly:hover{
+  transform:scale(1.2) rotate(-6deg) !important;
+  box-shadow:0 8px 28px rgba(232,112,154,0.75),0 0 0 5px rgba(255,255,255,0.9);
+}
+</style>
+<script>
+(function(){
+  var W=window.innerWidth, H=window.innerHeight, SIZE=80;
+  var x=W*0.75, y=H*0.25;
+  var vx=(Math.random()*1.5+1.2)*(Math.random()<.5?1:-1);
+  var vy=(Math.random()*1.5+1.2)*(Math.random()<.5?1:-1);
+  var clicks=0;
+
+  var el=document.createElement('img');
+  el.className='director-fly';
+  el.src='director.jpg';
+  el.title='宋衍儒 院長';
+  document.body.appendChild(el);
+
+  function heart(hx,hy){
+    var h=document.createElement('span');
+    h.textContent='💖';
+    h.style.cssText='position:fixed;left:'+hx+'px;top:'+hy+'px;font-size:20px;pointer-events:none;z-index:9999;transition:all .8s ease-out;opacity:1;';
+    document.body.appendChild(h);
+    requestAnimationFrame(function(){h.style.transform='translateY(-55px) scale(1.4)';h.style.opacity='0';});
+    setTimeout(function(){h.remove();},900);
+  }
+
+  el.addEventListener('click',function(){
+    clicks++;
+    vx*=1.5; vy*=1.5;
+    var mv=14; if(Math.abs(vx)>mv)vx=mv*(vx>0?1:-1); if(Math.abs(vy)>mv)vy=mv*(vy>0?1:-1);
+    if(clicks%5===0) heart(x+SIZE/2,y);
+  });
+
+  window.addEventListener('resize',function(){W=window.innerWidth;H=window.innerHeight;});
+
+  function tick(){
+    x+=vx; y+=vy;
+    if(x<=0){x=0;vx=Math.abs(vx);heart(x,y+SIZE/2);}
+    if(x>=W-SIZE){x=W-SIZE;vx=-Math.abs(vx);heart(x+SIZE,y+SIZE/2);}
+    if(y<=0){y=0;vy=Math.abs(vy);heart(x+SIZE/2,y);}
+    if(y>=H-SIZE){y=H-SIZE;vy=-Math.abs(vy);heart(x+SIZE/2,y+SIZE);}
+    vx*=0.999; vy*=0.999;
+    var mn=0.9; if(Math.abs(vx)<mn)vx=mn*(vx>=0?1:-1); if(Math.abs(vy)<mn)vy=mn*(vy>=0?1:-1);
+    el.style.left=x+'px'; el.style.top=y+'px';
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
 </body>
 </html>

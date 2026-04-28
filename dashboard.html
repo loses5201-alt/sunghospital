@@ -514,7 +514,7 @@ window.addEventListener('load', function() {
     if (!store) { store = defaultStore(); }
     // 嘗試從 firebase 抓資料
     if (fbDb) {
-      fbDb.ref('/').once('value', function(snap) {
+      fbDb.ref('store').once('value', function(snap) {
         store = normalizeStore(snap.val() || defaultStore());
         var savedId = localStorage.getItem('loggedInUserId');
         if (savedId && !currentUser) {
