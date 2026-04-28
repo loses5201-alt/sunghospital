@@ -127,7 +127,6 @@ function _loadStoreBeforeLogin(callback) {
       var cloudData = snap.val();
       if (cloudData && normalizeArr(cloudData.users).length > 0) {
         store = normalizeStore(cloudData);
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
       }
       callback();
     }).catch(function() {
@@ -185,9 +184,7 @@ function startFirebaseSync(onReady) {
   fbDb.ref('store').once('value').then(function(snap) {
     var cloudData = snap.val();
     if (cloudData && normalizeArr(cloudData.users).length > 0) {
-      // 雲端有資料，以雲端為準（覆蓋本機 localStorage 舊快取）
       store = normalizeStore(cloudData);
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(e) {}
       mergeNewLocal();
       window._lastCloudSavedAt = store._savedAt || 0;
     } else {
@@ -212,7 +209,6 @@ function startFirebaseSync(onReady) {
         var prevAnnLen = (store.announcements||[]).length;
         var prevIrLen  = (store.incidents||[]).length;
         store = normalizeStore(d);
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch(ex) {}
         mergeNewLocal();
         var newAnns = (store.announcements||[]).length - prevAnnLen;
         var newIrs  = (store.incidents||[]).length  - prevIrLen;
@@ -241,16 +237,11 @@ function startFirebaseSync(onReady) {
 // ══════════════════════════════════════════
 // STORAGE & INIT
 // ══════════════════════════════════════════
-const STORE_KEY='sunghospital_v3';
-function loadStore(){
-  // 清除所有舊版本快取
-  ['sunghospital_v1','sunghospital_v2','medlog_v4','medlog_v3','medlog_v2','meetinglog_v2'].forEach(k=>localStorage.removeItem(k));
-  try{const d=localStorage.getItem(STORE_KEY);if(!d)return null;return normalizeStore(JSON.parse(d));}catch{return null;}
-}
+// localStorage 只保存 session，資料全走 Firebase
+function loadStore(){ return null; } // 已廢棄，保留避免呼叫出錯
 function saveStore(){
   store._savedAt = Date.now();
   window._lastSelfSave = store._savedAt;
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
   if(fbDb){
     fbDb.ref('store').set(store).catch(function(){});
   }
@@ -391,7 +382,7 @@ function loadSampleData(){
   setTimeout(function(){renderSidebar();setPage('home');},500);
 }
 
-let store=loadStore()||defaultStore();
+let store=defaultStore(); // 資料來源：Firebase，不用 localStorage
 let currentUser=null,currentMeetingId=null,currentTab='notes',currentPage='meetings';
 
 // ══════════════════════════════════════════

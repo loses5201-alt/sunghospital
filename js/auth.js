@@ -11,15 +11,17 @@ var FB_CONFIG = {
   appId: "1:1019796894908:web:7bb5aad634f90974a80cb9"
 };
 
-var fbDb = null;
-var fbAuth = null;
-var store = null;
+var fbDb        = null;
+var fbAuth      = null;
+var store       = null;
 var currentUser = null;
-var _storeReady = null; // Promise，resolve 後 store 必然是有效物件
+var _storeReady = null; // Promise：resolve 後 store 一定是有效物件
 
 // ══════════════════════════════════════
-// Firebase 初始化
+// 原則：localStorage 只存 loggedInUserId（session token）
+//       所有業務資料只從 Firebase 讀寫，不碰 localStorage
 // ══════════════════════════════════════
+
 window.addEventListener('load', function() {
   try {
     if (typeof firebase === 'undefined') {
@@ -33,64 +35,46 @@ window.addEventListener('load', function() {
     fbDb   = firebase.database();
     fbAuth = firebase.auth();
 
-    // 立即從 Firebase 讀取 store，並記錄為 Promise
+    // ── 從 Firebase 讀取 store（唯一資料來源）──
     _storeReady = fbDb.ref('store').once('value').then(function(snap) {
       var raw = snap.val();
-      store = (raw && typeof raw === 'object') ? normalizeStore(raw) : defaultStore();
+      if (raw && typeof raw === 'object') {
+        store = normalizeStore(raw);
+      } else {
+        // Firebase 是空的：推入預設結構（含管理員帳號）
+        store = defaultStore();
+        fbDb.ref('store').set(store).catch(function(){});
+      }
       return store;
     }).catch(function(err) {
-      console.warn('store 讀取失敗，使用預設值', err);
+      console.error('Firebase store 讀取失敗', err);
       store = defaultStore();
       return store;
     });
 
     // ── Google session 自動恢復 ──
-    // 僅處理「已存在帳號」的恢復；新用戶由 signInWithPopup 建立
     fbAuth.onAuthStateChanged(function(firebaseUser) {
       if (!firebaseUser) return;
-      // 已在 dashboard 不重複跳轉
       if (window.location.href.indexOf('dashboard.html') !== -1) return;
 
       _storeReady.then(function() {
-        var users = (store && store.users) || [];
-        if (users.length === 0) {
-          try {
-            var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
-            if (cached && cached.users) {
-              var cu = cached.users;
-              users = Array.isArray(cu) ? cu : Object.values(cu);
-              if (store && users.length > 0) store.users = users;
-            }
-          } catch(e) {}
-        }
-        var matched = users.find(function(u) {
+        var matched = store.users.find(function(u) {
           return u.googleId === firebaseUser.uid || u.email === firebaseUser.email;
         });
-        if (!matched) return; // 新用戶，等 signInWithPopup 流程建立
+        if (!matched) return; // 新用戶：由 signInWithPopup 流程處理
         currentUser = matched;
         localStorage.setItem('loggedInUserId', matched.id);
         window.location.href = 'dashboard.html';
       });
     });
 
-    // ── 帳密 session 恢復（F5 重整用）──
+    // ── 帳密 session 恢復（F5 重整）──
     _storeReady.then(function() {
-      if (fbAuth.currentUser) return; // Google session 由 onAuthStateChanged 處理
+      if (fbAuth.currentUser) return;
       var savedId = localStorage.getItem('loggedInUserId');
       if (!savedId) return;
-      var users = store.users || [];
-      if (users.length === 0) {
-        try {
-          var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
-          if (cached && cached.users) {
-            var cu = cached.users;
-            users = Array.isArray(cu) ? cu : Object.values(cu);
-            if (users.length > 0) store.users = users;
-          }
-        } catch(e) {}
-      }
-      var u = users.find(function(u) { return u.id === savedId; });
-      if (!u) return;
+      var u = store.users.find(function(u) { return u.id === savedId; });
+      if (!u) { localStorage.removeItem('loggedInUserId'); return; }
       currentUser = u;
       if (window.location.href.indexOf('dashboard.html') === -1) {
         window.location.href = 'dashboard.html';
@@ -115,22 +99,7 @@ function doLogin() {
   if (!uname || !pass) { showLoginErr('請輸入帳號和密碼'); return; }
 
   var proceed = function() {
-    var users = store.users || [];
-
-    // Firebase 空時，從舊系統 localStorage 快取補回
-    if (users.length === 0) {
-      try {
-        var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
-        if (cached && cached.users) {
-          var cu = cached.users;
-          users = Array.isArray(cu) ? cu : Object.values(cu);
-          // 順便補回 store，避免後面繼續空
-          if (users.length > 0) { store.users = users; }
-        }
-      } catch(e) {}
-    }
-
-    var user = users.find(function(u) {
+    var user = store.users.find(function(u) {
       return u.username === uname && u.password === pass;
     });
     if (!user) { showLoginErr('帳號或密碼錯誤'); return; }
@@ -142,9 +111,13 @@ function doLogin() {
   if (store) {
     proceed();
   } else if (_storeReady) {
-    _storeReady.then(proceed);
+    showLoginErr('連線中，請稍候...');
+    _storeReady.then(function() {
+      hideLoginErr();
+      proceed();
+    });
   } else {
-    showLoginErr('Firebase 尚未連線，請重新整理頁面');
+    showLoginErr('Firebase 未連線，請重新整理頁面');
   }
 }
 
@@ -160,23 +133,10 @@ function loginWithGoogle() {
     var gu = result.user;
 
     var finish = function() {
-      var users = store.users || [];
-      // Firebase 空時從 localStorage 補回
-      if (users.length === 0) {
-        try {
-          var cached = JSON.parse(localStorage.getItem('sunghospital_v3') || 'null');
-          if (cached && cached.users) {
-            var cu = cached.users;
-            users = Array.isArray(cu) ? cu : Object.values(cu);
-            if (users.length > 0) store.users = users;
-          }
-        } catch(e) {}
-      }
-      var matched = users.find(function(u) {
+      var matched = store.users.find(function(u) {
         return u.googleId === gu.uid || u.email === gu.email;
       });
       if (!matched) {
-        // 新用戶：建立帳號並寫回 Firebase
         var isFirst = store.users.length === 0;
         matched = {
           id: uid(),
@@ -189,6 +149,7 @@ function loginWithGoogle() {
           needsReview: !isFirst
         };
         store.users.push(matched);
+        // 新用戶直接寫入 Firebase
         fbDb.ref('store/users').set(store.users).catch(function(e) {
           console.warn('新用戶寫入失敗', e);
         });
@@ -201,14 +162,12 @@ function loginWithGoogle() {
     if (store) {
       finish();
     } else {
-      (_storeReady || Promise.resolve()).then(finish);
+      (_storeReady || Promise.resolve(defaultStore())).then(finish);
     }
   }).catch(function(e) {
     setLoginLoading(false);
-    var msg = e.code === 'auth/popup-closed-by-user'
-            ? '登入視窗已關閉，請重試'
-            : e.code === 'auth/popup-blocked'
-            ? '彈出視窗被封鎖，請允許後重試'
+    var msg = e.code === 'auth/popup-closed-by-user' ? '登入視窗已關閉，請重試'
+            : e.code === 'auth/popup-blocked'        ? '彈出視窗被封鎖，請允許後重試'
             : 'Google 登入失敗：' + e.message;
     showLoginErr(msg);
   });
@@ -243,6 +202,10 @@ function showLoginErr(msg) {
   var el = document.getElementById('loginErr');
   if (el) { el.textContent = msg; el.style.display = 'block'; }
 }
+function hideLoginErr() {
+  var el = document.getElementById('loginErr');
+  if (el) el.style.display = 'none';
+}
 function setLoginLoading(on) {
   var btn = document.getElementById('loginGoogleBtn');
   if (btn) btn.disabled = on;
@@ -265,24 +228,30 @@ function normalizeArr(val) {
 }
 
 function normalizeStore(s) {
-  if (!s || typeof s !== 'object') return null;
-  // 確保所有陣列欄位一定存在（即使 Firebase 裡沒有這個 key）
+  if (!s || typeof s !== 'object') return defaultStore();
   ['users','meetings','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
    'eduItems','titles','formNotifs','messages','chatRooms','equipment',
    'patients','sops','inventory','inventoryLogs','skillDefs','leaves'
-  ].forEach(function(f) {
-    s[f] = normalizeArr(s[f]);
-  });
+  ].forEach(function(f) { s[f] = normalizeArr(s[f]); });
   return s;
 }
 
 function defaultStore() {
   return {
-    users:[], departments:[], meetings:[], shifts:[], announcements:[],
-    incidents:[], emergencies:[], babies:[], rooms:[], formRequests:[],
-    swapRequests:[], journals:[], eduItems:[], titles:[], formNotifs:[],
-    messages:[], chatRooms:[], equipment:[], patients:[], sops:[],
-    inventory:[], inventoryLogs:[], skillDefs:[], leaves:[]
+    departments:[
+      {id:'d1',name:'婦產科',color:'pink'},
+      {id:'d2',name:'護理部',color:'green'},
+      {id:'d3',name:'行政部',color:'amber'}
+    ],
+    titles:['主治醫師','住院醫師','護理師','護理長','行政人員','病房主任','科主任','院長'],
+    users:[
+      {id:'u1',username:'admin',password:'admin123',name:'系統管理員',
+       role:'admin',deptId:'d3',title:'行政人員',avatar:'av-a',status:'active'}
+    ],
+    meetings:[],shifts:[],announcements:[],incidents:[],emergencies:[],
+    babies:[],rooms:[],formRequests:[],swapRequests:[],journals:[],
+    eduItems:[],formNotifs:[],messages:[],chatRooms:[],equipment:[],
+    patients:[],sops:[],inventory:[],inventoryLogs:[],skillDefs:[],leaves:[]
   };
 }
