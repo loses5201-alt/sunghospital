@@ -48,7 +48,9 @@ function renderIRList(){
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)">
         ${avatarEl(ir.reporterId,20)}<span style="font-size:12px;color:var(--muted)">通報人：${esc(userName(ir.reporterId))}</span>
+        <button class="btn-xs" style="margin-left:auto" onclick="openIRComment('${ir.id}')">💬 跟進留言</button>
       </div>
+      ${(ir.comments||[]).length?'<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">'+(ir.comments||[]).map(function(cm){return'<div style="font-size:11px;padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid var(--primary)"><span style="font-weight:600;color:var(--primary)">'+esc(userName(cm.userId))+'</span> <span style="color:var(--faint)">'+esc((cm.at||'').slice(0,10))+'</span><div style="margin-top:3px">'+esc(cm.text)+'</div></div>';}).join('')+'</div>':''}
     </div>`;
   }).join('');
   c.innerHTML=html||'<div style="text-align:center;padding:40px;color:var(--faint);font-size:13px">尚無通報紀錄</div>';
@@ -82,5 +84,17 @@ function saveIR(){
 function updateIRStatus(id,v){
   const ir=store.incidents.find(x=>x.id===id);if(ir)ir.status=v;
   saveStore();renderIRList();updateIrBadge();
+}
+
+function openIRComment(id){
+  showModal('新增跟進留言',
+    '<div class="form-row"><label>留言內容</label><textarea id="irCmTxt" style="min-height:80px" placeholder="說明處理進展、補充事件細節..."></textarea></div>',
+  function(){
+    var txt=document.getElementById('irCmTxt').value.trim();if(!txt)return;
+    var ir=store.incidents.find(function(x){return x.id===id;});if(!ir)return;
+    if(!ir.comments)ir.comments=[];
+    ir.comments.push({userId:currentUser.id,text:txt,at:today()});
+    saveStore();closeModal();renderIRList();showToast('跟進留言已新增','','💬');
+  });
 }
 

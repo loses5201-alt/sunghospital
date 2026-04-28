@@ -3,6 +3,7 @@
 // ════════════════════════════════════════════════════════
 var EQ_CATS={device:'設備故障',supply:'耗材不足',facility:'環境維修',other:'其他'};
 var EQ_STATUS={open:'待處理',inprogress:'處理中',resolved:'已解決'};
+var EQ_PRI={high:'🔴 緊急',medium:'🟡 一般',low:'🟢 低優先'};
 
 function updateEqBadge(){
   var n=(store.equipment||[]).filter(function(e){return e.status!=='resolved';}).length;
@@ -15,17 +16,28 @@ function renderEquipmentPage(c){
   var resolved=items.filter(function(e){return e.status==='resolved';});
   function eqCard(e){
     var canResolve=isAdmin()||hasPerm('manageIR');
+    var priLabel=EQ_PRI[e.priority||'medium']||EQ_PRI.medium;
     var actions=e.status!=='resolved'
       ?(e.status==='open'?'<button class="btn-xs" onclick="setEqStatus(\''+e.id+'\',\'inprogress\')">開始處理</button>':'')
        +(canResolve?'<button class="btn-xs success" onclick="setEqStatus(\''+e.id+'\',\'resolved\')">標記解決</button>':'')
-       +'<button class="btn-xs danger" onclick="deleteEqReport(\''+e.id+'\')">刪除</button>'
-      :'<span style="font-size:11px;color:var(--faint)">解決日期：'+esc(e.resolvedAt||'')+'</span>';
+       +'<button class="btn-xs" onclick="openEqComment(\''+e.id+'\')">💬 跟進</button>'
+       +(isAdmin()?'<button class="btn-xs danger" onclick="deleteEqReport(\''+e.id+'\')">刪除</button>':'')
+      :'<span style="font-size:11px;color:var(--faint)">解決日期：'+esc(e.resolvedAt||'')+'</span>'
+       +'<button class="btn-xs" onclick="openEqComment(\''+e.id+'\')" style="margin-left:6px">💬 跟進</button>';
+    var comments=(e.comments||[]).map(function(cm){
+      return '<div style="font-size:11px;padding:5px 8px;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--primary);margin-top:4px">'
+        +'<span style="font-weight:600;color:var(--primary)">'+esc(userName(cm.userId))+'</span>'
+        +' <span style="color:var(--faint)">'+esc((cm.at||'').slice(0,10))+'</span>'
+        +'<div style="margin-top:2px;color:var(--text)">'+esc(cm.text)+'</div></div>';
+    }).join('');
     return '<div class="eq-card eq-s-'+e.status+'">'
       +'<div class="eq-card-top"><span class="eq-cat-badge">'+esc(EQ_CATS[e.category]||e.category)+'</span>'
+      +'<span style="font-size:11px;color:var(--faint)">'+priLabel+'</span>'
       +'<span class="eq-status-lbl eq-sl-'+e.status+'">'+esc(EQ_STATUS[e.status]||e.status)+'</span></div>'
       +'<div class="eq-name">'+esc(e.name)+'</div>'
       +'<div class="eq-meta">📍 '+esc(e.location||'未指定')+' &nbsp;·&nbsp; 回報者：'+esc(userName(e.reportedBy))+' &nbsp;·&nbsp; '+esc((e.reportedAt||'').slice(0,10))+'</div>'
       +(e.note?'<div class="eq-note">'+esc(e.note)+'</div>':'')
+      +(comments?'<div style="margin-top:6px">'+comments+'</div>':'')
       +'<div class="eq-actions">'+actions+'</div></div>';
   }
   c.innerHTML='<div class="admin-layout">'
@@ -49,6 +61,8 @@ function openNewEqReport(){
   showModal('新增設備/耗材回報',
     '<div class="form-row"><label>類型</label><select id="eqCat">'
     +Object.entries(EQ_CATS).map(function(kv){return '<option value="'+kv[0]+'">'+kv[1]+'</option>';}).join('')+'</select></div>'
+    +'<div class="form-row"><label>優先等級</label><select id="eqPri">'
+    +'<option value="high">🔴 緊急</option><option value="medium" selected>🟡 一般</option><option value="low">🟢 低優先</option></select></div>'
     +'<div class="form-row"><label>名稱/項目</label><input id="eqName" placeholder="例：呼叫鈴故障、手術手套不足..."></div>'
     +'<div class="form-row"><label>地點</label><select id="eqLoc"><option value="">（選擇）</option>'+locOpts
     +'<option value="護理站">護理站</option><option value="倉庫">倉庫</option></select></div>'
@@ -57,11 +71,24 @@ function openNewEqReport(){
     var name=document.getElementById('eqName').value.trim();
     if(!name){alert('請填寫名稱');return;}
     var item={id:uid(),name:name,category:document.getElementById('eqCat').value,
+      priority:document.getElementById('eqPri').value,
       location:document.getElementById('eqLoc').value,note:document.getElementById('eqNote').value,
-      status:'open',reportedBy:currentUser.id,reportedAt:today()};
+      status:'open',reportedBy:currentUser.id,reportedAt:today(),comments:[]};
     if(!store.equipment)store.equipment=[];
     store.equipment.push(item);logAudit('設備回報',name);saveStore();closeModal();
     renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('回報已送出',name,'🔧');
+  });
+}
+
+function openEqComment(id){
+  showModal('新增跟進留言',
+    '<div class="form-row"><label>留言內容</label><textarea id="eqCmTxt" style="min-height:80px" placeholder="更新處理進度、補充說明..."></textarea></div>',
+  function(){
+    var txt=document.getElementById('eqCmTxt').value.trim();if(!txt)return;
+    var e=(store.equipment||[]).find(function(x){return x.id===id;});if(!e)return;
+    if(!e.comments)e.comments=[];
+    e.comments.push({userId:currentUser.id,text:txt,at:today()});
+    saveStore();closeModal();renderPageInMain(renderEquipmentPage);showToast('跟進留言已新增','','💬');
   });
 }
 

@@ -1,7 +1,7 @@
 // ════ 行事曆 ════
 // CALENDAR
 // ══════════════════════════════════════════
-let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+var calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 function renderCalendarPage(c){
   c.innerHTML=`<div class="admin-layout">
     <div class="main-header">
@@ -32,12 +32,12 @@ function renderCalendar(){
     const meetings=store.meetings.filter(m=>m.date===ds);
     const shifts=store.shifts.filter(s=>s.date===ds);
     const myDuty=(store.dutySchedule&&store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][ds])||'';
-    const leaveReqs=(store.formRequests||[]).filter(f=>f.type==='leave'&&f.status==='approved'&&f.startDate<=ds&&(!f.endDate||f.endDate>=ds));
+    const leaveReqs=(store.leaves||[]).filter(function(l){return l.status==='approved'&&l.startDate<=ds&&l.endDate>=ds;});
     const events=[
       ...meetings.map(m=>`<div class="cal-event cal-event-meeting" onclick="event.stopPropagation();selectMeeting('${m.id}');setPage('meetings')" title="${esc(m.title)}">${esc(m.title)}</div>`),
       ...shifts.map(s=>`<div class="cal-event cal-event-shift" title="${esc(s.unit)}">${s.shift==='morning'?'早':s.shift==='afternoon'?'午':'夜'} ${esc(s.unit)}</div>`),
       ...(myDuty&&myDuty!=='off'?[`<div class="cal-event cal-event-duty" title="我的班別">${(SHINFO[myDuty]||{l:myDuty}).l}</div>`]:[]),
-      ...leaveReqs.map(f=>`<div class="cal-event cal-event-leave" title="${esc(userName(f.applicantId))} 請假">${esc(userName(f.applicantId).slice(0,2))} 休</div>`)
+      ...leaveReqs.map(l=>`<div class="cal-event cal-event-leave" title="${esc(userName(l.userId))} 請假">${esc(userName(l.userId).slice(0,2))} 休</div>`)
     ].join('');
     return`<div class="cal-cell ${isToday?'today':''} ${!cell.current?'other-month':''}">
       <div class="cal-date-num">${cell.date.getDate()}</div>${events}
