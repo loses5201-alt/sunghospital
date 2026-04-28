@@ -1,0 +1,308 @@
+/* ══════════════════════════════════
+   按鈕
+══════════════════════════════════ */
+.btn{
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 22px;
+  border-radius: 99px; border: none;
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: all var(--t-spring);
+  white-space: nowrap; text-decoration: none;
+}
+.btn-sakura{
+  background: linear-gradient(135deg, #e8709a 0%, #d458a0 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(232,112,154,0.35);
+}
+.btn-sakura:hover{ transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 22px rgba(232,112,154,0.5) }
+.btn-sakura:active{ transform: translateY(0) scale(.98) }
+
+.btn-lavender{
+  background: linear-gradient(135deg, #9b7fd4 0%, #7b5fb4 100%);
+  color: white;
+  box-shadow: 0 4px 14px rgba(155,127,212,0.35);
+}
+.btn-lavender:hover{ transform: translateY(-2px); box-shadow: 0 8px 22px rgba(155,127,212,0.5) }
+
+.btn-outline{
+  background: transparent;
+  border: 1.5px solid var(--b2);
+  color: var(--muted);
+}
+.btn-outline:hover{ background: var(--s2); color: var(--text); border-color: var(--b3) }
+
+.btn-ghost{
+  background: transparent; color: var(--muted);
+  border: none; padding: 8px 14px;
+}
+.btn-ghost:hover{ background: var(--s2); color: var(--text) }
+
+/* 小按鈕 */
+.btn-sm{
+  padding: 6px 16px; border-radius: 99px;
+  border: 1.5px solid var(--b2);
+  background: transparent; color: var(--muted);
+  font-size: 13px; font-family: inherit;
+  cursor: pointer; transition: all var(--t-fast);
+  white-space: nowrap; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.btn-sm:hover{ background: var(--s2); color: var(--text); border-color: var(--b3) }
+.btn-sm.primary{
+  background: linear-gradient(135deg, #e8709a 0%, #d458a0 100%);
+  color: white; border-color: transparent;
+  box-shadow: 0 3px 10px rgba(232,112,154,0.30);
+}
+.btn-sm.primary:hover{ box-shadow: 0 6px 18px rgba(232,112,154,0.45); transform: translateY(-1px) }
+.btn-sm.danger{ background: var(--red-bg); color: var(--red); border-color: rgba(149,32,32,.2) }
+.btn-sm.danger:hover{ background: #fad5d5 }
+
+/* ══════════════════════════════════
+   卡片
+══════════════════════════════════ */
+.card{
+  background: var(--surface);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform var(--t-spring), box-shadow var(--t-med);
+}
+.card:hover{
+  transform: translateY(-3px) scale(1.008);
+  box-shadow: var(--shadow-md);
+}
+
+/* 頂部彩色漸層條 */
+.card-bar{
+  height: 4px;
+  background: var(--card-g1);
+}
+.card-bar.g2{ background: var(--card-g2) }
+.card-bar.g3{ background: var(--card-g3) }
+.card-bar.g4{ background: var(--card-g4) }
+
+.card-body{ padding: 18px 20px }
+.card-title{
+  font-size: 14px; font-weight: 700;
+  color: var(--muted); letter-spacing: .02em;
+  margin-bottom: 8px;
+}
+
+/* 數據卡 */
+.metric-card{
+  background: var(--surface);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform var(--t-spring), box-shadow var(--t-med);
+}
+.metric-card:hover{ transform: translateY(-3px); box-shadow: var(--shadow-md) }
+.metric-card .card-bar{ height: 4px }
+.metric-inner{ padding: 16px 20px }
+.metric-num{
+  font-size: 32px; font-weight: 900;
+  letter-spacing: -.04em; line-height: 1.1;
+}
+.metric-lbl{ font-size: 12px; color: var(--faint); margin-top: 4px; font-weight: 600 }
+
+/* 模組卡 (dashboard grid) */
+.module-card{
+  background: var(--surface);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--t-spring), box-shadow var(--t-med);
+  display: flex; flex-direction: column;
+  text-decoration: none; color: inherit;
+}
+.module-card:hover{
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-lg);
+}
+.module-icon{
+  font-size: 28px;
+  height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.module-icon::after{
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+  background: radial-gradient(circle at center, rgba(255,255,255,0.12), transparent 70%);
+}
+.module-card:hover .module-icon::after{ opacity: 1 }
+.module-name{
+  padding: 10px 14px 14px;
+  font-size: 13px; font-weight: 700;
+  text-align: center; line-height: 1.4;
+}
+.module-badge{
+  position: absolute; top: 8px; right: 8px;
+  background: var(--sakura); color: white;
+  border-radius: 99px; font-size: 10px; font-weight: 700;
+  padding: 1px 6px; line-height: 1.6;
+}
+
+/* ── 統計欄 ── */
+.metric-grid{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px }
+.metric-box{ background: var(--surface); border: 1px solid var(--b1); border-radius: var(--radius-sm); padding: 14px 16px; text-align: center; box-shadow: var(--shadow) }
+.metric-box .metric-num{ font-size: 24px; font-weight: 800; letter-spacing: -.04em; line-height: 1.1 }
+.metric-box .metric-lbl{ font-size: 11px; color: var(--faint); margin-top: 3px; font-weight: 600 }
+
+/* ══════════════════════════════════
+   表單 / 輸入
+══════════════════════════════════ */
+.input{
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--b2);
+  border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  font-size: 14px; font-family: inherit;
+  outline: none;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.input:focus{
+  border-color: var(--sakura);
+  box-shadow: 0 0 0 3px rgba(232,112,154,0.12);
+}
+.input::placeholder{ color: var(--faint) }
+
+select.input{ cursor: pointer }
+textarea.input{ resize: vertical; min-height: 80px; line-height: 1.6 }
+
+.input-group{ display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px }
+.input-label{ font-size: 13px; font-weight: 600; color: var(--muted) }
+
+/* ══════════════════════════════════
+   Badge / 標籤
+══════════════════════════════════ */
+.badge{
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 700;
+  white-space: nowrap;
+}
+.badge-sakura{ background: var(--sakura-light); color: var(--sakura-dark) }
+.badge-lavender{ background: var(--lavender-light); color: var(--lavender-dark) }
+.badge-green{ background: var(--green-bg); color: var(--green) }
+.badge-blue{ background: var(--blue-bg); color: var(--blue) }
+.badge-amber{ background: var(--amber-bg); color: var(--amber) }
+.badge-red{ background: var(--red-bg); color: var(--red) }
+
+/* ══════════════════════════════════
+   表格
+══════════════════════════════════ */
+.table-wrap{ overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--b1) }
+table{ width: 100%; border-collapse: collapse; font-size: 13px }
+thead th{
+  background: var(--s2); padding: 10px 14px;
+  text-align: left; font-weight: 700;
+  color: var(--muted); letter-spacing: .02em;
+  font-size: 12px; border-bottom: 1px solid var(--b1);
+}
+tbody td{ padding: 11px 14px; border-bottom: 1px solid var(--b1) }
+tbody tr:last-child td{ border-bottom: none }
+tbody tr:hover{ background: var(--s2) }
+
+/* ══════════════════════════════════
+   Modal
+══════════════════════════════════ */
+.overlay{
+  position: fixed; inset: 0;
+  background: rgba(42,13,30,0.55);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 16px;
+}
+.modal{
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--b1);
+  width: 100%; max-width: 520px;
+  max-height: 90vh; overflow: hidden;
+  display: flex; flex-direction: column;
+  animation: modalIn var(--t-spring);
+}
+.modal-head{
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--b1);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.modal-title{ font-size: 17px; font-weight: 800 }
+.modal-close{
+  width: 32px; height: 32px;
+  border-radius: 8px; border: none;
+  background: var(--s2); color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all var(--t-fast); font-size: 16px;
+}
+.modal-close:hover{ background: var(--red-bg); color: var(--red) }
+.modal-body{ flex: 1; overflow-y: auto; padding: 20px 24px }
+.modal-foot{
+  padding: 14px 24px;
+  border-top: 1px solid var(--b1);
+  display: flex; gap: 8px; justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════
+   Toast / 通知
+══════════════════════════════════ */
+.toast-stack{ position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px }
+.toast{
+  background: var(--surface);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-weight: 600;
+  min-width: 240px; max-width: 360px;
+  animation: toastIn .22s var(--t-spring);
+}
+.toast-icon{ font-size: 18px; flex-shrink: 0 }
+
+/* ══════════════════════════════════
+   Tab 分頁
+══════════════════════════════════ */
+.tabs{
+  background: var(--surface);
+  border-bottom: 1px solid var(--b1);
+  display: flex; padding: 0 16px;
+  flex-shrink: 0; overflow-x: auto; gap: 2px;
+}
+.tabs::-webkit-scrollbar{ height: 0 }
+.tab{
+  padding: 11px 14px; font-size: 13px;
+  cursor: pointer; border-bottom: 2.5px solid transparent;
+  color: var(--muted); font-weight: 600;
+  transition: all var(--t-fast); white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.tab:hover{ color: var(--sakura); background: var(--sakura-light) }
+.tab.active{
+  color: var(--sakura);
+  border-bottom-color: var(--sakura);
+  font-weight: 800;
+  background: linear-gradient(180deg, var(--sakura-light) 0%, transparent 100%);
+}
+
+/* ── RWD ── */
+@media (max-width: 640px){
+  .metric-grid{ grid-template-columns: repeat(2,1fr) }
+  .modal{ max-height: 100vh; border-radius: var(--radius) }
+  .toast-stack{ bottom: 80px; right: 12px; left: 12px }
+  .toast{ min-width: 0 }
+}
+@media (max-width: 440px){
+  .metric-grid{ grid-template-columns: 1fr 1fr }
+}

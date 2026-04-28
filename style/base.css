@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
+
+/* ══════════════════════════════════
+   CSS 變數系統
+══════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* 主色系 */
+  --sakura: #e8709a;
+  --sakura-light: #fde8f0;
+  --sakura-dark: #c4527a;
+  --lavender: #9b7fd4;
+  --lavender-light: #ede8f8;
+  --lavender-dark: #7b5fb4;
+  --mint: #3db89a;
+  --mint-light: #e0f5f0;
+  --sky: #5a9ef5;
+  --sky-light: #e8f1fd;
+
+  /* 背景 / 表面 */
+  --bg: #fdf5f9;
+  --surface: #ffffff;
+  --s2: #faf0f5;
+  --s3: #f5e8ef;
+
+  /* 導覽 */
+  --nav: #2a0d1e;
+  --nav-hover: rgba(255,255,255,0.08);
+  --nav-active: rgba(232,112,154,0.18);
+  --nav-border: rgba(255,255,255,0.07);
+  --nav-text: rgba(255,255,255,0.5);
+  --nav-text-active: #ffffff;
+  --nav-accent: #e8709a;
+
+  /* 邊框 */
+  --b1: rgba(180,80,120,0.10);
+  --b2: rgba(180,80,120,0.18);
+  --b3: rgba(180,80,120,0.32);
+
+  /* 文字 */
+  --text: #2d1a24;
+  --muted: #7a4860;
+  --faint: #c090a8;
+
+  /* 狀態色 */
+  --green: #1a7a45;
+  --green-bg: #e4f2eb;
+  --blue: #1558a0;
+  --blue-bg: #e6eef9;
+  --amber: #8f5208;
+  --amber-bg: #fdf0dc;
+  --red: #952020;
+  --red-bg: #fce8e8;
+
+  /* 圓角 */
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* 陰影 */
+  --shadow: 0 2px 8px rgba(232,112,154,0.08), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 6px 28px rgba(232,112,154,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg: 0 12px 48px rgba(232,112,154,0.16), 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-sakura: 0 6px 24px rgba(232,112,154,0.32);
+  --shadow-lavender: 0 6px 24px rgba(155,127,212,0.32);
+
+  /* 動畫時間 */
+  --t-fast: .12s cubic-bezier(.4,0,.2,1);
+  --t-med: .22s cubic-bezier(.4,0,.2,1);
+  --t-spring: .3s cubic-bezier(.34,1.56,.64,1);
+
+  /* 卡片漸層條顏色（循環使用） */
+  --card-g1: linear-gradient(90deg, #e8709a, #9b7fd4);
+  --card-g2: linear-gradient(90deg, #9b7fd4, #5a9ef5);
+  --card-g3: linear-gradient(90deg, #5a9ef5, #3db89a);
+  --card-g4: linear-gradient(90deg, #3db89a, #e8709a);
+}
+
+/* ── Dark Mode ── */
+body.dark{
+  --bg: #130a10;
+  --surface: #1e1018;
+  --s2: #251520;
+  --s3: #2e1a28;
+  --b1: rgba(255,255,255,0.07);
+  --b2: rgba(255,255,255,0.13);
+  --b3: rgba(255,255,255,0.22);
+  --text: #f0e8ed;
+  --muted: #a890a0;
+  --faint: #684858;
+  --sakura: #f080aa;
+  --sakura-light: #2d1020;
+  --sakura-dark: #e8709a;
+  --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.35);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* ── Base ── */
+html{ scroll-behavior: smooth }
+body{
+  font-family: 'Nunito','Noto Sans TC',-apple-system,sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a{ color: inherit; text-decoration: none }
+img{ max-width: 100%; display: block }
+button{ font-family: inherit; cursor: pointer }
+
+/* ── 捲軸 ── */
+::-webkit-scrollbar{ width:5px; height:5px }
+::-webkit-scrollbar-track{ background: transparent }
+::-webkit-scrollbar-thumb{ background: var(--b2); border-radius:99px }
+::-webkit-scrollbar-thumb:hover{ background: var(--b3) }
+
+/* ── 工具類 ── */
+.sr-only{ position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0) }
+.truncate{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis }
+.flex{ display:flex; align-items:center }
+.flex-col{ display:flex; flex-direction:column }
+.gap-4{ gap:4px } .gap-8{ gap:8px } .gap-12{ gap:12px }

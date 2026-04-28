@@ -1470,28 +1470,39 @@ function svgLineChart(data,color,h){
     +'<path class="chart-line" d="'+path+'" stroke="'+color+'" />'
     +dots+labels+'</svg>';
 }
-function svgBarChart(data,color,h){
-  h=h||140;var w=400;
-  if(!data||!data.length)return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">暫無資料</div>';
+function svgBarChart(data,colorIn,h){
+  h=h||170;
+  var w=500,PL=20,PR=16,PT=26,PB=40;
+  var CW=w-PL-PR,CH=h-PT-PB;
+  if(!data||!data.length)return '<div style="color:var(--faint);font-size:12px;padding:24px;text-align:center">暫無資料</div>';
+  var CMAP={'var(--primary)':'#c4527a','var(--sakura)':'#e8709a','var(--lavender)':'#9b7fd4','var(--green)':'#1a7a45','var(--blue)':'#1558a0','var(--amber)':'#c87800','var(--red)':'#e03030','var(--teal)':'#0d8070','var(--mint)':'#3db89a','var(--sky)':'#5a9ef5','var(--b2)':'#bba8b2'};
+  var PAL=['#e8709a','#9b7fd4','#5a9ef5','#3db89a','#f0a030','#e06060'];
+  var baseClr=CMAP[colorIn]||(colorIn&&!colorIn.startsWith('var(')?colorIn:PAL[0]);
   var max=Math.max.apply(null,data.map(function(d){return d.v;}))||1;
-  var gap=(w-40)/data.length;
-  var bw=Math.max(8,Math.floor(gap*0.6));
-  // gridlines
-  var gridLines=[0.25,0.5,0.75,1].map(function(f){
-    var y=Math.round(h-18-f*(h-32));
-    return '<line x1="10" y1="'+y+'" x2="'+(w-10)+'" y2="'+y+'" stroke="var(--b1)" stroke-width="1"/>';
+  var gap=CW/data.length;
+  var bw=Math.max(10,Math.min(52,Math.floor(gap*0.62)));
+  var gid='bg'+Math.random().toString(36).slice(2,6);
+  var defs='<linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0%" stop-color="'+baseClr+'" stop-opacity="1"/>'
+    +'<stop offset="100%" stop-color="'+baseClr+'" stop-opacity="0.38"/>'
+    +'</linearGradient>';
+  var grid=[0.25,0.5,0.75,1].map(function(f){
+    var y=PT+CH-Math.round(f*CH);
+    return '<line x1="'+PL+'" y1="'+y+'" x2="'+(w-PR)+'" y2="'+y+'" stroke="var(--b1)" stroke-width="1" stroke-dasharray="4 3"/>'
+      +'<text x="'+(PL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="var(--faint)" font-family="Nunito,sans-serif">'+Math.round(max*f)+'</text>';
   }).join('');
   var bars=data.map(function(d,i){
-    var bh=Math.round(d.v/max*(h-32));if(bh<2)bh=2;
-    var x=Math.round(i*gap+20+(gap-bw)/2);
-    var y=h-18-bh;
-    var lbl=d.l.length>5?d.l.slice(0,5)+'…':d.l;
-    return '<rect class="chart-bar" x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="3" fill="'+color+'" opacity=".85">'
-      +'<title>'+d.l+': '+d.v+'</title></rect>'
-      +'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(h-2)+'" text-anchor="middle">'+lbl+'</text>'
-      +(d.v>0?'<text class="chart-label" x="'+(x+bw/2)+'" y="'+(y-4)+'" text-anchor="middle" style="font-weight:700;fill:var(--text)">'+d.v+'</text>':'');
+    var bh=Math.max(4,Math.round(d.v/max*CH));
+    var x=Math.round(PL+i*gap+(gap-bw)/2);
+    var y=PT+CH-bh;
+    var r=Math.min(7,bw/2);
+    var path='M'+(x+r)+','+y+' H'+(x+bw-r)+' Q'+(x+bw)+','+y+' '+(x+bw)+','+(y+r)+' V'+(PT+CH)+' H'+x+' V'+(y+r)+' Q'+x+','+y+' '+(x+r)+','+y+'Z';
+    var lbl=d.l.length>6?d.l.slice(0,5)+'…':d.l;
+    return '<path class="chart-bar" d="'+path+'" fill="url(#'+gid+')"><title>'+d.l+': '+d.v+'</title></path>'
+      +'<text x="'+(x+bw/2)+'" y="'+(PT+CH+17)+'" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Nunito,sans-serif">'+lbl+'</text>'
+      +(d.v>0?'<text x="'+(x+bw/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+baseClr+'" font-family="Nunito,sans-serif">'+d.v+'</text>':'');
   }).join('');
-  return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px">'+gridLines+bars+'</svg>';
+  return '<svg class="chart-svg" viewBox="0 0 '+w+' '+h+'" style="height:'+h+'px"><defs>'+defs+'</defs>'+grid+bars+'</svg>';
 }
 function renderCharts(c){
   var wrap=document.getElementById('chartsSection');if(!wrap)return;
