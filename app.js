@@ -11,7 +11,6 @@ var FB_CONFIG = {
   appId: "1:1019796894908:web:7bb5aad634f90974a80cb9"
 };
 var fbDb = null;
-var fbAuth = null;
 
 // Firebase array/object normalization
 // Firebase RTDB converts arrays to objects - convert back
@@ -39,15 +38,14 @@ function normalizeStore(s) {
   return s;
 }
 
-// Init Firebase after page fully loads
 window.addEventListener('load', function() {
   try {
     if (typeof firebase === 'undefined') { setSyncDot(false); return; }
-    firebase.initializeApp(FB_CONFIG);
+    try { firebase.app(); } catch(e) { firebase.initializeApp(FB_CONFIG); }
     fbDb = firebase.database();
-    fbAuth = firebase.auth();
     setSyncDot(true);
   } catch(e) {
+    console.error('Firebase init failed', e);
     setSyncDot(false);
   }
 });
@@ -135,41 +133,6 @@ function _loadStoreBeforeLogin(callback) {
   } else {
     callback();
   }
-}
-
-// Google Login
-function doGoogleLogin() {
-  if (!fbAuth) { alert('Firebase 連線中，請稍後再試'); return; }
-  var provider = new firebase.auth.GoogleAuthProvider();
-  fbAuth.signInWithPopup(provider).then(function(result) {
-    var gu = result.user;
-    _loadStoreBeforeLogin(function() {
-      var users = store.users || [];
-      var matched = users.find(function(u) {
-        return u.email === gu.email || u.googleId === gu.uid;
-      });
-      if (!matched) {
-        matched = {
-          id: uid(), username: gu.email.split('@')[0], password: '',
-          name: gu.displayName || gu.email.split('@')[0],
-          email: gu.email, googleId: gu.uid,
-          role: 'member', deptId: '', title: '', avatar: 'av-a'
-        };
-        store.users.push(matched);
-        saveStore();
-      }
-      currentUser = matched;
-      localStorage.setItem('loggedInUserId', matched.id);
-      document.getElementById('loginErr').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('appShell').style.display = 'block';
-      initApp();
-    });
-  }).catch(function(e) {
-    var el = document.getElementById('loginErr');
-    el.textContent = 'Google 登入失敗：' + e.message;
-    el.style.display = 'block';
-  });
 }
 
 // Firebase sync in initApp (called after login)
@@ -519,12 +482,9 @@ function logout(){
   localStorage.removeItem('loggedInUserId'); // 清除 session
   stopIdleTimer();
   if(fbDb)fbDb.ref('store/_savedAt').off();
-  if(fbAuth&&fbAuth.currentUser)fbAuth.signOut().catch(function(){});
   currentUser=null;currentMeetingId=null;
-  document.getElementById('appShell').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginUser').value='';
-  document.getElementById('loginPass').value='';
+  localStorage.removeItem('loggedInUserId');
+  window.location.replace('index.html');
 }
 
 // ══════════════════════════════════════════
