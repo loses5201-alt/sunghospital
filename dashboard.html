@@ -506,30 +506,29 @@ function navigateTo(url) {
   window.location.href = url;
 }
 
-// 等 Firebase 載入完成再渲染
 window.addEventListener('load', function() {
-  requireAuth();
-  // 若 Firebase 需要時間，先用 local 狀態
-  setTimeout(function() {
-    if (!store) { store = defaultStore(); }
-    // 嘗試從 firebase 抓資料
-    if (fbDb) {
-      fbDb.ref('store').once('value', function(snap) {
-        store = normalizeStore(snap.val() || defaultStore());
-        var savedId = localStorage.getItem('loggedInUserId');
-        if (savedId && !currentUser) {
-          currentUser = store.users.find(function(u) { return u.id === savedId; });
-        }
-        initDashboard();
-      });
-    } else {
+  if (!requireAuth()) return;
+
+  function _waitFb(){
+    if (!fbDb) return setTimeout(_waitFb, 80);
+    fbDb.ref('store').once('value').then(function(snap) {
+      var raw = snap.val();
+      store = normalizeStore(raw && typeof raw === 'object' ? raw : defaultStore());
       var savedId = localStorage.getItem('loggedInUserId');
-      if (savedId && store) {
+      if (savedId) {
         currentUser = store.users.find(function(u) { return u.id === savedId; });
       }
+      if (!currentUser) {
+        localStorage.removeItem('loggedInUserId');
+        window.location.replace('index.html');
+        return;
+      }
       initDashboard();
-    }
-  }, 300);
+    }).catch(function(){
+      initDashboard();
+    });
+  }
+  _waitFb();
 });
 
 // ══════════════════════════════════════

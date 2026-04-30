@@ -1,6 +1,6 @@
 import { ref as dbRef, onValue, set, get, update } from 'firebase/database'
 import { ref } from 'vue'
-import { db, auth as firebaseAuth } from '../firebase'
+import { db } from '../firebase'
 import type { AppStore } from '../types'
 
 // RTDB converts arrays to objects — convert back
@@ -43,25 +43,6 @@ export function normalizeStore(s: Partial<AppStore>): AppStore {
   return result
 }
 
-// CRITICAL: wait for Firebase Auth to restore its persisted session
-// before reading RTDB. Otherwise Firebase rules may deny the read,
-// we'd silently fall back to empty store, and the next save would
-// WIPE all cloud data.
-function waitForAuthRestore(): Promise<void> {
-  return new Promise((resolve) => {
-    let resolved = false
-    const finish = () => { if (!resolved) { resolved = true; resolve() } }
-    // Subscribe to auth state. The first event fires once Firebase has
-    // determined whether a persisted session exists (user OR null).
-    const unsub = firebaseAuth.onAuthStateChanged(() => {
-      unsub()
-      finish()
-    })
-    // Safety net: don't hang forever if Firebase Auth is unreachable
-    setTimeout(finish, 5000)
-  })
-}
-
 export function useRtdb() {
   const synced = ref(false)         // true = cloud listener active
   const loadFailed = ref(false)     // true = we couldn't read cloud (BLOCK saves)
@@ -69,11 +50,6 @@ export function useRtdb() {
   const store = ref<AppStore | null>(null)
 
   async function watchStore(onReady: () => void): Promise<void> {
-    // STEP 1: wait for Firebase Auth to restore persisted session
-    // (otherwise RTDB rules might deny our read and we'd think cloud is empty)
-    await waitForAuthRestore()
-
-    // STEP 2: try to read store from cloud
     const storeRef = dbRef(db, 'store')
     try {
       const snap = await get(storeRef)
