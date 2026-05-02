@@ -155,37 +155,42 @@ function startFirebaseSync(onReady) {
       fbDb.ref('store').set(store).catch(function() {});
     }
 
-    // 雲端資料就緒，通知呼叫者可以渲染頁面了
     if (onReady) onReady();
 
-    // 即時監聽：只要雲端 _savedAt 有變動就重新拉取
+    // 節流同步：監聽 _savedAt（極小流量），但每次變動最多 90 秒拉一次完整 store
+    // 大幅減少 Firebase 流量，仍保持多人協作即時性
+    var _lastFetchAt = Date.now();
+    var _MIN_FETCH_INTERVAL = 90000;
+    var _pendingFetch = null;
+
     fbDb.ref('store/_savedAt').on('value', function(tSnap) {
       var cloudTime = tSnap.val() || 0;
       window._lastCloudSavedAt = cloudTime;
-      // 跳過自己剛存的（避免無限循環）
       if (cloudTime === window._lastSelfSave) return;
       if (!currentUser) return;
 
-      fbDb.ref('store').once('value').then(function(dSnap) {
-        var d = dSnap.val();
-        if (!d || !d.users) return;
-        var prevAnnLen = (store.announcements||[]).length;
-        var prevIrLen  = (store.incidents||[]).length;
-        store = normalizeStore(d);
-        mergeNewLocal();
-        var newAnns = (store.announcements||[]).length - prevAnnLen;
-        var newIrs  = (store.incidents||[]).length  - prevIrLen;
-        if (newAnns > 0) { var a = store.announcements[0]; showToast('新公告', a ? a.title : '', '📢'); }
-        if (newIrs  > 0) { var ir = store.incidents[0];    showToast('新事件通報', ir ? ir.title : '', '🚨'); }
-        // 更新當前頁面（涵蓋所有分頁）
-        renderSidebar();
-        updateAnnBadge(); updateIrBadge(); updateCalBadge(); updateMarquee();
-        if (currentPage === 'meetings' || !currentPage) {
-          if (currentMeetingId) renderMeetingMain();
-        } else if (currentPage === 'home') {
-          setPage('home');
-        }
-      });
+      var now = Date.now();
+      var wait = Math.max(0, _MIN_FETCH_INTERVAL - (now - _lastFetchAt));
+      if (_pendingFetch) return;
+      _pendingFetch = setTimeout(function() {
+        _pendingFetch = null;
+        _lastFetchAt = Date.now();
+        fbDb.ref('store').once('value').then(function(dSnap) {
+          var d = dSnap.val();
+          if (!d || !d.users) return;
+          var prevAnnLen = (store.announcements||[]).length;
+          var prevIrLen  = (store.incidents||[]).length;
+          store = normalizeStore(d);
+          mergeNewLocal();
+          var newAnns = (store.announcements||[]).length - prevAnnLen;
+          var newIrs  = (store.incidents||[]).length  - prevIrLen;
+          if (newAnns > 0) { var a = store.announcements[0]; showToast('新公告', a ? a.title : '', '📢'); }
+          if (newIrs  > 0) { var ir = store.incidents[0];    showToast('新事件通報', ir ? ir.title : '', '🚨'); }
+          renderSidebar();
+          updateAnnBadge(); updateIrBadge(); updateCalBadge(); updateMarquee();
+          if (currentPage === 'home') setPage('home');
+        });
+      }, wait);
     });
 
     setSyncDot(true);
