@@ -1616,15 +1616,13 @@ function restoreData(){
               action: '還原備份（' + backupDate + '）',
               size: '-'
             });
-            try{localStorage.setItem(STORE_KEY, JSON.stringify(store));}catch(ex){}
             showToast('還原成功', '3 秒後重新整理頁面', '✅');
             setTimeout(function(){location.reload();}, 3000);
           }).catch(function(){
             alert('❌ 寫入 Firebase 失敗，請確認網路連線。');
           });
         } else {
-          try{localStorage.setItem(STORE_KEY, JSON.stringify(store));}catch(ex){}
-          showToast('還原成功（離線）', '請重新整理頁面', '✅');
+          alert('❌ 無 Firebase 連線，無法還原備份');
         }
       } catch(err){
         alert('❌ 無法解析備份檔：' + err.message);
