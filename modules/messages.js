@@ -50,7 +50,7 @@ function startDM(userId){var room=getOrCreateDM(userId);_activeChatRoom=room.id;
 function openChatRoom(roomId){
   _activeChatRoom=roomId;
   (store.messages||[]).forEach(function(m){if(m.roomId===roomId&&m.to===currentUser.id){if(!m.reads)m.reads={};m.reads[currentUser.id]=true;}});
-  saveStore();renderChatThread(roomId);updateMsgBadge();
+  saveCollection('messages');renderChatThread(roomId);updateMsgBadge();
   document.querySelectorAll('.chat-room-item').forEach(function(el){el.classList.remove('active');});
   document.querySelectorAll('.chat-room-item').forEach(function(el){if(el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(roomId)>=0)el.classList.add('active');});
 }

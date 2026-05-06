@@ -138,7 +138,7 @@ function openPatientDetail(id){
     p.assigneeId = document.getElementById('pasn').value;
     p.note = document.getElementById('pnt').value.trim();
     p.flags = Array.from(document.querySelectorAll('.pflag:checked')).map(function(cb){ return cb.value; });
-    saveStore(); closeModal(); rnPatientBoard();
+    saveCollection('patients'); closeModal(); rnPatientBoard();
   });
 }
 
@@ -149,7 +149,7 @@ function openPtNote(id){
     '<div class="form-row"><textarea id="qn" style="min-height:80px">'+esc(p.note||'')+'</textarea></div>',
   function(){
     p.note = document.getElementById('qn').value.trim();
-    saveStore(); closeModal(); rnPatientBoard();
+    saveCollection('patients'); closeModal(); rnPatientBoard();
   });
 }
 
@@ -161,7 +161,7 @@ function movePtStage(id, dir){
   if(ni < 0 || ni >= PATIENT_STAGES.length) return;
   p.stage = PATIENT_STAGES[ni];
   p.stageTime = new Date().toISOString();
-  saveStore(); rnPatientBoard();
+  saveCollection('patients'); rnPatientBoard();
   showToast('階段更新', esc(p.name)+' → '+p.stage, '🏥');
 }
 
@@ -170,7 +170,7 @@ function dischargePt(id){
   if(!p||!confirm(esc(p.name)+' 確認辦理出院？')) return;
   p.discharged = true;
   p.dischargeTime = new Date().toISOString();
-  saveStore(); rnPatientBoard();
+  saveCollection('patients'); rnPatientBoard();
   showToast('出院', esc(p.name)+' 已辦理出院', '👋');
 }
 
@@ -201,7 +201,7 @@ function openNewPatient(){
       note:document.getElementById('pnt').value.trim(),
       flags:[], discharged:false
     });
-    saveStore(); closeModal(); rnPatientBoard();
+    saveCollection('patients'); closeModal(); rnPatientBoard();
     showToast('新增成功', esc(n)+' 已加入看板', '🏥');
   });
 }

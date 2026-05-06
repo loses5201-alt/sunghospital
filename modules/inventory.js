@@ -114,7 +114,7 @@ function invUse(id){
     item.updatedAt = new Date().toISOString();
     if(!store.inventoryLogs) store.inventoryLogs = [];
     store.inventoryLogs.push({id:uid(), itemId:item.id, itemName:item.name, type:'use', qty:q, userId:currentUser.id, date:today(), note:document.getElementById('inote').value.trim()});
-    saveStore(); closeModal(); rnInventory();
+    saveMultiple(['inventory','inventoryLogs']); closeModal(); rnInventory();
     if(item.qty === 0) showToast('庫存告磬', esc(item.name)+' 已用完，請補貨！', '🚨');
     else if(item.qty <= item.minQty) showToast('庫存警示', esc(item.name)+' 剩餘 '+item.qty+'，已低於最低庫存', '⚠️');
   });
@@ -132,7 +132,7 @@ function invRestock(id){
     item.updatedAt = new Date().toISOString();
     if(!store.inventoryLogs) store.inventoryLogs = [];
     store.inventoryLogs.push({id:uid(), itemId:item.id, itemName:item.name, type:'restock', qty:q, userId:currentUser.id, date:today(), note:document.getElementById('inote').value.trim()});
-    saveStore(); closeModal(); rnInventory();
+    saveMultiple(['inventory','inventoryLogs']); closeModal(); rnInventory();
     showToast('補貨完成', esc(item.name)+' +'+q+esc(item.unit||'個')+' → 庫存 '+item.qty, '📦');
   });
 }
@@ -140,7 +140,7 @@ function invRestock(id){
 function deleteInvItem(id){
   if(!confirm('確定刪除此品項？')) return;
   store.inventory = (store.inventory||[]).filter(function(i){ return i.id!==id; });
-  saveStore(); rnInventory();
+  saveCollection('inventory'); rnInventory();
 }
 
 function openNewInvItem(){ _invForm(null); }
@@ -176,6 +176,6 @@ function _invForm(item){
         minQty:parseInt(document.getElementById('im').value)||5,
         updatedAt:new Date().toISOString(), updatedBy:currentUser.id});
     }
-    saveStore(); closeModal(); rnInventory();
+    saveCollection('inventory'); closeModal(); rnInventory();
   });
 }

@@ -79,11 +79,11 @@ function saveIR(){
     date:document.getElementById('irDate').value,
     actions:document.getElementById('irActions').value,
     followUp:document.getElementById('irFollowUp').value});
-  saveStore();closeModal();renderIRList();updateIrBadge();
+  saveCollection('incidents');closeModal();renderIRList();updateIrBadge();
 }
 function updateIRStatus(id,v){
   const ir=store.incidents.find(x=>x.id===id);if(ir)ir.status=v;
-  saveStore();renderIRList();updateIrBadge();
+  saveCollection('incidents');renderIRList();updateIrBadge();
 }
 
 function openIRComment(id){
@@ -94,7 +94,7 @@ function openIRComment(id){
     var ir=store.incidents.find(function(x){return x.id===id;});if(!ir)return;
     if(!ir.comments)ir.comments=[];
     ir.comments.push({userId:currentUser.id,text:txt,at:today()});
-    saveStore();closeModal();renderIRList();showToast('跟進留言已新增','','💬');
+    saveCollection('incidents');closeModal();renderIRList();showToast('跟進留言已新增','','💬');
   });
 }
 

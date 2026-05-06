@@ -158,7 +158,7 @@ function setUserStatus(id,status){
   if(!confirm('確定'+lbls[status]+'此帳號？'))return;
   u.status=status;
   logAudit('狀態變更',u.name+' → '+STATUSLBLS[status]);
-  saveStore();renderUserContent();
+  saveCollection('users');renderUserContent();
   showToast(STATUSLBLS[status],u.name,status==='active'?'✅':'⚠️');
 }
 function onRoleChange(sel){
@@ -296,9 +296,9 @@ function saveUser(){
     store.users.push({id:uid(),...data,password});
     logAudit('新增人員', data.name + '（@' + data.username + '）');
   }
-  saveStore();closeModal();renderUserContent();
+  saveCollection('users');closeModal();renderUserContent();
 }
-function deleteUser(id){if(!confirm('確定刪除此人員？'))return;const du=store.users.find(x=>x.id===id);store.users=store.users.filter(x=>x.id!==id);logAudit('刪除人員', du?du.name:'');saveStore();renderUserContent();}
+function deleteUser(id){if(!confirm('確定刪除此人員？'))return;const du=store.users.find(x=>x.id===id);store.users=store.users.filter(x=>x.id!==id);logAudit('刪除人員', du?du.name:'');saveCollection('users');renderUserContent();}
 
 // ══════════════════════════════════════════
 // CHANGE PASSWORD
@@ -316,7 +316,7 @@ function openChangePassword(){
     if(nw!==conf){alert('兩次密碼不一致');return;}
     if(nw.length<4){alert('密碼至少4碼');return;}
     currentUser.password=nw;const u=store.users.find(x=>x.id===currentUser.id);if(u)u.password=nw;
-    saveStore();closeModal();alert('密碼已更新');
+    saveCollection('users');closeModal();alert('密碼已更新');
   });
 }
 
@@ -457,7 +457,6 @@ function mergeNewLocal(){
     if(!j.image)j.image=null;
     if(j.edited===undefined)j.edited=false;
   });
-  try{localStorage.setItem(STORE_KEY,JSON.stringify(store));}catch(e){}
 }
 // mergeNew：補足欄位後同步到 Firebase
 // 只在已確認從雲端讀取資料後呼叫

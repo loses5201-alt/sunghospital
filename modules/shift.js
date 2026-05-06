@@ -265,7 +265,7 @@ function confirmSignShift(id){
 function signShift(id){
   var s = store.shifts.find(function(x){ return x.id===id; }); if(!s) return;
   s.toSigned = true; s.toSignedAt = today()+' '+nowTime();
-  saveStore(); renderShiftList();
+  saveCollection('shifts'); renderShiftList();
   showToast('簽收完成','交班已確認，'+nowTime(),'✓');
 }
 
@@ -400,7 +400,7 @@ function saveShift(){
     fromSigned:true, toSigned:false,
     createdAt:today()+' '+nowTime()
   });
-  saveStore(); closeModal(); renderShiftList();
+  saveCollection('shifts'); closeModal(); renderShiftList();
   showToast('交班紀錄已送出','接班人員需點擊「我要簽收」確認交接','📋');
 }
 
@@ -410,7 +410,7 @@ function saveShift(){
 function deleteShift(id){
   if(!confirm('確定刪除此交班紀錄？'))return;
   store.shifts = store.shifts.filter(function(x){ return x.id!==id; });
-  saveStore(); renderShiftPage(document.getElementById('mainContent'));
+  saveCollection('shifts'); renderShiftPage(document.getElementById('mainContent'));
   showToast('已刪除','交班紀錄已移除','🗑');
 }
 
@@ -476,7 +476,7 @@ function openEditShift(id){
       var old = oldMap[text];
       return old ? old : {id:uid(),text:text,done:false};
     });
-    saveStore(); closeModal(); renderShiftList();
+    saveCollection('shifts'); closeModal(); renderShiftList();
     showToast('已更新','交班紀錄已修改','✏');
   });
 }
@@ -494,7 +494,7 @@ function toggleChecklistItem(shiftId,itemId,done){
   } else {
     delete item.doneBy; delete item.doneAt;
   }
-  saveStore(); renderShiftList();
+  saveCollection('shifts'); renderShiftList();
 }
 
 // ════════════════════════════════

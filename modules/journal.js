@@ -158,7 +158,7 @@ function openNewPost(){
         createdAt:today()+' '+nowTime(),
         likes:[],comments:[],pinned:false,image:_boardImg,edited:false});
       _boardImg=null;_boardOpenId=null;
-      saveStore();closeModal();rnBoard();
+      saveCollection('journals');closeModal();rnBoard();
       showToast('已發布','','📋');
     });
 }
@@ -181,20 +181,20 @@ function likePost(id){
   if(!j.likes)j.likes=[];
   var i=j.likes.indexOf(currentUser.id);
   if(i>=0)j.likes.splice(i,1);else j.likes.push(currentUser.id);
-  saveStore();rnBoard();
+  saveCollection('journals');rnBoard();
 }
 
 function deletePost(id){
   if(!confirm('確定刪除此貼文？'))return;
   store.journals=store.journals.filter(function(j){return j.id!==id;});
   if(_boardOpenId===id)_boardOpenId=null;
-  saveStore();rnBoard();showToast('已刪除','','🗑');
+  saveCollection('journals');rnBoard();showToast('已刪除','','🗑');
 }
 
 function pinPost(id){
   var j=(store.journals||[]).find(function(x){return x.id===id;});if(!j)return;
   j.pinned=!j.pinned;
-  saveStore();rnBoard();
+  saveCollection('journals');rnBoard();
   showToast(j.pinned?'已置頂':'已取消置頂','','📌');
   togglePostMenu(id);
 }
@@ -217,7 +217,7 @@ function editPost(id){
       j.image=_boardImg;
       j.edited=true;
       _boardImg=null;
-      saveStore();closeModal();rnBoard();
+      saveCollection('journals');closeModal();rnBoard();
     });
   togglePostMenu(id);
 }
@@ -237,7 +237,7 @@ function addComment(postId){
   if(!j.comments)j.comments=[];
   j.comments.push({id:uid(),userId:currentUser.id,text:text,createdAt:today()+' '+nowTime(),likes:[]});
   ta.value='';
-  saveStore();renderPostDetail(document.getElementById('boardFeed'),postId);
+  saveCollection('journals');renderPostDetail(document.getElementById('boardFeed'),postId);
 }
 
 function likeComment(postId,commentId){
@@ -246,13 +246,13 @@ function likeComment(postId,commentId){
   if(!cm.likes)cm.likes=[];
   var i=cm.likes.indexOf(currentUser.id);
   if(i>=0)cm.likes.splice(i,1);else cm.likes.push(currentUser.id);
-  saveStore();renderPostDetail(document.getElementById('boardFeed'),postId);
+  saveCollection('journals');renderPostDetail(document.getElementById('boardFeed'),postId);
 }
 
 function deleteComment(postId,commentId){
   var j=(store.journals||[]).find(function(x){return x.id===postId;});if(!j)return;
   j.comments=(j.comments||[]).filter(function(x){return x.id!==commentId;});
-  saveStore();renderPostDetail(document.getElementById('boardFeed'),postId);
+  saveCollection('journals');renderPostDetail(document.getElementById('boardFeed'),postId);
   showToast('已刪除留言','','🗑');
 }
 

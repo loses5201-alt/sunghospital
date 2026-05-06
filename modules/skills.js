@@ -145,7 +145,7 @@ function openSkillCell(userId, skillId){
       note: document.getElementById('snote').value.trim(),
       updatedAt: new Date().toISOString()
     };
-    saveStore(); closeModal(); rnSkills();
+    saveCollection('skillMatrix'); closeModal(); rnSkills();
   });
 }
 
@@ -158,7 +158,7 @@ function deleteSkillDef(id){
   if(!confirm('確定刪除此技能欄位？（相關資料也將刪除）')) return;
   store.skillDefs = (store.skillDefs||[]).filter(function(s){ return s.id!==id; });
   if(store.skillMatrix) Object.values(store.skillMatrix).forEach(function(um){ delete um[id]; });
-  saveStore(); rnSkills();
+  saveMultiple(['skillDefs','skillMatrix']); rnSkills();
 }
 function _skillDefForm(s){
   var catOpts = SKILL_CATS.map(function(c){
@@ -177,6 +177,6 @@ function _skillDefForm(s){
     } else {
       store.skillDefs.push({id:uid(), name:n, category:document.getElementById('sc').value, requiresExpiry:document.getElementById('sexp').checked});
     }
-    saveStore(); closeModal(); rnSkills();
+    saveCollection('skillDefs'); closeModal(); rnSkills();
   });
 }

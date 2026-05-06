@@ -105,7 +105,7 @@ function saveNotesInline(meetingId) {
   var ta = document.getElementById('notesTA');
   if (!ta) return;
   m.notes = ta.value.trim();
-  saveStore(); renderTab();
+  saveCollection('meetings'); renderTab();
   showToast('摘要已更新', '', '✅');
 }
 
@@ -203,19 +203,19 @@ function cycleStatusById(taskId) {
   var m = _getMtg(); if (!m) return;
   var t = _getTask(taskId); if (!t) return;
   t.status = t.status === '待辦' ? '進行中' : t.status === '進行中' ? '已完成' : '待辦';
-  saveStore(); renderSidebar(); renderMeetingMain();
+  saveCollection('meetings'); renderSidebar(); renderMeetingMain();
 }
 function setStatusById(taskId, v) {
   var m = _getMtg(); if (!m) return;
   var t = _getTask(taskId); if (!t) return;
   t.status = v;
-  saveStore(); renderSidebar(); renderMeetingMain();
+  saveCollection('meetings'); renderSidebar(); renderMeetingMain();
 }
 function deleteTaskById(taskId) {
   var m = _getMtg(); if (!m) return;
   if (!confirm('確定刪除此任務？')) return;
   m.tasks = (m.tasks || []).filter(function(t) { return t.id !== taskId; });
-  saveStore(); renderSidebar(); renderMeetingMain();
+  saveCollection('meetings'); renderSidebar(); renderMeetingMain();
 }
 function openEditTaskById(taskId) {
   var m = _getMtg(); if (!m) return;
@@ -252,7 +252,7 @@ function openEditTaskById(taskId) {
     t2.due = document.getElementById('etDue').value;
     t2.status = document.getElementById('etStatus').value;
     t2.note = document.getElementById('etNote').value.trim();
-    saveStore(); closeModal(); renderSidebar(); renderMeetingMain();
+    saveCollection('meetings'); closeModal(); renderSidebar(); renderMeetingMain();
     showToast('任務已更新', txt, '✅');
   });
 }
@@ -262,7 +262,7 @@ function clearCompletedTasks() {
   if (!n) { showToast('無已完成任務', '', '⚠️'); return; }
   if (!confirm('確定清除 ' + n + ' 項已完成任務？此操作無法復原。')) return;
   m.tasks = (m.tasks || []).filter(function(t) { return t.status !== '已完成'; });
-  saveStore(); renderSidebar(); renderMeetingMain();
+  saveCollection('meetings'); renderSidebar(); renderMeetingMain();
   showToast('清除完成', '已移除 ' + n + ' 項完成任務', '✅');
 }
 
@@ -271,7 +271,7 @@ function deleteTask(origI) {
   var m = _getMtg(); if (!m) return;
   if (!confirm('確定刪除此任務？')) return;
   (m.tasks || []).splice(origI, 1);
-  saveStore(); renderSidebar(); renderMeetingMain();
+  saveCollection('meetings'); renderSidebar(); renderMeetingMain();
 }
 
 // ── 聊天（全新設計）──
@@ -365,7 +365,7 @@ function sendChat() {
   if (!m.chat) m.chat = [];
   m.chat.push({id: uid(), userId: currentUser.id, text: text, time: nowTime(), date: today()});
   if (inp) inp.value = '';
-  saveStore(); renderTab();
+  saveCollection('meetings'); renderTab();
 }
 function renderVotes(c,m){
   if(!m.votes)m.votes=[];
@@ -409,20 +409,20 @@ function renderVotes(c,m){
   </div>${addForm}${cards||'<div style="text-align:center;padding:30px;color:var(--faint);font-size:13px">尚無投票</div>'}`;
 }
 function addVoteOpt(){const c=document.getElementById('vOptsEdit');const n=c.children.length+1;const r=document.createElement('div');r.style.cssText='display:flex;gap:6px;margin-bottom:6px';r.innerHTML=`<input class="vopt" placeholder="選項 ${n}" style="flex:1;font-size:12px;border:1px solid var(--b1);border-radius:var(--radius-sm);padding:6px 9px;background:var(--bg);color:var(--text);outline:none;font-family:inherit">`;c.appendChild(r);}
-function saveVote(){const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;const q=document.getElementById('vQuestion').value.trim();if(!q)return;const opts=Array.from(document.querySelectorAll('.vopt')).map(i=>i.value.trim()).filter(Boolean);if(opts.length<2)return;if(!m.votes)m.votes=[];m.votes.push({id:uid(),question:q,options:opts,votes:{},closed:false});saveStore();renderTab();}
-function castVote(vi,oi){const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m||!m.votes[vi]||m.votes[vi].closed)return;m.votes[vi].votes[currentUser.id]=oi;saveStore();renderTab();}
-function closeVote(vi){const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;m.votes[vi].closed=true;saveStore();renderTab();}
+function saveVote(){const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;const q=document.getElementById('vQuestion').value.trim();if(!q)return;const opts=Array.from(document.querySelectorAll('.vopt')).map(i=>i.value.trim()).filter(Boolean);if(opts.length<2)return;if(!m.votes)m.votes=[];m.votes.push({id:uid(),question:q,options:opts,votes:{},closed:false});saveCollection('meetings');renderTab();}
+function castVote(vi,oi){const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m||!m.votes[vi]||m.votes[vi].closed)return;m.votes[vi].votes[currentUser.id]=oi;saveCollection('meetings');renderTab();}
+function closeVote(vi){const m=store.meetings.find(x=>x.id===currentMeetingId);if(!m)return;m.votes[vi].closed=true;saveCollection('meetings');renderTab();}
 
 // ══════════════════════════════════════════
 // TASK ACTIONS
 // ══════════════════════════════════════════
-function cycleStatus(i){const m=store.meetings.find(x=>x.id===currentMeetingId);const s=m.tasks[i].status;m.tasks[i].status=s==='待辦'?'進行中':s==='進行中'?'已完成':'待辦';saveStore();renderSidebar();renderMeetingMain();}
-function setStatus(i,v){const m=store.meetings.find(x=>x.id===currentMeetingId);m.tasks[i].status=v;saveStore();renderSidebar();renderMeetingMain();}
+function cycleStatus(i){const m=store.meetings.find(x=>x.id===currentMeetingId);const s=m.tasks[i].status;m.tasks[i].status=s==='待辦'?'進行中':s==='進行中'?'已完成':'待辦';saveCollection('meetings');renderSidebar();renderMeetingMain();}
+function setStatus(i,v){const m=store.meetings.find(x=>x.id===currentMeetingId);m.tasks[i].status=v;saveCollection('meetings');renderSidebar();renderMeetingMain();}
 function addTask(){
   const m=store.meetings.find(x=>x.id===currentMeetingId);
   const text=document.getElementById('newTask').value.trim();if(!text)return;
   m.tasks.push({id:uid(),text,assigneeId:document.getElementById('newAssignee').value,due:document.getElementById('newDue').value,status:'待辦',priority:document.getElementById('newPrio').value});
-  saveStore();renderSidebar();renderMeetingMain();
+  saveCollection('meetings');renderSidebar();renderMeetingMain();
 }
 
 // ══════════════════════════════════════════
@@ -434,7 +434,7 @@ function openNewMeeting(){
   editingMeetingId=null;showModal('新增會議',meetingForm(null),saveMeeting);
 }
 function openEditMeeting(){editingMeetingId=currentMeetingId;const m=store.meetings.find(x=>x.id===currentMeetingId);showModal('編輯會議',meetingForm(m),saveMeeting);}
-function deleteMeeting(){if(!confirm('確定刪除這場會議？'))return;const dm=store.meetings.find(x=>x.id===currentMeetingId);store.meetings=store.meetings.filter(x=>x.id!==currentMeetingId);logAudit('刪除會議', dm?dm.title:'');currentMeetingId=null;saveStore();renderSidebar();renderEmptyMain();}
+function deleteMeeting(){if(!confirm('確定刪除這場會議？'))return;const dm=store.meetings.find(x=>x.id===currentMeetingId);store.meetings=store.meetings.filter(x=>x.id!==currentMeetingId);logAudit('刪除會議', dm?dm.title:'');currentMeetingId=null;saveCollection('meetings');renderSidebar();renderEmptyMain();}
 function meetingForm(m){
   const allUsers=store.users.filter(u=>u.role!=='admin'||u.id===currentUser.id);
   const checks=store.users.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;cursor:pointer">
@@ -455,12 +455,12 @@ function saveMeeting(){
     const m=store.meetings.find(x=>x.id===editingMeetingId);
     m.title=title;m.date=date;m.notes=notes;m.attendeeIds=attendeeIds;
     attendeeIds.forEach(u=>{if(!m.reads[u])m.reads[u]={read:false,time:null};});
-    logAudit('編輯會議', title);closeModal();saveStore();renderSidebar();renderMeetingMain();
+    logAudit('編輯會議', title);closeModal();saveCollection('meetings');renderSidebar();renderMeetingMain();
   } else {
     const id=uid();const reads={};
     attendeeIds.forEach(u=>{reads[u]={read:u===currentUser.id,time:u===currentUser.id?nowTime():null};});
     store.meetings.push({id,title,date,attendeeIds,notes,tasks:[],chat:[],votes:[],reads});
-    logAudit('新增會議', title);closeModal();saveStore();renderSidebar();selectMeeting(id);
+    logAudit('新增會議', title);closeModal();saveCollection('meetings');renderSidebar();selectMeeting(id);
   }
 }
 

@@ -154,7 +154,7 @@ function approveLeave(id, approved){
   l.status = approved ? 'approved' : 'rejected';
   l.approverId = currentUser.id;
   l.approvedAt = new Date().toISOString();
-  saveStore(); rnLeave();
+  saveCollection('leaves'); rnLeave();
   var lt = LEAVE_TYPES.find(function(t){ return t.id===l.type; })||{label:l.type};
   showToast(approved?'已核准':'已駁回', esc(userName(l.userId))+'的'+lt.label, approved?'✅':'❌');
 }
@@ -176,7 +176,7 @@ function openEditBalance(userId){
       var v = parseInt(document.getElementById('lb_'+lt.id).value);
       if(!isNaN(v)) store.leaveBalance[userId][lt.id] = v;
     });
-    saveStore(); closeModal(); rnLeave();
+    saveCollection('leaveBalance'); closeModal(); rnLeave();
     showToast('更新完成', esc(user.name)+'的假期餘額已調整', '📅');
   });
 }
@@ -211,7 +211,7 @@ function openNewLeave(){
       reason:document.getElementById('lreason').value.trim(),
       status:'pending', createdAt:new Date().toISOString()
     });
-    saveStore(); closeModal(); rnLeave();
+    saveCollection('leaves'); closeModal(); rnLeave();
     showToast('申請送出', '假期申請（'+days+'天）已送出待審核', '📅');
   });
 }

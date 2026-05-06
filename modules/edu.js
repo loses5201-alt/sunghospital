@@ -60,7 +60,7 @@ function togEdu(id,eduId){
     if(!store.eduReads[eduId])store.eduReads[eduId]={};
     if(!store.eduReads[eduId][currentUser.id]){
       store.eduReads[eduId][currentUser.id]=true;
-      saveStore();rnEdu();
+      saveCollection('eduReads');rnEdu();
     }
   }
 }
@@ -82,7 +82,7 @@ function openNewEdu(){
     store.eduItems.push({id:uid(),title:t,icon:document.getElementById('ei').value||'📄',
       tags:document.getElementById('et').value.split(',').map(function(x){return x.trim();}).filter(Boolean),
       desc:document.getElementById('ed').value,content:document.getElementById('ec').value});
-    saveStore();closeModal();rnEdu();
+    saveCollection('eduItems');closeModal();rnEdu();
   });
 }
 
@@ -93,13 +93,13 @@ function openEditEdu(id){
     e.title=t;e.icon=document.getElementById('ei').value||'📄';
     e.tags=document.getElementById('et').value.split(',').map(function(x){return x.trim();}).filter(Boolean);
     e.desc=document.getElementById('ed').value;e.content=document.getElementById('ec').value;
-    saveStore();closeModal();rnEdu();
+    saveCollection('eduItems');closeModal();rnEdu();
   });
 }
 
 function deleteEdu(id){
   if(!confirm('確定刪除此衛教資料？'))return;
   store.eduItems=(store.eduItems||[]).filter(function(x){return x.id!==id;});
-  saveStore();rnEdu();
+  saveCollection('eduItems');rnEdu();
   showToast('已刪除','衛教資料已刪除','🗑');
 }

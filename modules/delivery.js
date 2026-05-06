@@ -13,6 +13,6 @@ function editRoom(i){
   const r=store.rooms[i];
   const opts=Object.entries(RSTS).map(([k,v])=>'<option value="'+k+'" '+(r.status===k?'selected':'')+'>'+v.i+' '+v.l+'</option>').join('');
   showModal('更新：'+r.name,'<div class="form-row"><label>狀態</label><select id="rs">'+opts+'</select></div><div class="form-row"><label>病患（可匿名）</label><input id="rp" value="'+esc(r.patient)+'"></div><div class="form-row"><label>開始時間</label><input id="rt" value="'+esc(r.since)+'"></div><div class="form-row"><label>備註</label><input id="rn" value="'+esc(r.note)+'"></div>',
-  ()=>{store.rooms[i].status=document.getElementById('rs').value;store.rooms[i].patient=document.getElementById('rp').value;store.rooms[i].since=document.getElementById('rt').value;store.rooms[i].note=document.getElementById('rn').value;saveStore();closeModal();rnRooms();});
+  ()=>{store.rooms[i].status=document.getElementById('rs').value;store.rooms[i].patient=document.getElementById('rp').value;store.rooms[i].since=document.getElementById('rt').value;store.rooms[i].note=document.getElementById('rn').value;saveCollection('rooms');closeModal();rnRooms();});
 }
 

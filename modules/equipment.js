@@ -75,7 +75,7 @@ function openNewEqReport(){
       location:document.getElementById('eqLoc').value,note:document.getElementById('eqNote').value,
       status:'open',reportedBy:currentUser.id,reportedAt:today(),comments:[]};
     if(!store.equipment)store.equipment=[];
-    store.equipment.push(item);logAudit('設備回報',name);saveStore();closeModal();
+    store.equipment.push(item);logAudit('設備回報',name);saveCollection('equipment');closeModal();
     renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('回報已送出',name,'🔧');
   });
 }
@@ -88,7 +88,7 @@ function openEqComment(id){
     var e=(store.equipment||[]).find(function(x){return x.id===id;});if(!e)return;
     if(!e.comments)e.comments=[];
     e.comments.push({userId:currentUser.id,text:txt,at:today()});
-    saveStore();closeModal();renderPageInMain(renderEquipmentPage);showToast('跟進留言已新增','','💬');
+    saveCollection('equipment');closeModal();renderPageInMain(renderEquipmentPage);showToast('跟進留言已新增','','💬');
   });
 }
 
@@ -96,12 +96,12 @@ function setEqStatus(id,status){
   var e=(store.equipment||[]).find(function(x){return x.id===id;});if(!e)return;
   e.status=status;if(status==='resolved'){e.resolvedBy=currentUser.id;e.resolvedAt=today();}
   logAudit('設備狀態更新',e.name+' → '+(EQ_STATUS[status]||status));
-  saveStore();renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('狀態已更新',e.name,'✅');
+  saveCollection('equipment');renderPageInMain(renderEquipmentPage);updateEqBadge();showToast('狀態已更新',e.name,'✅');
 }
 
 function deleteEqReport(id){
   if(!confirm('確定刪除此回報？'))return;
   var e=(store.equipment||[]).find(function(x){return x.id===id;});
   store.equipment=(store.equipment||[]).filter(function(x){return x.id!==id;});
-  logAudit('刪除設備回報',e?e.name:'');saveStore();renderPageInMain(renderEquipmentPage);updateEqBadge();
+  logAudit('刪除設備回報',e?e.name:'');saveCollection('equipment');renderPageInMain(renderEquipmentPage);updateEqBadge();
 }

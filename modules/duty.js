@@ -469,7 +469,7 @@ function editDC(uid,date){
   function(){
     if(!store.dutySchedule[uid])store.dutySchedule[uid]={};
     store.dutySchedule[uid][date]=document.getElementById('dcs').value;
-    saveStore();closeModal();rnDuty();
+    saveCollection('dutySchedule');closeModal();rnDuty();
   });
 }
 
@@ -506,7 +506,7 @@ function openBatchEdit(){
       if(skipLeave&&(store.leaves||[]).some(function(l){return l.userId===u&&l.status==='approved'&&l.startDate<=dStr&&l.endDate>=dStr;}))continue;
       store.dutySchedule[u][dStr]=sh;cnt++;
     }
-    saveStore();closeModal();rnDuty();
+    saveCollection('dutySchedule');closeModal();rnDuty();
     showToast('批次排班完成',userName(u)+' 設定 '+cnt+' 天為 '+(SHINFO[sh]||SHINFO.off).l,'✅');
   });
 }
@@ -551,7 +551,7 @@ function openNewSw(){
     store.swapRequests.unshift({id:uid(),fromId:currentUser.id,toId:toId,
       fromDate:fromDate,toDate:toDate,fromShift:fromShift,toShift:toShift,
       reason:reason,status:'pending',createdAt:today()+' '+nowTime()});
-    saveStore();closeModal();_dutyTab='swap';rnDuty();
+    saveCollection('swapRequests');closeModal();_dutyTab='swap';rnDuty();
     showToast('換班申請已送出','等待 '+userName(toId)+' 確認','🔄');
   });
 }
@@ -562,7 +562,7 @@ function cancelSwap(id){
   var s=store.swapRequests.find(function(x){return x.id===id;});
   if(!s||s.fromId!==currentUser.id){showToast('無法撤回','','❌');return;}
   store.swapRequests=store.swapRequests.filter(function(x){return x.id!==id;});
-  saveStore();rnDuty();showToast('已撤回換班申請','','↩️');
+  saveCollection('swapRequests');rnDuty();showToast('已撤回換班申請','','↩️');
 }
 
 // 核准換班（自動對調班別）
@@ -574,14 +574,14 @@ function appSw(id){
   var tmp=(store.dutySchedule[s.fromId][s.fromDate])||'off';
   store.dutySchedule[s.fromId][s.fromDate]=(store.dutySchedule[s.toId][s.toDate])||'off';
   store.dutySchedule[s.toId][s.toDate]=tmp;
-  saveStore();rnDuty();
+  saveMultiple(['swapRequests','dutySchedule']);rnDuty();
   showToast('換班已核准',userName(s.fromId)+' ⇄ '+userName(s.toId),'✅');
 }
 
 // 拒絕換班
 function rejectSw(id){
   var s=store.swapRequests.find(function(x){return x.id===id;});if(!s)return;
-  s.status='rejected';saveStore();rnDuty();
+  s.status='rejected';saveCollection('swapRequests');rnDuty();
   showToast('換班已拒絕','','❌');
 }
 
@@ -594,7 +594,7 @@ function editDutyNote(date){
   function(){
     var v=document.getElementById('dnote').value.trim();
     if(v)store.dutyNotes[date]=v;else delete store.dutyNotes[date];
-    saveStore();closeModal();rnDuty();
+    saveCollection('dutyNotes');closeModal();rnDuty();
   });
 }
 
@@ -612,7 +612,7 @@ function openMinStaffSettings(){
       afternoon:parseInt(document.getElementById('msa').value)||0,
       night:parseInt(document.getElementById('msn').value)||0
     };
-    saveStore();closeModal();rnDuty();
+    saveCollection('dutyMinStaff');closeModal();rnDuty();
     showToast('已更新最低人力設定','','✅');
   });
 }

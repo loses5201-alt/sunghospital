@@ -157,6 +157,10 @@
       if (raw && typeof raw === 'object') store = normalizeStore(raw);
       var user = (store.users || []).find(function(u){ return u.id === savedId; });
       if (!user) { localStorage.removeItem('loggedInUserId'); return; }
+      if (user.status === 'disabled' || user.status === 'resigned') {
+        localStorage.removeItem('loggedInUserId');
+        return;
+      }
       currentUser = user;
       var ls = document.getElementById('loginScreen');
       var as = document.getElementById('appShell');

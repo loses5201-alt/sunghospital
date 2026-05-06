@@ -157,10 +157,10 @@ function startFirebaseSync(onReady) {
 
     if (onReady) onReady();
 
-    // 節流同步：監聽 _savedAt（極小流量），但每次變動最多 90 秒拉一次完整 store
-    // 大幅減少 Firebase 流量，仍保持多人協作即時性
+    // 節流同步：監聽 _savedAt（極小流量），最快 3 秒拉一次完整 store
+    // 配合精準寫入（saveCollection/saveMultiple），多人協作衝突大幅降低
     var _lastFetchAt = Date.now();
-    var _MIN_FETCH_INTERVAL = 90000;
+    var _MIN_FETCH_INTERVAL = 3000;
     var _pendingFetch = null;
 
     fbDb.ref('store/_savedAt').on('value', function(tSnap) {
@@ -207,9 +207,43 @@ function startFirebaseSync(onReady) {
 // ══════════════════════════════════════════
 // localStorage 只保存 session，資料全走 Firebase
 function loadStore(){ return null; } // 已廢棄，保留避免呼叫出錯
-function saveStore(){
+
+// ── 精準寫入：避免多人同時操作互相覆蓋 ──
+// saveCollection('formRequests') 只更新雲端的 store/formRequests，不動其他集合。
+// saveMultiple(['formRequests','formNotifs']) 同時原子更新多個集合。
+// saveStore() 仍保留為「全寫入」相容版（建議只在初始化、還原備份等情境使用）。
+function _markSaved(){
   store._savedAt = Date.now();
   window._lastSelfSave = store._savedAt;
+  return store._savedAt;
+}
+function saveCollection(key){
+  if(!key) return;
+  if(store[key] === undefined) return; // 不誤刪雲端節點
+  var ts = _markSaved();
+  if(!fbDb) return;
+  var update = {};
+  update[key] = store[key];
+  update._savedAt = ts;
+  fbDb.ref('store').update(update).catch(function(){});
+}
+function saveMultiple(keys){
+  if(!keys || !keys.length) return;
+  var ts = _markSaved();
+  if(!fbDb) return;
+  var update = { _savedAt: ts };
+  var any = false;
+  for(var i=0;i<keys.length;i++){
+    var k = keys[i];
+    if(store[k] === undefined) continue;
+    update[k] = store[k];
+    any = true;
+  }
+  if(!any) return;
+  fbDb.ref('store').update(update).catch(function(){});
+}
+function saveStore(){
+  _markSaved();
   if(fbDb){
     fbDb.ref('store').set(store).catch(function(){});
   }
@@ -413,6 +447,16 @@ function doLogin(){
     });
     if (!matched) {
       el.textContent = '帳號或密碼錯誤';
+      el.style.display = 'block';
+      return;
+    }
+    if (matched.status === 'disabled') {
+      el.textContent = '此帳號已停用，請聯絡系統管理員';
+      el.style.display = 'block';
+      return;
+    }
+    if (matched.status === 'resigned') {
+      el.textContent = '此帳號已標記離職，無法登入';
       el.style.display = 'block';
       return;
     }
@@ -851,7 +895,7 @@ function cycleTaskGlobal(meetingId, origI) {
   if (!m) return;
   var s = m.tasks[origI].status;
   m.tasks[origI].status = s === '待辦' ? '進行中' : s === '進行中' ? '已完成' : '待辦';
-  saveStore();
+  saveCollection('meetings');
   if (currentMeetingId === '__mytasks__') { renderSidebar(); renderMyTasksMain(); }
   else { renderSidebar(); renderMeetingMain(); }
 }
@@ -861,7 +905,7 @@ function selectMeeting(id){
   currentMeetingId=id;currentTab='notes';
   const m=store.meetings.find(x=>x.id===id);
   if(m&&m.reads&&m.reads[currentUser.id])m.reads[currentUser.id]={read:true,time:nowTime()};
-  saveStore();renderSidebar();renderMeetingMain();
+  saveCollection('meetings');renderSidebar();renderMeetingMain();
 }
 
 // ══════════════════════════════════════════
@@ -1082,7 +1126,7 @@ function renderNotifPanel(){
   });
   // 簽核結果通知
   (store.formNotifs||[]).filter(n=>n.toUserId===currentUser.id).forEach(n=>{
-    items.push({icon:n.title.startsWith('✓')?'✅':'❌',title:n.title,body:n.body||'',time:n.time||'',unread:!n.read,act:()=>{n.read=true;saveStore();setPage('form');closeNotifPanel();renderNotifPanel();}});
+    items.push({icon:n.title.startsWith('✓')?'✅':'❌',title:n.title,body:n.body||'',time:n.time||'',unread:!n.read,act:()=>{n.read=true;saveCollection('formNotifs');setPage('form');closeNotifPanel();renderNotifPanel();}});
   });
   // 任務到期提醒
   const todayStr=today();
@@ -1810,7 +1854,7 @@ function rejectSw(id){
   if(!s) return;
   s.status = 'rejected';
   logAudit('拒絕換班', userName(s.fromId)+' → '+userName(s.toId));
-  saveStore();
+  saveCollection('swapRequests');
   rnDuty();
   showToast('換班申請已拒絕', userName(s.fromId)+' 的換班申請已退回', '❌');
 }
@@ -2005,7 +2049,7 @@ function getOrCreateDM(otherId){
   if(existing)return existing;
   var room={id:uid(),isGroup:false,members:[currentUser.id,otherId],name:'',lastMsg:'',lastTs:''};
   if(!store.chatRooms)store.chatRooms=[];
-  store.chatRooms.push(room);saveStore();return room;
+  store.chatRooms.push(room);saveCollection('chatRooms');return room;
 }
 
 function sendMsg(roomId,text,attachment,replyTo){
@@ -2021,7 +2065,7 @@ function sendMsg(roomId,text,attachment,replyTo){
   store.messages.push(msg);
   room.lastMsg=attachment?'📎 '+attachment.name:(text.slice(0,30)||'');
   room.lastTs=msg.ts;
-  saveStore();renderChatThread(roomId);updateMsgBadge();
+  saveMultiple(['messages','chatRooms']);renderChatThread(roomId);updateMsgBadge();
 }
 
 function handleChatFile(input){
@@ -2247,7 +2291,7 @@ function openAddResolution(meetingId) {
         status: '進行中',
         createdAt: today() + ' ' + nowTime()
       });
-      saveStore(); closeModal(); renderTab();
+      saveCollection('meetings'); closeModal(); renderTab();
     }
   );
 }
@@ -2258,7 +2302,7 @@ function toggleResolutionStatus(meetingId, resId) {
   var r = (m.resolutions||[]).find(function(x){ return x.id === resId; });
   if(!r) return;
   r.status = r.status === '已完成' ? '進行中' : '已完成';
-  saveStore(); renderTab(); renderSidebar();
+  saveCollection('meetings'); renderTab(); renderSidebar();
 }
 
 function deleteResolution(meetingId, resId) {
@@ -2266,7 +2310,7 @@ function deleteResolution(meetingId, resId) {
   var m = store.meetings.find(function(x){ return x.id === meetingId; });
   if(!m) return;
   m.resolutions = (m.resolutions||[]).filter(function(r){ return r.id !== resId; });
-  saveStore(); renderTab();
+  saveCollection('meetings'); renderTab();
 }
 
 // ── 紀錄簽核 ──
@@ -2324,7 +2368,7 @@ function lockMeetingMinutes(meetingId) {
   m.signoff.locked = true;
   m.signoff.signatures = m.signoff.signatures || {};
   logAudit('發布簽核', m.title);
-  saveStore(); renderTab();
+  saveCollection('meetings'); renderTab();
   showToast('已發布', '請與會成員前往確認簽核', '🔏');
 }
 
@@ -2333,7 +2377,7 @@ function unlockMeetingMinutes(meetingId) {
   var m = store.meetings.find(function(x){ return x.id === meetingId; });
   if(!m) return;
   m.signoff = {locked: false, signatures: {}};
-  saveStore(); renderTab();
+  saveCollection('meetings'); renderTab();
   showToast('已解除', '紀錄簽核已重置', '🔓');
 }
 
@@ -2342,48 +2386,71 @@ function signMeetingMinutes(meetingId) {
   if(!m || !m.signoff || !m.signoff.locked) return;
   if(!m.signoff.signatures) m.signoff.signatures = {};
   m.signoff.signatures[currentUser.id] = {signed: true, time: today() + ' ' + nowTime()};
-  saveStore(); renderTab();
+  saveCollection('meetings'); renderTab();
   showToast('已簽核', m.title, '✍️');
 }
 
-// ── 表單：退回重申 ──
+// ── 表單：退回重申（多階審核版） ──
 function resubmitForm(id) {
   var f = store.formRequests.find(function(x){ return x.id === id; });
   if(!f) return;
   _pendingAttachment = null;
-  var approvers = store.users.filter(function(u){
-    return u.id !== currentUser.id && u.status !== 'disabled' && u.status !== 'resigned'
-      && (u.role === 'admin' || u.role === 'supervisor' || (u.permissions && u.permissions.approveForm));
-  });
-  var aOpts = approvers.length
-    ? approvers.map(function(u){ return '<option value="' + u.id + '"' + (f.approvers[0]===u.id?' selected':'') + '>' + esc(u.name) + '</option>'; }).join('')
-    : '<option value="">（尚未設定可審核人員）</option>';
+  // 沿用原申請的審核鏈為預設值
+  _approverPicks = (f.approvers && f.approvers.length) ? f.approvers.slice() : [''];
+  var typeOpts = ['leave','overtime','supply','other'].map(function(k){
+    var lbls = {leave:'請假',overtime:'加班',supply:'物品申請',other:'其他'};
+    return '<option value="'+k+'"'+(f.type===k?' selected':'')+'>'+lbls[k]+'</option>';
+  }).join('');
   showModal('重新申請（退回修改）',
     '<div style="padding:8px 12px;background:var(--amber-bg,#fff8e1);border-radius:6px;font-size:12px;color:var(--amber);margin-bottom:12px">📋 原申請已退回，請修改後重新送出</div>'
-    + '<div class="form-row"><label>類型</label><select id="rfty"><option value="leave"' + (f.type==='leave'?' selected':'') + '>請假</option><option value="overtime"' + (f.type==='overtime'?' selected':'') + '>加班</option><option value="supply"' + (f.type==='supply'?' selected':'') + '>物品申請</option><option value="other"' + (f.type==='other'?' selected':'') + '>其他</option></select></div>'
-    + '<div class="form-row"><label>標題</label><input id="rftit" value="' + esc(f.title) + '"></div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>開始日期</label><input id="rfsd" type="date" value="' + (f.startDate||today()) + '"></div><div class="form-row"><label>結束日期</label><input id="rfed" type="date" value="' + (f.endDate||today()) + '"></div></div>'
-    + '<div class="form-row"><label>原因</label><textarea id="rfrs">' + esc(f.reason||'') + '</textarea></div>'
-    + '<div class="form-row"><label>送審主管</label><select id="rfap">' + aOpts + '</select></div>',
+    + '<div class="form-row"><label>類型</label><select id="fty" onchange="onFormTypeChange()">'+typeOpts+'</select></div>'
+    + '<div class="form-row"><label>標題</label><input id="ftit" value="' + esc(f.title) + '"></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>開始日期</label><input id="fsd" type="date" value="' + (f.startDate||today()) + '" onchange="updateRuleBanner()"></div><div class="form-row"><label>結束日期</label><input id="fed" type="date" value="' + (f.endDate||today()) + '" onchange="updateRuleBanner()"></div></div>'
+    + '<div id="extraFieldHost"></div>'
+    + '<div class="form-row"><label>原因</label><textarea id="frs">' + esc(f.reason||'') + '</textarea></div>'
+    + '<div id="ruleBanner" style="font-size:12px;color:var(--primary);background:var(--s2);padding:8px 10px;border-radius:var(--radius-sm);margin:4px 0 10px;line-height:1.5"></div>'
+    + '<div class="form-row"><label>送審流程（依序簽核）</label><div id="approverPicker"></div></div>'
+    + '<div class="form-row"><label>附件（圖片或 PDF，上限 800 KB）</label><input type="file" id="fattach" accept="image/*,.pdf" onchange="handleAttachment(this)" style="font-size:12px;width:100%"><div id="fattachPreview"></div></div>',
     function() {
-      var t = document.getElementById('rftit').value.trim(); if(!t) return;
+      var t = document.getElementById('ftit').value.trim(); if(!t){alert('請輸入標題');return;}
+      if(_approverPicks.some(function(x){return !x;})){alert('每一階都必須選擇審核人，或請移除空白階');return;}
+      if(!_approverPicks.length){alert('請至少指定 1 位審核人');return;}
+      var seen={};
+      for(var k=0;k<_approverPicks.length;k++){
+        if(seen[_approverPicks[k]]){alert('同一審核人不可重複指派於不同階');return;}
+        seen[_approverPicks[k]]=1;
+      }
+      var ty = document.getElementById('fty').value;
+      var hoursEl = document.getElementById('fhours'), amountEl = document.getElementById('famount');
       store.formRequests.unshift({
-        id: uid(), type: document.getElementById('rfty').value, title: t,
+        id: uid(), type: ty, title: t,
         applicantId: currentUser.id, date: today(),
-        startDate: document.getElementById('rfsd').value,
-        endDate: document.getElementById('rfed').value,
-        reason: document.getElementById('rfrs').value,
-        approvers: [document.getElementById('rfap').value],
-        statuses: ['pending'], status: 'pending', createdAt: today() + ' ' + nowTime(),
+        startDate: document.getElementById('fsd').value,
+        endDate: document.getElementById('fed').value,
+        reason: document.getElementById('frs').value,
+        approvers: _approverPicks.slice(),
+        statuses: _approverPicks.map(function(){return 'pending';}),
+        comments: [],
+        status: 'pending', createdAt: today() + ' ' + nowTime(),
         urgent: f.urgent || false,
         attachment: _pendingAttachment || null,
+        hours: hoursEl ? (parseFloat(hoursEl.value)||0) : undefined,
+        amount: amountEl ? (parseFloat(amountEl.value)||0) : undefined,
         resubmittedFrom: f.id
       });
-      _pendingAttachment = null;
-      saveStore(); closeModal(); rnForms();
+      _pendingAttachment = null; _approverPicks = [''];
+      saveCollection('formRequests'); closeModal(); rnForms();
       showToast('已重新送出', t, '📋');
     }
   );
+  setTimeout(function(){
+    onFormTypeChange();
+    // 重新申請：保留原值（含 hours/amount），但仍刷新 banner
+    var hEl = document.getElementById('fhours'); if(hEl && f.hours!==undefined) hEl.value = f.hours;
+    var aEl = document.getElementById('famount'); if(aEl && f.amount!==undefined) aEl.value = f.amount;
+    renderApproverPicker();
+    updateRuleBanner();
+  }, 0);
 }
 
 // ════════════════════════════════════════════════════════
@@ -2405,7 +2472,7 @@ function reactToMsg(roomId,msgId,emoji){
   var idx=m.reactions[emoji].indexOf(currentUser.id);
   if(idx>=0){m.reactions[emoji].splice(idx,1);if(!m.reactions[emoji].length)delete m.reactions[emoji];}
   else{m.reactions[emoji].push(currentUser.id);}
-  saveStore();renderChatThread(roomId);
+  saveCollection('messages');renderChatThread(roomId);
 }
 
 function setReply(msgId,text,fromName){
@@ -2435,7 +2502,7 @@ function deleteMsg(roomId,msgId){
   m.deleted=true;m.text='';m.attachment=null;
   var room=(store.chatRooms||[]).find(function(r){return r.id===roomId;});
   if(room){var last=(store.messages||[]).filter(function(x){return x.roomId===roomId&&!x.deleted;});last.sort(function(a,b){return b.ts.localeCompare(a.ts);});room.lastMsg=last.length?(last[0].text||'📎 附件'):'';}
-  saveStore();renderChatThread(roomId);
+  saveMultiple(['messages','chatRooms']);renderChatThread(roomId);
 }
 
 function scrollToMsg(msgId){
@@ -2463,7 +2530,7 @@ function openCreateGroup(){
       var room={id:uid(),isGroup:true,groupName:name,members:members,lastMsg:'',lastTs:''};
       store.chatRooms.push(room);
       _activeChatRoom=room.id;
-      saveStore();closeModal();setPage('messages');
+      saveCollection('chatRooms');closeModal();setPage('messages');
       showToast('群組已建立',name,'👥');
     }
   );
@@ -2483,7 +2550,7 @@ function manageChatGroup(roomId){
     +'<div style="border:1px solid var(--b1);border-radius:var(--radius-sm);padding:8px 12px;max-height:180px;overflow-y:auto">'+memberList+'</div>';
   showModal('群組資訊',html,function(){
     var n=document.getElementById('editGrpName').value.trim();
-    if(n){room.groupName=n;saveStore();renderChatThread(roomId);renderMessagesPage(document.getElementById('pageContainer'));}
+    if(n){room.groupName=n;saveCollection('chatRooms');renderChatThread(roomId);renderMessagesPage(document.getElementById('pageContainer'));}
     closeModal();
   },'儲存');
 }

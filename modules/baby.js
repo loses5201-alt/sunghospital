@@ -15,7 +15,7 @@ function dischargeBaby(id){
   const b=store.babies.find(function(x){return x.id===id;});if(!b)return;
   if(!confirm('確定標記出院？出院後住院天數將停止計算。'))return;
   b.discharged=true;b.dischargeDate=today();
-  logAudit('寶寶出院',b.name);saveStore();
+  logAudit('寶寶出院',b.name);saveCollection('babies');
   const q=document.getElementById('babySearch');rnBaby(q?q.value:'');
   showToast('已標記出院',b.name,'🏠');
 }
@@ -92,7 +92,7 @@ function openNewBaby(){
     const n=document.getElementById('bn').value.trim();if(!n)return;
     const b=_babyReadForm({id:uid()});
     store.babies.unshift(b);
-    logAudit('新增寶寶',b.name);saveStore();closeModal();rnBaby();
+    logAudit('新增寶寶',b.name);saveCollection('babies');closeModal();rnBaby();
     showToast('寶寶公告已新增',b.name,'🍼');
   });
 }
@@ -102,7 +102,7 @@ function openEditBaby(id){
   showModal('編輯寶寶資料',_babyFormHtml(b),function(){
     const n=document.getElementById('bn').value.trim();if(!n)return;
     _babyReadForm(b);
-    logAudit('編輯寶寶',b.name);saveStore();closeModal();rnBaby();
+    logAudit('編輯寶寶',b.name);saveCollection('babies');closeModal();rnBaby();
     showToast('資料已更新',b.name,'✏');
   });
 }

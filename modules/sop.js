@@ -104,14 +104,14 @@ function ackSop(id){
   if(!s) return;
   if(!s.acks) s.acks = {};
   s.acks[currentUser.id] = new Date().toISOString();
-  saveStore(); rnSop();
+  saveCollection('sops'); rnSop();
   showToast('已確認', '已標記閱讀「'+esc(s.title)+'」', '✅');
 }
 
 function deleteSop(id){
   if(!confirm('確定刪除此 SOP？')) return;
   store.sops = (store.sops||[]).filter(function(s){ return s.id!==id; });
-  saveStore(); rnSop();
+  saveCollection('sops'); rnSop();
 }
 
 function openNewSop(){ _sopForm(null); }
@@ -145,6 +145,6 @@ function _sopForm(s){
         version:newVer, content:document.getElementById('sct').value,
         updatedAt:new Date().toISOString(), updatedBy:currentUser.id, acks:{}});
     }
-    saveStore(); closeModal(); rnSop();
+    saveCollection('sops'); closeModal(); rnSop();
   });
 }

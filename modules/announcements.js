@@ -25,7 +25,7 @@ function updateAnnBadge(){
 }
 function markAllAnnRead(){
   store.announcements.forEach(a=>{if(!a.reads[currentUser.id])a.reads[currentUser.id]=true;});
-  saveStore();updateAnnBadge();
+  saveCollection('announcements');updateAnnBadge();
 }
 function renderAnnouncementsPage(c){
   c.innerHTML=`<div class="admin-layout">
@@ -97,11 +97,11 @@ function saveAnn(){
     category:document.getElementById('annCat').value,
     infectionLevel:document.getElementById('annInf').value,reads});
   logAudit('發布公告', document.getElementById('annTitle').value.trim());
-  saveStore();closeModal();renderAnnList();updateAnnBadge();updateMarquee();
+  saveCollection('announcements');closeModal();renderAnnList();updateAnnBadge();updateMarquee();
 }
-function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a)a.reads[currentUser.id]=true;saveStore();renderAnnList();updateAnnBadge();}
-function togglePin(id){const a=store.announcements.find(x=>x.id===id);if(a)a.pinned=!a.pinned;saveStore();renderAnnList();}
-function deleteAnn(id){if(!confirm('確定刪除？'))return;const da=store.announcements.find(x=>x.id===id);store.announcements=store.announcements.filter(x=>x.id!==id);logAudit('刪除公告', da?da.title:'');saveStore();renderAnnList();updateMarquee();}
+function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a)a.reads[currentUser.id]=true;saveCollection('announcements');renderAnnList();updateAnnBadge();}
+function togglePin(id){const a=store.announcements.find(x=>x.id===id);if(a)a.pinned=!a.pinned;saveCollection('announcements');renderAnnList();}
+function deleteAnn(id){if(!confirm('確定刪除？'))return;const da=store.announcements.find(x=>x.id===id);store.announcements=store.announcements.filter(x=>x.id!==id);logAudit('刪除公告', da?da.title:'');saveCollection('announcements');renderAnnList();updateMarquee();}
 
 
 // ── 緊急廣播 (moved from meetings block) ──
@@ -135,7 +135,7 @@ function sendEmergency(){
   store.announcements.unshift({id:uid(),title:'⚡ '+title,body,authorId:currentUser.id,
     time:today()+' '+nowTime(),pinned:true,category:'emergency',infectionLevel:level==='red'?'red':level==='orange'?'orange':level==='yellow'?'yellow':'',
     reads:Object.fromEntries(store.users.map(u=>[u.id,u.id===currentUser.id]))});
-  saveStore();closeModal();showEmergencyOverlay(em);
+  saveMultiple(['emergencies','announcements']);closeModal();showEmergencyOverlay(em);
 }
 function checkPendingEmergency(){
   const pending=store.emergencies.find(e=>!e.confirms[currentUser.id]);
@@ -163,7 +163,7 @@ function confirmEmergency(){
   const id=document.getElementById('emergencyOverlay').dataset.emId;
   const em=store.emergencies.find(x=>x.id===id);
   if(em)em.confirms[currentUser.id]=true;
-  saveStore();
+  saveCollection('emergencies');
   document.getElementById('emergencyOverlay').classList.remove('show');
 }
 
