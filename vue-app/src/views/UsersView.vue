@@ -32,6 +32,7 @@
         <!-- Tabs -->
         <div class="tabs">
           <button :class="['tab', activeTab === 'users' ? 'active' : '']" @click="activeTab = 'users'">👥 人員管理</button>
+          <button :class="['tab', activeTab === 'rules' ? 'active' : '']" @click="activeTab = 'rules'">⚙️ 簽核規則</button>
           <button :class="['tab', activeTab === 'audit' ? 'active' : '']" @click="activeTab = 'audit'">📋 稽核日誌</button>
         </div>
 
@@ -93,6 +94,35 @@
           </div>
         </div>
 
+        <!-- RULES tab -->
+        <div v-if="activeTab === 'rules'" class="tab-content">
+          <div class="rules-card">
+            <div class="rules-info">
+              <div class="rules-info-title">📋 多階簽核自動建議規則</div>
+              <div class="rules-info-sub">超過下列門檻的申請會自動建議 2 階審核，未超過則 1 階。申請時仍可手動加階或調整。</div>
+            </div>
+            <div class="form-row">
+              <label>請假門檻（天）</label>
+              <input v-model.number="ruleForm.leaveDays" type="number" min="1" step="1" />
+              <div class="rule-hint">天數 ≤ 此值 → 1 階；超過 → 2 階</div>
+            </div>
+            <div class="form-row">
+              <label>加班門檻（小時）</label>
+              <input v-model.number="ruleForm.overtimeHours" type="number" min="0.5" step="0.5" />
+              <div class="rule-hint">時數 ≤ 此值 → 1 階；超過 → 2 階</div>
+            </div>
+            <div class="form-row">
+              <label>物品申請門檻（元）</label>
+              <input v-model.number="ruleForm.supplyAmount" type="number" min="100" step="100" />
+              <div class="rule-hint">金額 ≤ 此值 → 1 階；超過 → 2 階</div>
+            </div>
+            <div class="modal-actions">
+              <button class="btn-ghost" @click="resetRules">↺ 還原預設</button>
+              <button class="btn-primary" :disabled="!ruleFormValid" @click="saveRules">💾 儲存</button>
+            </div>
+          </div>
+        </div>
+
         <!-- AUDIT tab -->
         <div v-if="activeTab === 'audit'" class="tab-content">
           <div v-if="auditLog.length" class="audit-list">
@@ -151,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import AppShell from '../components/layout/AppShell.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
@@ -197,6 +227,31 @@ function deleteUser(id: string) {
   rtdb.store.users = rtdb.store.users.filter((u) => u.id !== id)
   saveUsers()
 }
+
+// 簽核規則閾值
+const RULE_DEFAULTS = { leaveDays: 2, overtimeHours: 4, supplyAmount: 5000 }
+const ruleForm = reactive({ ...RULE_DEFAULTS })
+function loadRules() {
+  const c = rtdb.store?.formRuleConfig ?? {}
+  ruleForm.leaveDays = Number(c.leaveDays) > 0 ? Number(c.leaveDays) : RULE_DEFAULTS.leaveDays
+  ruleForm.overtimeHours = Number(c.overtimeHours) > 0 ? Number(c.overtimeHours) : RULE_DEFAULTS.overtimeHours
+  ruleForm.supplyAmount = Number(c.supplyAmount) > 0 ? Number(c.supplyAmount) : RULE_DEFAULTS.supplyAmount
+}
+const ruleFormValid = computed(() => ruleForm.leaveDays > 0 && ruleForm.overtimeHours > 0 && ruleForm.supplyAmount > 0)
+function saveRules() {
+  if (!rtdb.store || !ruleFormValid.value) return
+  rtdb.store.formRuleConfig = { leaveDays: ruleForm.leaveDays, overtimeHours: ruleForm.overtimeHours, supplyAmount: ruleForm.supplyAmount }
+  rtdb.saveCollection('formRuleConfig', rtdb.store.formRuleConfig as any)
+  alert('簽核規則閾值已儲存')
+}
+function resetRules() {
+  if (!confirm('確定還原成預設值？\n（請假 2 天 / 加班 4 小時 / 物品 5000 元）')) return
+  Object.assign(ruleForm, RULE_DEFAULTS)
+  saveRules()
+}
+// 切到 rules tab 時載入當前值
+watch(activeTab, (v) => { if (v === 'rules') loadRules() })
+loadRules()
 
 const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '' })
 const delegateCandidates = computed(() =>
@@ -288,5 +343,10 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .form-row input, .form-row select { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: .88rem; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .label-hint { font-size: .7rem; color: #888; font-weight: 400; margin-left: 4px; }
+.rules-card { max-width: 560px; background: white; border: 1px solid #eee; border-radius: 10px; padding: 18px 20px; }
+.rules-info { background: #f8f8f8; border-radius: 7px; padding: 11px 14px; margin-bottom: 14px; }
+.rules-info-title { font-size: .9rem; font-weight: 700; color: #1a3c5e; margin-bottom: 4px; }
+.rules-info-sub { font-size: .8rem; color: #777; line-height: 1.5; }
+.rule-hint { font-size: .7rem; color: #aaa; margin-top: 3px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 </style>

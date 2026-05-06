@@ -6,6 +6,30 @@
         <button class="btn-primary" @click="openNew">＋ 新增申請</button>
       </div>
 
+      <!-- Personal dashboard tiles -->
+      <div class="dashboard-tiles">
+        <div :class="['tile', filterKey === 'pending-me' ? 'tile-active' : '']" @click="filterKey = 'pending-me'">
+          <div class="tile-label">待我審核</div>
+          <div class="tile-num tile-amber">{{ pendingMeCount }}</div>
+          <div class="tile-sub">{{ pendingMeCount ? '點此篩選' : '目前無待審' }}</div>
+        </div>
+        <div :class="['tile', filterKey === 'my-pending' ? 'tile-active' : '']" @click="filterKey = 'my-pending'">
+          <div class="tile-label">我送出（審核中）</div>
+          <div class="tile-num tile-blue">{{ myPendingCount }}</div>
+          <div class="tile-sub">&nbsp;</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">本月已核准</div>
+          <div class="tile-num tile-green">{{ myMonthApproved }}</div>
+          <div class="tile-sub">{{ myMonthRejected ? `駁回 ${myMonthRejected} 件` : ' ' }}</div>
+        </div>
+        <div :class="['tile', filterKey === 'overdue' ? 'tile-active' : '']" @click="filterKey = 'overdue'">
+          <div class="tile-label">逾期</div>
+          <div class="tile-num tile-red">{{ overdueCount }}</div>
+          <div class="tile-sub">{{ overdueCount ? `>${FORM_OVERDUE_HOURS}h pending` : ' ' }}</div>
+        </div>
+      </div>
+
       <!-- Filter tabs -->
       <div class="filter-tabs">
         <button v-for="tab in FILTER_TABS" :key="tab.key" :class="['ftab', filterKey === tab.key ? 'active' : '']" @click="filterKey = tab.key">
@@ -23,12 +47,13 @@
       </div>
 
       <div v-if="filtered.length" class="form-list">
-        <div v-for="f in filtered" :key="f.id" class="form-card" @click="openDetail(f)">
+        <div v-for="f in filtered" :key="f.id" :class="['form-card', isFormOverdue(f) ? 'form-overdue' : '']" @click="openDetail(f)">
           <div class="form-left">
             <span :class="['ftype', FTYPES[f.type]?.c ?? 'ft-ot2']">{{ FTYPES[f.type]?.l ?? f.type }}</span>
             <div class="form-info">
               <div class="form-title">
                 <span v-if="f.urgent" class="urgent-badge">急</span>
+                <span v-if="isFormOverdue(f)" class="overdue-badge">🕒 逾期 {{ overdueHours(f) }}h</span>
                 {{ f.title }}
               </div>
               <div class="form-meta">{{ userName(f.applicantId) }} · {{ f.createdAt?.slice(0, 10) }}</div>
@@ -69,6 +94,19 @@
             <div v-if="detail.form.hours" class="dfield"><label>加班時數</label><div>{{ detail.form.hours }} 小時</div></div>
             <div v-if="detail.form.itemName" class="dfield"><label>申請品項</label><div>{{ detail.form.itemName }} × {{ detail.form.itemQty ?? 1 }}</div></div>
           </div>
+          <!-- Resubmit history -->
+          <div v-if="resubmitParent" class="resubmit-banner">
+            <div class="resubmit-title">↩ 此為重新申請</div>
+            <div class="resubmit-meta">原申請：「{{ resubmitParent.title }}」 · {{ resubmitParent.createdAt?.slice(0,10) }}</div>
+            <div v-if="resubmitParentRejection" class="resubmit-comment">原駁回意見：「{{ resubmitParentRejection }}」</div>
+          </div>
+          <div v-if="resubmitChildren.length" class="resubmit-children">
+            <div class="resubmit-title">📎 後續重申</div>
+            <div v-for="ch in resubmitChildren" :key="ch.id" class="resubmit-child">
+              <span>{{ ch.title }}</span> · {{ ch.createdAt?.slice(0,10) }} · {{ statusLabel(ch.status) }}
+            </div>
+          </div>
+
           <div v-if="detail.form.reason" class="dfield"><label>原因說明</label><div class="reason-box">{{ detail.form.reason }}</div></div>
 
           <!-- Approval timeline -->
@@ -284,19 +322,46 @@ function isApproverViaDelegate(f: FormRequest): boolean {
 
 const pendingMeCount = computed(() => forms.value.filter(f => f.status === 'pending' && (isApprover(f) || isApproverViaDelegate(f))).length)
 
+// 逾期判定（pending 超過 24h）
+const FORM_OVERDUE_HOURS = 24
+function isFormOverdue(f: FormRequest): boolean {
+  if (!f || f.status !== 'pending' || !f.createdAt) return false
+  const ms = Date.now() - new Date(f.createdAt).getTime()
+  return !isNaN(ms) && ms > FORM_OVERDUE_HOURS * 3600 * 1000
+}
+function overdueHours(f: FormRequest): number {
+  if (!f?.createdAt) return 0
+  const ms = Date.now() - new Date(f.createdAt).getTime()
+  return Math.max(0, Math.floor(ms / 3600000))
+}
+
+// 儀表板統計
+const myPendingCount = computed(() => forms.value.filter(f => f.applicantId === currentUserId.value && f.status === 'pending').length)
+const overdueCount = computed(() => forms.value.filter(isFormOverdue).length)
+const myMonthApproved = computed(() => {
+  const ym = new Date().toISOString().slice(0, 7)
+  return forms.value.filter(f => f.applicantId === currentUserId.value && f.status === 'approved' && (f.createdAt || '').slice(0, 7) === ym).length
+})
+const myMonthRejected = computed(() => {
+  const ym = new Date().toISOString().slice(0, 7)
+  return forms.value.filter(f => f.applicantId === currentUserId.value && f.status === 'rejected' && (f.createdAt || '').slice(0, 7) === ym).length
+})
+
 const FILTER_TABS = computed(() => [
   { key: 'all',        label: '全部',       count: 0 },
   { key: 'mine',       label: '我的申請',   count: 0 },
+  { key: 'my-pending', label: '我送出審核中', count: 0 },
   { key: 'pending-me', label: '待我審核',   count: pendingMeCount.value },
-  { key: 'pending',    label: '待審中',     count: 0 },
+  { key: 'overdue',    label: '逾期',       count: overdueCount.value },
 ])
 
 const filterKey = ref('all')
 const filtered = computed(() => {
   switch (filterKey.value) {
     case 'mine':       return forms.value.filter(f => f.applicantId === currentUserId.value)
+    case 'my-pending': return forms.value.filter(f => f.applicantId === currentUserId.value && f.status === 'pending')
     case 'pending-me': return forms.value.filter(f => f.status === 'pending' && (isApprover(f) || isApproverViaDelegate(f)))
-    case 'pending':    return forms.value.filter(f => f.status === 'pending')
+    case 'overdue':    return forms.value.filter(isFormOverdue)
     default:           return forms.value
   }
 })
@@ -331,6 +396,22 @@ function openDetail(f: FormRequest) {
 const canWithdraw = computed(() => detail.form?.applicantId === currentUserId.value && detail.form?.status === 'pending')
 const canApprove  = computed(() => !!detail.form && isApprover(detail.form))
 const canApproveViaDelegate = computed(() => !!detail.form && !canApprove.value && isApproverViaDelegate(detail.form))
+
+// 重申歷程鏈
+const resubmitParent = computed(() => {
+  if (!detail.form?.resubmittedFrom) return null
+  return forms.value.find(f => f.id === detail.form!.resubmittedFrom) ?? null
+})
+const resubmitParentRejection = computed(() => {
+  const p = resubmitParent.value
+  if (!p?.statuses) return ''
+  const idx = [...p.statuses].lastIndexOf('rejected' as any)
+  return idx >= 0 ? (p.comments?.[idx] ?? '') : ''
+})
+const resubmitChildren = computed(() => {
+  if (!detail.form) return []
+  return forms.value.filter(f => f.resubmittedFrom === detail.form!.id)
+})
 const delegateActorName = computed(() => {
   if (!detail.form || !canApproveViaDelegate.value) return ''
   const idx = getDelegatorIdx(detail.form, currentUserId.value)
@@ -568,6 +649,38 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .delegate-banner { background: #eef5ff; border-left: 3px solid #2e7d5a; border-radius: 6px; padding: 8px 12px; margin: 12px 0 4px; font-size: .82rem; color: #1a3c5e; }
+
+/* Dashboard tiles */
+.dashboard-tiles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.tile { flex: 1; min-width: 130px; background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: transform .12s; }
+.tile:hover { transform: translateY(-1px); }
+.tile-active { outline: 2px solid #1a3c5e; outline-offset: -2px; }
+.tile-label { font-size: .72rem; color: #888; }
+.tile-num { font-size: 1.55rem; font-weight: 700; line-height: 1.1; margin-top: 2px; }
+.tile-amber { color: #e67e22; }
+.tile-blue  { color: #1a3c5e; }
+.tile-green { color: #2e7d5a; }
+.tile-red   { color: #c0392b; }
+.tile-sub { font-size: .68rem; color: #aaa; margin-top: 2px; min-height: 1em; }
+
+/* Overdue */
+.overdue-badge { background: #fde8ec; color: #b8001f; font-size: .65rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; margin-right: 4px; flex-shrink: 0; }
+.form-overdue { border-color: #f0c8d0; background: #fff8f9; }
+
+/* Resubmit */
+.resubmit-banner { background: #fff8e1; border-left: 3px solid #f5a623; border-radius: 6px; padding: 9px 12px; margin: 4px 0 12px; font-size: .8rem; line-height: 1.6; }
+.resubmit-children { background: #f8f8f8; border-radius: 6px; padding: 9px 12px; margin: 4px 0 12px; font-size: .78rem; line-height: 1.6; }
+.resubmit-title { font-weight: 700; color: #c87a00; margin-bottom: 3px; }
+.resubmit-children .resubmit-title { color: #555; }
+.resubmit-meta { color: #777; }
+.resubmit-comment { margin-top: 5px; padding: 4px 8px; background: rgba(255,255,255,.7); border-radius: 4px; color: #555; font-style: italic; }
+.resubmit-child { margin-top: 2px; color: #555; }
+
+@media (max-width: 768px) {
+  .dashboard-tiles { gap: 6px; }
+  .tile { min-width: calc(50% - 6px); padding: 8px 10px; }
+  .tile-num { font-size: 1.35rem; }
+}
 .btn-primary { background: #2e7d5a; color: white; border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 .btn-danger  { background: #c0392b; color: white; border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }

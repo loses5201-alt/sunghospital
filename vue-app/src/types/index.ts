@@ -37,6 +37,7 @@ export interface AppStore {
   formRequests: FormRequest[]
   swapRequests: SwapRequest[]
   formNotifs: FormNotif[]
+  formRuleConfig?: { leaveDays?: number; overtimeHours?: number; supplyAmount?: number }
   skillDefs: SkillDef[]
   skillMatrix: SkillMatrix
   eduReads?: Record<string, Record<string, boolean>>
