@@ -54,6 +54,7 @@
               <div class="form-title">
                 <span v-if="f.urgent" class="urgent-badge">急</span>
                 <span v-if="isFormOverdue(f)" class="overdue-badge">🕒 逾期 {{ overdueHours(f) }}h</span>
+                <span v-if="f.attachment" class="attach-icon" title="有附件">📎</span>
                 {{ f.title }}
               </div>
               <div class="form-meta">{{ userName(f.applicantId) }} · {{ f.createdAt?.slice(0, 10) }}</div>
@@ -109,6 +110,18 @@
 
           <div v-if="detail.form.reason" class="dfield"><label>原因說明</label><div class="reason-box">{{ detail.form.reason }}</div></div>
 
+          <!-- Attachment -->
+          <div v-if="detail.form.attachment" class="dfield">
+            <label>附件</label>
+            <div class="detail-attach">
+              <img v-if="detail.form.attachment.mime?.startsWith('image/')"
+                   :src="detail.form.attachment.data"
+                   @click="openLightbox(detail.form.attachment.data)"
+                   :alt="detail.form.attachment.name" />
+              <a v-else :href="detail.form.attachment.data" :download="detail.form.attachment.name">📎 {{ detail.form.attachment.name }}</a>
+            </div>
+          </div>
+
           <!-- Approval timeline -->
           <div class="dfield">
             <label>審核流程</label>
@@ -143,6 +156,14 @@
             <button v-if="!canApprove && !canApproveViaDelegate && !canWithdraw" class="btn-ghost" @click="detail.open = false">關閉</button>
           </div>
         </div>
+      </div>
+    </Teleport>
+
+    <!-- Attachment lightbox -->
+    <Teleport to="body">
+      <div v-if="lightbox.open" class="lightbox-backdrop" @click="lightbox.open = false">
+        <img :src="lightbox.src" />
+        <div class="lightbox-close">×</div>
       </div>
     </Teleport>
 
@@ -186,6 +207,22 @@
           </template>
 
           <div class="form-row"><label>原因說明</label><textarea v-model="newModal.reason" rows="3" /></div>
+
+          <!-- Attachment (camera + file) -->
+          <div class="form-row">
+            <label>附件 <span class="label-hint">請假單、報價單等，圖片上限 800 KB</span></label>
+            <div class="attach-row">
+              <button type="button" class="btn-camera" @click="cameraInput?.click()">📷 拍照</button>
+              <button type="button" class="btn-camera btn-camera-alt" @click="fileInput?.click()">📁 選檔案</button>
+              <input ref="cameraInput" type="file" accept="image/*" capture="environment" class="hidden-input" @change="handleAttachmentVue" />
+              <input ref="fileInput" type="file" accept="image/*,.pdf" class="hidden-input" @change="handleAttachmentVue" />
+              <button v-if="newModal.attachment" type="button" class="btn-camera-clear" @click="newModal.attachment = null">✕ 移除</button>
+            </div>
+            <div v-if="newModal.attachment" class="attach-preview">
+              <img v-if="newModal.attachment.mime.startsWith('image/')" :src="newModal.attachment.data" />
+              <span v-else>📎 {{ newModal.attachment.name }}</span>
+            </div>
+          </div>
 
           <!-- Urgent flag -->
           <div class="form-row urgent-row">
@@ -501,7 +538,32 @@ const newModal = reactive({
   leaveType: 'annual',
   hours: 8,
   itemName: '', itemQty: 1,
+  attachment: null as null | { name: string; mime: string; data: string },
 })
+
+// 拍照 / 選檔案 共用 handler
+const cameraInput = ref<HTMLInputElement | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// 附件 lightbox
+const lightbox = reactive({ open: false, src: '' })
+function openLightbox(src: string) { lightbox.src = src; lightbox.open = true }
+function handleAttachmentVue(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  if (file.size > 819200) {
+    alert('檔案請勿超過 800 KB，請壓縮後再上傳')
+    input.value = ''
+    return
+  }
+  const r = new FileReader()
+  r.onload = (ev) => {
+    newModal.attachment = { name: file.name, mime: file.type, data: String(ev.target?.result ?? '') }
+    input.value = ''  // 清空 input 讓使用者能再次選同一個檔案
+  }
+  r.readAsDataURL(file)
+}
 
 function onTypeChange() {
   // Reset type-specific fields on type switch
@@ -518,6 +580,7 @@ function openNew() {
     approvers: [...defaultApprovers.value],
     urgent: false, leaveType: 'annual', hours: 8,
     itemName: '', itemQty: 1,
+    attachment: null,
   })
 }
 
@@ -545,6 +608,7 @@ function submitForm() {
     hours: newModal.type === 'overtime' ? newModal.hours : undefined,
     itemName: newModal.type === 'supply' ? newModal.itemName.trim() || undefined : undefined,
     itemQty: newModal.type === 'supply' ? newModal.itemQty : undefined,
+    attachment: newModal.attachment,
   }
 
   const updatedForms = [newForm, ...(rtdb.store.formRequests ?? [])]
@@ -676,10 +740,30 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .resubmit-comment { margin-top: 5px; padding: 4px 8px; background: rgba(255,255,255,.7); border-radius: 4px; color: #555; font-style: italic; }
 .resubmit-child { margin-top: 2px; color: #555; }
 
+/* Attachment camera UI */
+.attach-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.btn-camera { background: #2e7d5a; color: white; border: none; border-radius: 7px; padding: 9px 14px; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.btn-camera-alt { background: #f0f0f0; color: #555; }
+.btn-camera-clear { background: transparent; border: 1px solid #ddd; color: #c0392b; border-radius: 5px; padding: 6px 10px; font-size: .75rem; cursor: pointer; }
+.hidden-input { display: none; }
+.attach-preview { margin-top: 8px; }
+.attach-preview img { max-height: 120px; max-width: 100%; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
+.attach-preview span { font-size: .82rem; color: #666; }
+.attach-icon { font-size: .82rem; margin-right: 2px; }
+.detail-attach img { max-width: 100%; max-height: 240px; border-radius: 6px; border: 1px solid #eee; cursor: zoom-in; }
+.detail-attach a { color: #1a3c5e; text-decoration: underline; font-size: .88rem; }
+
+/* Lightbox */
+.lightbox-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; z-index: 999; cursor: zoom-out; padding: 16px; box-sizing: border-box; }
+.lightbox-backdrop img { max-width: 95vw; max-height: 92vh; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,.6); }
+.lightbox-close { position: absolute; top: 16px; right: 20px; color: white; font-size: 28px; line-height: 1; cursor: pointer; opacity: .8; }
+
 @media (max-width: 768px) {
   .dashboard-tiles { gap: 6px; }
   .tile { min-width: calc(50% - 6px); padding: 8px 10px; }
   .tile-num { font-size: 1.35rem; }
+  .btn-camera { flex: 1; min-width: 0; min-height: 44px; }
+  .btn-camera-clear { flex-basis: 100%; text-align: center; min-height: 36px; }
 }
 .btn-primary { background: #2e7d5a; color: white; border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; }

@@ -554,7 +554,14 @@ function openNewFrm(){
     '<div class="form-row"><label>原因</label><textarea id="frs"></textarea></div>'+
     '<div id="ruleBanner" style="font-size:12px;color:var(--primary);background:var(--s2);padding:8px 10px;border-radius:var(--radius-sm);margin:4px 0 10px;line-height:1.5"></div>'+
     '<div class="form-row"><label>送審流程（依序簽核）</label><div id="approverPicker"></div></div>'+
-    '<div class="form-row"><label>附件（圖片或 PDF，上限 800 KB）</label><input type="file" id="fattach" accept="image/*,.pdf" onchange="handleAttachment(this)" style="font-size:12px;width:100%"><div id="fattachPreview"></div></div>'+
+    '<div class="form-row"><label>附件（圖片或 PDF，上限 800 KB）</label>'
+    +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+      +'<button type="button" class="btn-sm primary" style="font-size:12px;padding:7px 12px" onclick="document.getElementById(\'fattachCam\').click()">📷 拍照</button>'
+      +'<button type="button" class="btn-sm" style="font-size:12px;padding:7px 12px" onclick="document.getElementById(\'fattach\').click()">📁 選檔案</button>'
+      +'<input type="file" id="fattachCam" accept="image/*" capture="environment" onchange="handleAttachment(this)" style="display:none">'
+      +'<input type="file" id="fattach" accept="image/*,.pdf" onchange="handleAttachment(this)" style="display:none">'
+    +'</div>'
+    +'<div id="fattachPreview"></div></div>'+
     '<div class="form-row" style="margin-top:2px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="furgent" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer"> <span style="color:var(--red);font-weight:700">🔴 標記為緊急（置頂顯示並提醒審核人員）</span></label></div>',
   function(){
     var t=document.getElementById('ftit').value.trim();if(!t){alert('請輸入標題');return;}

@@ -154,6 +154,7 @@ export interface FormRequest {
   actuallyApprovedBy?: string[]   // 實際簽核者（代理時與 approvers 不同）
   resubmittedFrom?: string         // 重申來源原單 id
   amount?: number      // for type='supply'（與根 SPA 對齊）
+  attachment?: { name: string; mime: string; data: string } | null   // 附件（請假單照片、報價單等）
 }
 export interface SwapRequest {
   id: string; fromId: string; toId: string; status: string; createdAt: string
