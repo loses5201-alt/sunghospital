@@ -124,6 +124,24 @@ function renderFormsPage(c){
   rnForms();
 }
 function isApp(f){const i=f.approvers.indexOf(currentUser.id);if(i<0)return false;if(i===0)return f.statuses[0]==='pending';return f.statuses[i-1]==='approved'&&f.statuses[i]==='pending';}
+
+// ── 逾期判定：pending 超過 24 小時 ──
+var FORM_OVERDUE_HOURS=24;
+function isFormOverdue(f){
+  if(!f||f.status!=='pending'||!f.createdAt)return false;
+  var ms=Date.now()-new Date(f.createdAt).getTime();
+  if(isNaN(ms))return false;
+  return ms>FORM_OVERDUE_HOURS*3600*1000;
+}
+function overdueHours(f){
+  if(!f||!f.createdAt)return 0;
+  var ms=Date.now()-new Date(f.createdAt).getTime();
+  return Math.max(0,Math.floor(ms/3600000));
+}
+
+// ── 表單列表篩選狀態 ──
+var _formFilter='all';
+function setFormFilter(v){_formFilter=v;rnForms();}
 function withdrawForm(id){
   if(!confirm('\u78ba\u5b9a\u64a4\u56de\u6b64\u7533\u8acb\uff1f')) return;
   var f = store.formRequests.find(function(x){ return x.id===id; });
@@ -305,7 +323,47 @@ function rejF(id){
   );
 }
 
-// ── 新版 rnForms：含撤回、詳情、意見顯示 ──
+// ── 個人簽核儀表板：統計 + 篩選 ──
+function renderFormDashboard(all){
+  var me=currentUser.id;
+  var pendingForMe=all.filter(function(f){return f.status==='pending'&&isApp(f);});
+  var myPending=all.filter(function(f){return f.applicantId===me&&f.status==='pending';});
+  var ym=today().slice(0,7); // YYYY-MM
+  var myThisMonth=all.filter(function(f){
+    if(f.applicantId!==me||!f.createdAt)return false;
+    return f.createdAt.slice(0,7)===ym;
+  });
+  var myMonthApproved=myThisMonth.filter(function(f){return f.status==='approved';}).length;
+  var myMonthRejected=myThisMonth.filter(function(f){return f.status==='rejected';}).length;
+  var overdueAll=all.filter(isFormOverdue);
+
+  function tile(label,val,sub,clr,key){
+    var active=_formFilter===key?' style="outline:2px solid var(--primary);outline-offset:-2px"':'';
+    var cursor=key?' cursor:pointer;':'';
+    return '<div'+(key?' onclick="setFormFilter(\''+key+'\')"':'')
+      +' style="flex:1;min-width:130px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm);padding:10px 12px;'+cursor+'"'
+      +(active?' data-active="1"':'')+'>'
+      +'<div style="font-size:11px;color:var(--muted)">'+label+'</div>'
+      +'<div style="font-size:22px;font-weight:700;color:'+clr+';line-height:1.1;margin-top:2px">'+val+'</div>'
+      +(sub?'<div style="font-size:10px;color:var(--faint);margin-top:2px">'+sub+'</div>':'')
+      +'</div>';
+  }
+  return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+    +tile('待我審核',pendingForMe.length,pendingForMe.length?'點此篩選':'目前無待審','var(--amber,#f5a623)','pending_me')
+    +tile('我送出（審核中）',myPending.length,'','var(--primary)','my_pending')
+    +tile('本月已核准',myMonthApproved,myMonthRejected?'駁回 '+myMonthRejected+' 件':'','var(--green,#2ec27e)',null)
+    +tile('逾期',overdueAll.length,overdueAll.length?'>'+FORM_OVERDUE_HOURS+'h pending':'','var(--red,#e54545)','overdue')
+    +'</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
+    +['all:全部','pending_me:待我審核','my_pending:我送出（審核中）','my_all:我送出（全部）','overdue:逾期'].map(function(s){
+      var p=s.split(':'),k=p[0],l=p[1];
+      var on=_formFilter===k;
+      return '<button class="btn-sm'+(on?' primary':'')+'" style="font-size:11px;padding:4px 10px" onclick="setFormFilter(\''+k+'\')">'+l+'</button>';
+    }).join('')
+    +'</div>';
+}
+
+// ── 新版 rnForms：含儀表板、篩選、逾期、撤回、詳情、意見顯示 ──
 function rnForms(){
   var c = document.getElementById('frmC'); if(!c) return;
   if(!store.formNotifs) store.formNotifs = [];
@@ -340,8 +398,13 @@ function rnForms(){
           : '<div class="frq-attach"><a onclick="viewAttachment(\'' + f.id + '\')" style="cursor:pointer">\ud83d\udcce ' + esc(f.attachment.name) + '</a></div>')
       : '';
 
-    return '<div class="frq-card'+(f.urgent&&f.status==='pending'?' frq-urgent':'')+'">'
+    var overdue = isFormOverdue(f);
+    var ovHtml = overdue
+      ? '<span style="font-size:10px;font-weight:700;color:#b8001f;background:#fde8ec;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px" title="送出後已超過 '+FORM_OVERDUE_HOURS+' 小時尚未完成">🕒 逾期 '+overdueHours(f)+'h</span>'
+      : '';
+    return '<div class="frq-card'+(f.urgent&&f.status==='pending'?' frq-urgent':'')+(overdue?' frq-overdue':'')+'">'
       +(f.urgent&&f.status==='pending'?'<span style="font-size:10px;font-weight:700;color:var(--red);background:#fce8e8;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px">🔴 緊急</span>':'')
+      +ovHtml
       +'<span class="ftype ' + ft.c + '">' + ft.l + '</span>'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:13px;font-weight:600;margin-bottom:3px;cursor:pointer" onclick="openFormDetail(\'' + f.id + '\')">'
@@ -363,18 +426,43 @@ function rnForms(){
       + '</div></div>';
   }
 
-  // sort: urgent+pending first, then by date
+  // sort: \u903e\u671f + \u7dca\u6025 pending \u512a\u5148\uff1b\u5176\u9918\u6309\u65e5\u671f\u964d\u51aa
   all.sort(function(a,b){
+    var aOv=isFormOverdue(a)?1:0,bOv=isFormOverdue(b)?1:0;
+    if(bOv!==aOv)return bOv-aOv;
     var aUrgPend=(a.urgent&&a.status==='pending')?1:0;
     var bUrgPend=(b.urgent&&b.status==='pending')?1:0;
     if(bUrgPend!==aUrgPend)return bUrgPend-aUrgPend;
     return b.createdAt.localeCompare(a.createdAt);
   });
-  var pend = all.filter(function(f){ return f.status==='pending' && isApp(f); });
-  c.innerHTML = (pend.length
-    ? '<div class="sec-label">\u5f85\u6211\u5be9\u6838\uff08' + pend.length + '\uff09</div>' + pend.map(rCard).join('') + '<div class="sec-label">\u5168\u90e8\u7533\u8acb</div>'
-    : '<div class="sec-label">\u5168\u90e8\u7533\u8acb</div>'
-  ) + all.map(rCard).join('');
+
+  var dash = renderFormDashboard(all);
+  var me = currentUser.id;
+  var listSrc;
+  var sectionLabel='';
+  if(_formFilter==='pending_me'){
+    listSrc = all.filter(function(f){ return f.status==='pending' && isApp(f); });
+    sectionLabel = '\u5f85\u6211\u5be9\u6838\uff08' + listSrc.length + '\uff09';
+  } else if(_formFilter==='my_pending'){
+    listSrc = all.filter(function(f){ return f.applicantId===me && f.status==='pending'; });
+    sectionLabel = '\u6211\u9001\u51fa \u00b7 \u5be9\u6838\u4e2d\uff08' + listSrc.length + '\uff09';
+  } else if(_formFilter==='my_all'){
+    listSrc = all.filter(function(f){ return f.applicantId===me; });
+    sectionLabel = '\u6211\u9001\u51fa \u00b7 \u5168\u90e8\uff08' + listSrc.length + '\uff09';
+  } else if(_formFilter==='overdue'){
+    listSrc = all.filter(isFormOverdue);
+    sectionLabel = '\u903e\u671f\u7533\u8acb\uff08' + listSrc.length + '\uff09';
+  } else {
+    listSrc = all;
+    sectionLabel = '\u5168\u90e8\u7533\u8acb\uff08' + listSrc.length + '\uff09';
+  }
+
+  var pend = (_formFilter==='all') ? all.filter(function(f){ return f.status==='pending' && isApp(f); }) : [];
+  var emptyHtml = '<div style="padding:30px;text-align:center;color:var(--faint);font-size:13px">\u6b64\u5206\u985e\u4e0b\u6c92\u6709\u8cc7\u6599</div>';
+  c.innerHTML = dash + (pend.length
+    ? '<div class="sec-label">\u5f85\u6211\u5be9\u6838\uff08' + pend.length + '\uff09</div>' + pend.map(rCard).join('') + '<div class="sec-label">' + sectionLabel + '</div>'
+    : '<div class="sec-label">' + sectionLabel + '</div>'
+  ) + (listSrc.length ? listSrc.map(rCard).join('') : emptyHtml);
 }
 function openNewFrm(){
   _pendingAttachment=null;
