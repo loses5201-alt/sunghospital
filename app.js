@@ -490,7 +490,7 @@ function initApp(){
   startFirebaseSync(function() {
     // Firebase 資料就緒後才渲染
     updateAnnBadge(); updateIrBadge(); updateCalBadge();
-    updateNotifBadge((store.announcements||[]).filter(function(a){ return !a.reads[currentUser && currentUser.id]; }).length);
+    updateNotifBadge((store.announcements||[]).filter(function(a){ return !(a.reads||{})[currentUser && currentUser.id]; }).length);
     renderSidebar();
     setPage('home');
     checkPendingEmergency();
@@ -1116,7 +1116,7 @@ function renderNotifPanel(){
   const items=[];
   // 未讀公告
   (store.announcements||[]).forEach(a=>{
-    const unread=!a.reads[currentUser.id];
+    const unread=!(a.reads||{})[currentUser.id];
     items.push({icon:'📢',title:a.title,body:a.body,time:a.time,unread,act:()=>{openAnnFromMarquee(a.id);closeNotifPanel();}});
   });
   // 未讀事件
@@ -1141,7 +1141,7 @@ function renderNotifPanel(){
     });
   });
   // 依時間排序，未讀優先
-  items.sort((a,b)=>(b.unread-a.unread)||b.time.localeCompare(a.time));
+  items.sort((a,b)=>(b.unread-a.unread)||(b.time||'').localeCompare(a.time||''));
   updateNotifBadge(items.filter(x=>x.unread).length);
   if(!items.length){list.innerHTML='<div class="notif-empty">目前沒有通知</div>';return;}
   list.innerHTML=items.map((it,i)=>`
@@ -2130,7 +2130,7 @@ function showDailySummary(){
   var key='dailySummary_'+today();if(localStorage.getItem(key))return;
   localStorage.setItem(key,'1');
   var myForms=(store.formRequests||[]).filter(function(f){return f.applicantId===currentUser.id&&f.status==='pending';}).length;
-  var unreadAnn=(store.announcements||[]).filter(function(a){return !a.reads[currentUser.id];}).length;
+  var unreadAnn=(store.announcements||[]).filter(function(a){return !(a.reads||{})[currentUser.id];}).length;
   var myTasks=(store.meetings||[]).flatMap(function(m){return m.tasks||[];}).filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';}).length;
   var unreadMsg=(store.messages||[]).filter(function(m){return m.to===currentUser.id&&!(m.reads||{})[currentUser.id];}).length;
   var shiftToday=(function(){
