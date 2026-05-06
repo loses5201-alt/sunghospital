@@ -132,6 +132,13 @@
               </select>
             </div>
           </div>
+          <div class="form-row">
+            <label>簽核代理人 <span class="label-hint">不在時可代為簽核此人應審的表單</span></label>
+            <select v-model="modal.delegateId">
+              <option value="">（無代理人）</option>
+              <option v-for="u in delegateCandidates" :key="u.id" :value="u.id">{{ u.name }}{{ u.title ? ' · ' + u.title : '' }}</option>
+            </select>
+          </div>
           <div v-if="!modal.editId" class="form-row"><label>密碼</label><input v-model="modal.password" type="password" /></div>
           <div class="modal-actions">
             <button class="btn-ghost" @click="modal.open = false">取消</button>
@@ -191,9 +198,12 @@ function deleteUser(id: string) {
   saveUsers()
 }
 
-const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '' })
-function openAdd() { Object.assign(modal, { open: true, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '' }) }
-function openEdit(u: User) { Object.assign(modal, { open: true, editId: u.id, name: u.name, username: u.username, email: u.email ?? '', deptId: u.deptId ?? '', title: u.title ?? '', role: u.role, password: '' }) }
+const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '' })
+const delegateCandidates = computed(() =>
+  users.value.filter((u) => u.id !== modal.editId && (u.status ?? 'active') === 'active' && !u.needsReview)
+)
+function openAdd() { Object.assign(modal, { open: true, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '' }) }
+function openEdit(u: User) { Object.assign(modal, { open: true, editId: u.id, name: u.name, username: u.username, email: u.email ?? '', deptId: u.deptId ?? '', title: u.title ?? '', role: u.role, password: '', delegateId: u.delegateId ?? '' }) }
 function save() {
   if (!modal.name.trim() || !modal.username.trim() || !rtdb.store) return
   if (modal.editId) {
@@ -205,6 +215,7 @@ function save() {
       u.deptId = modal.deptId
       u.title = modal.title
       u.role = modal.role as User['role']
+      u.delegateId = modal.delegateId || undefined
       u.needsReview = false  // 管理員確認後清除旗標
     }
   } else {
@@ -212,6 +223,7 @@ function save() {
       id: rtdb.uid(), name: modal.name.trim(), username: modal.username.trim(),
       email: modal.email, deptId: modal.deptId, title: modal.title,
       role: modal.role as User['role'], password: modal.password, avatar: 'av-a',
+      delegateId: modal.delegateId || undefined,
     })
   }
   saveUsers()
@@ -275,5 +287,6 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .form-row label { display: block; font-size: .82rem; color: #555; margin-bottom: 4px; }
 .form-row input, .form-row select { width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; padding: 7px 10px; font-size: .88rem; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.label-hint { font-size: .7rem; color: #888; font-weight: 400; margin-left: 4px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 </style>

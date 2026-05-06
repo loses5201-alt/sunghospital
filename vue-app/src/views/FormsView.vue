@@ -86,6 +86,11 @@
             </div>
           </div>
 
+          <!-- Delegate banner -->
+          <div v-if="canApproveViaDelegate" class="delegate-banner">
+            🤝 您正在代理 <b>{{ delegateActorName }}</b> 簽核此單，將記錄為代理簽核
+          </div>
+
           <!-- Actions -->
           <div class="modal-actions">
             <button v-if="canWithdraw" class="btn-ghost" @click="withdrawForm">撤回申請</button>
@@ -93,7 +98,11 @@
               <button class="btn-danger" @click="rejectForm">退回</button>
               <button class="btn-primary" @click="approveForm">核准</button>
             </template>
-            <button v-if="!canApprove && !canWithdraw" class="btn-ghost" @click="detail.open = false">關閉</button>
+            <template v-else-if="canApproveViaDelegate">
+              <button class="btn-danger" @click="rejectForm">🤝 代理退回</button>
+              <button class="btn-primary" @click="approveForm">🤝 代理核准</button>
+            </template>
+            <button v-if="!canApprove && !canApproveViaDelegate && !canWithdraw" class="btn-ghost" @click="detail.open = false">關閉</button>
           </div>
         </div>
       </div>
@@ -251,7 +260,29 @@ function isApprover(f: FormRequest) {
   return f.statuses[i - 1] === 'approved' && f.statuses[i] === 'pending'
 }
 
-const pendingMeCount = computed(() => forms.value.filter(f => f.status === 'pending' && isApprover(f)).length)
+// 找到當前 pending 階索引（之前都 approved）
+function getActiveApproverIdx(f: FormRequest): number {
+  if (f.status !== 'pending' || !f.approvers) return -1
+  for (let i = 0; i < f.approvers.length; i++) {
+    if (f.statuses[i] === 'pending') {
+      if (i === 0) return 0
+      return f.statuses[i - 1] === 'approved' ? i : -1
+    }
+  }
+  return -1
+}
+function getDelegatorIdx(f: FormRequest, delegateId: string): number {
+  const i = getActiveApproverIdx(f)
+  if (i < 0) return -1
+  if (f.approvers[i] === delegateId) return -1
+  const actor = users.value.find(u => u.id === f.approvers[i])
+  return actor?.delegateId === delegateId ? i : -1
+}
+function isApproverViaDelegate(f: FormRequest): boolean {
+  return getDelegatorIdx(f, currentUserId.value) >= 0
+}
+
+const pendingMeCount = computed(() => forms.value.filter(f => f.status === 'pending' && (isApprover(f) || isApproverViaDelegate(f))).length)
 
 const FILTER_TABS = computed(() => [
   { key: 'all',        label: '全部',       count: 0 },
@@ -264,7 +295,7 @@ const filterKey = ref('all')
 const filtered = computed(() => {
   switch (filterKey.value) {
     case 'mine':       return forms.value.filter(f => f.applicantId === currentUserId.value)
-    case 'pending-me': return forms.value.filter(f => f.status === 'pending' && isApprover(f))
+    case 'pending-me': return forms.value.filter(f => f.status === 'pending' && (isApprover(f) || isApproverViaDelegate(f)))
     case 'pending':    return forms.value.filter(f => f.status === 'pending')
     default:           return forms.value
   }
@@ -299,6 +330,12 @@ function openDetail(f: FormRequest) {
 
 const canWithdraw = computed(() => detail.form?.applicantId === currentUserId.value && detail.form?.status === 'pending')
 const canApprove  = computed(() => !!detail.form && isApprover(detail.form))
+const canApproveViaDelegate = computed(() => !!detail.form && !canApprove.value && isApproverViaDelegate(detail.form))
+const delegateActorName = computed(() => {
+  if (!detail.form || !canApproveViaDelegate.value) return ''
+  const idx = getDelegatorIdx(detail.form, currentUserId.value)
+  return idx >= 0 ? userName(detail.form.approvers[idx]) : ''
+})
 
 function withdrawForm() {
   if (!detail.form || !rtdb.store || !confirm('確定撤回此申請？')) return
@@ -316,36 +353,56 @@ function rejectForm()  { commentModal.isApprove = false; commentModal.text = '';
 function submitApproval() {
   if (!detail.form || !rtdb.store) return
   const f = detail.form
-  const i = f.approvers.indexOf(currentUserId.value)
+
+  // 解析作用階段：先看是不是直屬審核人，否則看是不是代理
+  let i = -1
+  let viaDelegate = false
+  const directIdx = f.approvers.indexOf(currentUserId.value)
+  if (directIdx >= 0) {
+    const ok = directIdx === 0 ? f.statuses[0] === 'pending' : (f.statuses[directIdx - 1] === 'approved' && f.statuses[directIdx] === 'pending')
+    if (ok) i = directIdx
+  }
+  if (i < 0) {
+    const di = getDelegatorIdx(f, currentUserId.value)
+    if (di >= 0) { i = di; viaDelegate = true }
+  }
   if (i < 0) return
 
   if (!f.comments) f.comments = []
-  f.comments[i] = commentModal.text.trim()
+  const text = commentModal.text.trim()
+  const prefix = viaDelegate ? `（代理：${userName(currentUserId.value)}）` : ''
+  f.comments[i] = (text + (text && prefix ? ' ' : '') + prefix).trim()
+
+  if (!f.actuallyApprovedBy) f.actuallyApprovedBy = []
+  f.actuallyApprovedBy[i] = currentUserId.value
 
   const newNotifs = [...rtdb.store.formNotifs]
-  const approverName = userName(currentUserId.value)
+  const actorName = userName(currentUserId.value)
   const formTitle = f.title
+  const labelPrefix = viaDelegate ? `代理 ${userName(f.approvers[i])} ` : ''
 
   if (commentModal.isApprove) {
     f.statuses[i] = 'approved'
     const allApproved = f.statuses.every(s => s === 'approved')
     if (allApproved) {
       f.status = 'approved'
-      // 通知申請人：全部核准
       newNotifs.push(makeNotif(f.applicantId, `✓ 表單已核准`, `「${formTitle}」已由所有審核人核准`))
     } else {
-      // 通知下一位審核人
+      // 通知下一位審核人 + 其代理人
       const nextIdx = f.approvers.findIndex((_, idx) => idx > i && f.statuses[idx] === 'pending')
       if (nextIdx >= 0) {
-        newNotifs.push(makeNotif(f.approvers[nextIdx], `🔔 待您審核`, `${userName(f.applicantId)} 的「${formTitle}」輪到您簽核`))
+        const nextUserId = f.approvers[nextIdx]
+        newNotifs.push(makeNotif(nextUserId, `🔔 待您審核`, `${userName(f.applicantId)} 的「${formTitle}」輪到您簽核`))
+        const nextUser = users.value.find(u => u.id === nextUserId)
+        if (nextUser?.delegateId) {
+          newNotifs.push(makeNotif(nextUser.delegateId, `🔔 代理待審`, `代理 ${nextUser.name} 簽核「${formTitle}」`))
+        }
       }
     }
   } else {
     f.statuses[i] = 'rejected'
     f.status = 'rejected'
-    // 通知申請人：退回
-    const comment = commentModal.text.trim()
-    newNotifs.push(makeNotif(f.applicantId, `✗ 表單已退回`, `「${formTitle}」被 ${approverName} 退回${comment ? `：${comment}` : ''}`))
+    newNotifs.push(makeNotif(f.applicantId, `✗ 表單已退回`, `「${formTitle}」被 ${labelPrefix}${actorName} 退回${text ? `：${text}` : ''}`))
   }
 
   rtdb.saveMultiple({ formRequests: rtdb.store.formRequests, formNotifs: newNotifs })
@@ -510,6 +567,7 @@ h1 { font-size: 1.3rem; margin: 0 0 4px; color: #1a3c5e; }
 .urgent-row { margin-bottom: 10px; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.delegate-banner { background: #eef5ff; border-left: 3px solid #2e7d5a; border-radius: 6px; padding: 8px 12px; margin: 12px 0 4px; font-size: .82rem; color: #1a3c5e; }
 .btn-primary { background: #2e7d5a; color: white; border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 .btn-danger  { background: #c0392b; color: white; border: none; border-radius: 7px; padding: 8px 16px; font-size: .85rem; cursor: pointer; }

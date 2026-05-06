@@ -12,6 +12,7 @@ export interface User {
   status?: 'active' | 'disabled' | 'resigned'
   needsReview?: boolean   // true = 新 Google 用戶，待管理員確認身分
   firstLoginAt?: string   // Google 首次登入時間
+  delegateId?: string     // 簽核代理人（不在時可代為簽核此人應審的表單）
 }
 
 export interface AppStore {
@@ -149,6 +150,9 @@ export interface FormRequest {
   hours?: number       // for type='overtime'
   itemName?: string    // for type='supply'
   itemQty?: number     // for type='supply'
+  actuallyApprovedBy?: string[]   // 實際簽核者（代理時與 approvers 不同）
+  resubmittedFrom?: string         // 重申來源原單 id
+  amount?: number      // for type='supply'（與根 SPA 對齊）
 }
 export interface SwapRequest {
   id: string; fromId: string; toId: string; status: string; createdAt: string
