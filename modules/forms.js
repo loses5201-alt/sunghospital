@@ -1,6 +1,17 @@
 // ════ 表單簽核 ════
 const FTYPES={leave:{l:'請假',c:'ft-lv'},overtime:{l:'加班',c:'ft-ot'},supply:{l:'物品申請',c:'ft-sp'},other:{l:'其他',c:'ft-ot2'}};
 
+// ── 簽核規則閾值（可由管理頁調整，存於 store.formRuleConfig） ──
+var FORM_RULE_DEFAULTS={leaveDays:2,overtimeHours:4,supplyAmount:5000};
+function getRuleConfig(){
+  var c=(store&&store.formRuleConfig)||{};
+  return {
+    leaveDays:Number(c.leaveDays)>0?Number(c.leaveDays):FORM_RULE_DEFAULTS.leaveDays,
+    overtimeHours:Number(c.overtimeHours)>0?Number(c.overtimeHours):FORM_RULE_DEFAULTS.overtimeHours,
+    supplyAmount:Number(c.supplyAmount)>0?Number(c.supplyAmount):FORM_RULE_DEFAULTS.supplyAmount
+  };
+}
+
 // ── 簽核規則：依類型 + 數量自動決定階數 ──
 var FORM_RULES={
   leave:{
@@ -11,20 +22,20 @@ var FORM_RULES={
       var ms=new Date(ed.value)-new Date(sd.value);
       return{days:Math.max(1,Math.round(ms/86400000)+1)};
     },
-    stages:function(ctx){return ctx.days<=2?1:2;},
-    describe:function(ctx){return ctx.days<=2?'📋 請假 '+ctx.days+' 天 → 建議 1 階審核（直屬主管）':'📋 請假 '+ctx.days+' 天 → 建議 2 階審核（主管 → 院方）';}
+    stages:function(ctx){return ctx.days<=getRuleConfig().leaveDays?1:2;},
+    describe:function(ctx){var t=getRuleConfig().leaveDays;return ctx.days<=t?'📋 請假 '+ctx.days+' 天 → 建議 1 階審核（直屬主管）':'📋 請假 '+ctx.days+' 天（>'+t+' 天）→ 建議 2 階審核（主管 → 院方）';}
   },
   overtime:{
     extraFieldHtml:'<div class="form-row"><label>加班時數</label><input id="fhours" type="number" min="0" step="0.5" placeholder="例：3" oninput="updateRuleBanner()" style="width:140px"></div>',
     getCtx:function(){var h=document.getElementById('fhours');return{hours:h?(parseFloat(h.value)||0):0};},
-    stages:function(ctx){return ctx.hours<=4?1:2;},
-    describe:function(ctx){return ctx.hours<=4?'📋 加班 '+ctx.hours+' 小時 → 建議 1 階審核':'📋 加班 '+ctx.hours+' 小時 → 建議 2 階審核（主管 → 院方）';}
+    stages:function(ctx){return ctx.hours<=getRuleConfig().overtimeHours?1:2;},
+    describe:function(ctx){var t=getRuleConfig().overtimeHours;return ctx.hours<=t?'📋 加班 '+ctx.hours+' 小時 → 建議 1 階審核':'📋 加班 '+ctx.hours+' 小時（>'+t+' 小時）→ 建議 2 階審核（主管 → 院方）';}
   },
   supply:{
     extraFieldHtml:'<div class="form-row"><label>金額（元）</label><input id="famount" type="number" min="0" step="1" placeholder="例：3000" oninput="updateRuleBanner()" style="width:140px"></div>',
     getCtx:function(){var a=document.getElementById('famount');return{amount:a?(parseFloat(a.value)||0):0};},
-    stages:function(ctx){return ctx.amount<=5000?1:2;},
-    describe:function(ctx){return ctx.amount<=5000?'📋 物品申請 '+ctx.amount+' 元 → 建議 1 階審核':'📋 物品申請 '+ctx.amount+' 元 → 建議 2 階審核（主管 → 採購/院方）';}
+    stages:function(ctx){return ctx.amount<=getRuleConfig().supplyAmount?1:2;},
+    describe:function(ctx){var t=getRuleConfig().supplyAmount;return ctx.amount<=t?'📋 物品申請 '+ctx.amount+' 元 → 建議 1 階審核':'📋 物品申請 '+ctx.amount+' 元（>'+t+' 元）→ 建議 2 階審核（主管 → 採購/院方）';}
   },
   other:{
     extraFieldHtml:'',

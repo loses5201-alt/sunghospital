@@ -17,6 +17,7 @@ function renderUsersPage(c){
     </div>
     <div class="users-tab-bar">
       <div class="users-tab" id="utab-users" onclick="switchUsersTab('users')">👥 人員管理</div>
+      <div class="users-tab" id="utab-rules" onclick="switchUsersTab('rules')">⚙️ 簽核規則</div>
       <div class="users-tab" id="utab-audit" onclick="switchUsersTab('audit')">📋 稽核日誌</div>
       <div class="users-tab" id="utab-stats" onclick="switchUsersTab('stats')">📊 系統統計</div>
     </div>
@@ -31,8 +32,51 @@ function switchUsersTab(tab){
   var el=document.getElementById('utab-'+tab);if(el)el.classList.add('active');
   var c=document.getElementById('usersTabContent');if(!c)return;
   if(tab==='users'){renderUserContent();}
+  else if(tab==='rules'){renderRulesTab(c);}
   else if(tab==='audit'){renderAuditTab(c);}
   else if(tab==='stats'){renderUserStats(c);}
+}
+
+function renderRulesTab(c){
+  var cfg=(typeof getRuleConfig==='function')?getRuleConfig():{leaveDays:2,overtimeHours:4,supplyAmount:5000};
+  c.innerHTML='<div style="max-width:680px;padding:20px">'
+    +'<div style="background:var(--s2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;font-size:13px;line-height:1.7;color:var(--text)">'
+    +'<div style="font-weight:700;margin-bottom:6px">📋 多階簽核自動建議規則</div>'
+    +'<div style="color:var(--muted)">超過下列門檻的申請會自動建議 2 階審核，未超過則 1 階。申請時仍可手動加階或調整審核人。</div>'
+    +'</div>'
+    +'<div class="form-row"><label>請假門檻（天）</label>'
+      +'<input id="ruleLeaveDays" type="number" min="1" step="1" value="'+cfg.leaveDays+'" style="width:160px">'
+      +'<div style="font-size:11px;color:var(--faint);margin-top:4px">請假天數 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
+    +'<div class="form-row"><label>加班門檻（小時）</label>'
+      +'<input id="ruleOvertimeHours" type="number" min="0.5" step="0.5" value="'+cfg.overtimeHours+'" style="width:160px">'
+      +'<div style="font-size:11px;color:var(--faint);margin-top:4px">加班時數 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
+    +'<div class="form-row"><label>物品申請門檻（元）</label>'
+      +'<input id="ruleSupplyAmount" type="number" min="100" step="100" value="'+cfg.supplyAmount+'" style="width:160px">'
+      +'<div style="font-size:11px;color:var(--faint);margin-top:4px">申請金額 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
+    +'<div style="display:flex;gap:8px;margin-top:18px">'
+      +'<button class="btn-sm primary" onclick="saveRuleConfig()">💾 儲存</button>'
+      +'<button class="btn-sm" onclick="resetRuleConfig()">↺ 還原預設</button>'
+    +'</div></div>';
+}
+
+function saveRuleConfig(){
+  var l=parseFloat(document.getElementById('ruleLeaveDays').value);
+  var h=parseFloat(document.getElementById('ruleOvertimeHours').value);
+  var a=parseFloat(document.getElementById('ruleSupplyAmount').value);
+  if(!(l>0&&h>0&&a>0)){alert('門檻必須大於 0');return;}
+  store.formRuleConfig={leaveDays:l,overtimeHours:h,supplyAmount:a};
+  saveCollection('formRuleConfig');
+  logAudit('更新簽核規則','請假≤'+l+'天 / 加班≤'+h+'h / 物品≤'+a+'元');
+  showToast('已更新','簽核規則閾值已儲存','⚙️');
+}
+
+function resetRuleConfig(){
+  if(!confirm('確定還原成預設值？\n（請假 2 天 / 加班 4 小時 / 物品 5000 元）'))return;
+  store.formRuleConfig={leaveDays:2,overtimeHours:4,supplyAmount:5000};
+  saveCollection('formRuleConfig');
+  logAudit('重設簽核規則','還原預設值');
+  renderRulesTab(document.getElementById('usersTabContent'));
+  showToast('已還原','簽核規則已重設為預設值','↺');
 }
 var userFilter={q:'',dept:'',status:'',jobType:''};
 const JOBTYPES={
