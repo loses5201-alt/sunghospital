@@ -1,5 +1,112 @@
 // ════ 表單簽核 ════
 const FTYPES={leave:{l:'請假',c:'ft-lv'},overtime:{l:'加班',c:'ft-ot'},supply:{l:'物品申請',c:'ft-sp'},other:{l:'其他',c:'ft-ot2'}};
+
+// ── 簽核規則：依類型 + 數量自動決定階數 ──
+var FORM_RULES={
+  leave:{
+    extraFieldHtml:'',
+    getCtx:function(){
+      var sd=document.getElementById('fsd'),ed=document.getElementById('fed');
+      if(!sd||!ed||!sd.value||!ed.value)return{days:1};
+      var ms=new Date(ed.value)-new Date(sd.value);
+      return{days:Math.max(1,Math.round(ms/86400000)+1)};
+    },
+    stages:function(ctx){return ctx.days<=2?1:2;},
+    describe:function(ctx){return ctx.days<=2?'📋 請假 '+ctx.days+' 天 → 建議 1 階審核（直屬主管）':'📋 請假 '+ctx.days+' 天 → 建議 2 階審核（主管 → 院方）';}
+  },
+  overtime:{
+    extraFieldHtml:'<div class="form-row"><label>加班時數</label><input id="fhours" type="number" min="0" step="0.5" placeholder="例：3" oninput="updateRuleBanner()" style="width:140px"></div>',
+    getCtx:function(){var h=document.getElementById('fhours');return{hours:h?(parseFloat(h.value)||0):0};},
+    stages:function(ctx){return ctx.hours<=4?1:2;},
+    describe:function(ctx){return ctx.hours<=4?'📋 加班 '+ctx.hours+' 小時 → 建議 1 階審核':'📋 加班 '+ctx.hours+' 小時 → 建議 2 階審核（主管 → 院方）';}
+  },
+  supply:{
+    extraFieldHtml:'<div class="form-row"><label>金額（元）</label><input id="famount" type="number" min="0" step="1" placeholder="例：3000" oninput="updateRuleBanner()" style="width:140px"></div>',
+    getCtx:function(){var a=document.getElementById('famount');return{amount:a?(parseFloat(a.value)||0):0};},
+    stages:function(ctx){return ctx.amount<=5000?1:2;},
+    describe:function(ctx){return ctx.amount<=5000?'📋 物品申請 '+ctx.amount+' 元 → 建議 1 階審核':'📋 物品申請 '+ctx.amount+' 元 → 建議 2 階審核（主管 → 採購/院方）';}
+  },
+  other:{
+    extraFieldHtml:'',
+    getCtx:function(){return{};},
+    stages:function(){return 1;},
+    describe:function(){return '📋 其他類型 → 預設 1 階審核（可手動加階）';}
+  }
+};
+
+// 多階審核人選擇狀態（僅在開啟新增/重新申請彈窗期間有效）
+var _approverPicks=[''];
+
+function getApproverCandidates(){
+  return store.users.filter(function(u){
+    return u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'
+      &&(u.role==='admin'||u.role==='supervisor'||(u.permissions&&u.permissions.approveForm));
+  });
+}
+
+function suggestApproversByRule(type){
+  var rule=FORM_RULES[type]||FORM_RULES.other;
+  var n=rule.stages(rule.getCtx());
+  var pool=getApproverCandidates();
+  var deptId=currentUser.deptId;
+  var s1=pool.filter(function(u){return u.role==='supervisor'&&u.deptId===deptId;})[0]
+       ||pool.filter(function(u){return u.role==='supervisor';})[0]
+       ||pool.filter(function(u){return u.permissions&&u.permissions.approveForm;})[0]
+       ||pool[0];
+  if(n===1)return s1?[s1.id]:[''];
+  var s2=pool.filter(function(u){return u.role==='admin'&&(!s1||u.id!==s1.id);})[0]
+       ||pool.filter(function(u){return !s1||u.id!==s1.id;})[0];
+  return [s1?s1.id:'',s2?s2.id:''];
+}
+
+function approverOptionsHtml(selectedId){
+  var pool=getApproverCandidates();
+  if(!pool.length)return '<option value="">（尚未設定可審核人員）</option>';
+  return '<option value="">— 請選擇 —</option>'+pool.map(function(u){
+    var sel=(u.id===selectedId)?' selected':'';
+    var role=u.role==='admin'?'管理員':u.role==='supervisor'?'主管':'可審核';
+    return '<option value="'+u.id+'"'+sel+'>'+esc(u.name)+' · '+role+'</option>';
+  }).join('');
+}
+
+function renderApproverPicker(){
+  var box=document.getElementById('approverPicker');if(!box)return;
+  if(!_approverPicks.length)_approverPicks=[''];
+  var maxStages=5;
+  var rows=_approverPicks.map(function(picked,i){
+    var canRemove=_approverPicks.length>1;
+    return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
+      +'<div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">'+(i+1)+'</div>'
+      +'<select onchange="setApproverPick('+i+',this.value)" style="flex:1;padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit">'+approverOptionsHtml(picked)+'</select>'
+      +(canRemove?'<button type="button" class="btn-sm" style="font-size:11px;padding:4px 8px" onclick="removeApproverStage('+i+')" title="移除這一階">×</button>':'<span style="display:inline-block;width:32px"></span>')
+      +'</div>';
+  }).join('');
+  var addBtn=_approverPicks.length<maxStages?'<button type="button" class="btn-sm" style="font-size:11px;padding:5px 10px" onclick="addApproverStage()">＋ 加一階</button>':'';
+  var ruleBtn='<button type="button" class="btn-sm primary" style="font-size:11px;padding:5px 10px" onclick="applyRuleSuggestion()" title="依規則自動填入建議審核人">🎯 依規則建議</button>';
+  box.innerHTML=rows+'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'+addBtn+ruleBtn+'</div>';
+}
+
+function setApproverPick(i,val){_approverPicks[i]=val;}
+function addApproverStage(){_approverPicks.push('');renderApproverPicker();}
+function removeApproverStage(i){_approverPicks.splice(i,1);if(!_approverPicks.length)_approverPicks=[''];renderApproverPicker();}
+function applyRuleSuggestion(){
+  var ty=document.getElementById('fty');if(!ty)return;
+  _approverPicks=suggestApproversByRule(ty.value);
+  if(!_approverPicks.length)_approverPicks=[''];
+  renderApproverPicker();updateRuleBanner();
+}
+function updateRuleBanner(){
+  var ty=document.getElementById('fty'),banner=document.getElementById('ruleBanner');
+  if(!ty||!banner)return;
+  var rule=FORM_RULES[ty.value]||FORM_RULES.other;
+  banner.innerHTML=rule.describe(rule.getCtx())+' <span style="color:var(--faint);font-size:11px">（可手動調整）</span>';
+}
+function onFormTypeChange(){
+  var ty=document.getElementById('fty');if(!ty)return;
+  var host=document.getElementById('extraFieldHost');
+  if(host){var rule=FORM_RULES[ty.value]||FORM_RULES.other;host.innerHTML=rule.extraFieldHtml||'';}
+  updateRuleBanner();
+}
 function renderFormsPage(c){
   var exportBtn=(isAdmin()||hasPerm('exportData'))?'<button class="btn-sm" onclick="exportFormsCSV()">📥 匯出CSV</button>':'';
   c.innerHTML='<div class="admin-layout"><div class="main-header"><div><h1>📋 表單簽核</h1><div class="main-header-meta">請假 · 加班 · 物品申請 · 線上審核</div></div><div class="header-actions">'+exportBtn+'<button class="btn-sm primary" onclick="openNewFrm()">+ 新增申請</button></div></div><div class="admin-content" id="frmC"></div></div>';
@@ -13,7 +120,7 @@ function withdrawForm(id){
   f.status = 'withdrawn';
   f.statuses = f.statuses.map(function(s){ return s==='pending'?'withdrawn':s; });
   logAudit('\u64a4\u56de\u7533\u8acb', f.title);
-  saveStore(); rnForms();
+  saveCollection('formRequests'); rnForms();
   showToast('\u5df2\u64a4\u56de', f.title, '\u21a9\ufe0f');
 }
 
@@ -114,11 +221,27 @@ function appF(id){
       if(!f.comments) f.comments = [];
       f.comments[i] = comment;
       f.statuses[i] = 'approved';
-      if(f.statuses.every(function(s){ return s==='approved'; })) f.status = 'approved';
-      logAudit('\u5be9\u6838\u901a\u904e', f.title||f.type||'\u8868\u55ae');
-      notifyFormResult(f, 'approved', comment);
-      saveStore(); closeModal(); rnForms();
-      showToast('\u5df2\u6838\u51c6', f.title, '\u2705');
+      var totalStages = f.approvers.length;
+      var allDone = f.statuses.every(function(s){ return s==='approved'; });
+      if(allDone){
+        f.status = 'approved';
+        notifyFormResult(f, 'approved', comment);
+      } else {
+        var nextId = f.approvers[i+1];
+        if(nextId){
+          if(!store.formNotifs) store.formNotifs = [];
+          store.formNotifs.unshift({
+            id: uid(), toUserId: nextId, formId: f.id,
+            title: '\u23f3 \u5f85\u60a8\u5be9\u6838\uff1a' + f.title,
+            body: '\u7b2c ' + (i+1) + ' \u968e\u5df2\u6838\u51c6\uff0c\u8f2a\u5230\u60a8\u7c3d\u6838',
+            time: today() + ' ' + nowTime(), read: false
+          });
+        }
+      }
+      var stageLabel = totalStages > 1 ? '\uff08\u7b2c'+(i+1)+'/'+totalStages+'\u968e'+(allDone?'\u3001\u6700\u7d42':'')+'\uff09' : '';
+      logAudit('\u5be9\u6838\u901a\u904e'+stageLabel, f.title||f.type||'\u8868\u55ae');
+      saveMultiple(['formRequests','formNotifs']); closeModal(); rnForms();
+      showToast(allDone?'\u5df2\u6838\u51c6\uff08\u6700\u7d42\uff09':'\u5df2\u6838\u51c6 '+stageLabel, f.title, '\u2705');
     }
   );
 }
@@ -139,7 +262,7 @@ function rejF(id){
       f.status = 'rejected';
       logAudit('\u5be9\u6838\u9000\u56de', f.title||f.type||'\u8868\u55ae');
       notifyFormResult(f, 'rejected', comment);
-      saveStore(); closeModal(); rnForms();
+      saveMultiple(['formRequests','formNotifs']); closeModal(); rnForms();
       showToast('\u5df2\u99b3\u56de', f.title, '\u274c');
     }
   );
@@ -218,34 +341,48 @@ function rnForms(){
 }
 function openNewFrm(){
   _pendingAttachment=null;
-  const approvers=store.users.filter(u=>u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'&&(u.role==='admin'||u.role==='supervisor'||(u.permissions&&u.permissions.approveForm)));
-  const aOpts=approvers.length
-    ?approvers.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('')
-    :'<option value="">（尚未設定可審核人員）</option>';
+  _approverPicks=[''];
   showModal('新增申請單',
-    '<div class="form-row"><label>類型</label><select id="fty"><option value="leave">請假</option><option value="overtime">加班</option><option value="supply">物品申請</option><option value="other">其他</option></select></div>'+
+    '<div class="form-row"><label>類型</label><select id="fty" onchange="onFormTypeChange()"><option value="leave">請假</option><option value="overtime">加班</option><option value="supply">物品申請</option><option value="other">其他</option></select></div>'+
     '<div class="form-row"><label>標題</label><input id="ftit" placeholder="例：特休假申請 4/20"></div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>開始日期</label><input id="fsd" type="date" value="'+today()+'"></div><div class="form-row"><label>結束日期</label><input id="fed" type="date" value="'+today()+'"></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="form-row"><label>開始日期</label><input id="fsd" type="date" value="'+today()+'" onchange="updateRuleBanner()"></div><div class="form-row"><label>結束日期</label><input id="fed" type="date" value="'+today()+'" onchange="updateRuleBanner()"></div></div>'+
+    '<div id="extraFieldHost"></div>'+
     '<div class="form-row"><label>原因</label><textarea id="frs"></textarea></div>'+
-    '<div class="form-row"><label>送審主管</label><select id="fap">'+aOpts+'</select></div>'+
+    '<div id="ruleBanner" style="font-size:12px;color:var(--primary);background:var(--s2);padding:8px 10px;border-radius:var(--radius-sm);margin:4px 0 10px;line-height:1.5"></div>'+
+    '<div class="form-row"><label>送審流程（依序簽核）</label><div id="approverPicker"></div></div>'+
     '<div class="form-row"><label>附件（圖片或 PDF，上限 800 KB）</label><input type="file" id="fattach" accept="image/*,.pdf" onchange="handleAttachment(this)" style="font-size:12px;width:100%"><div id="fattachPreview"></div></div>'+
     '<div class="form-row" style="margin-top:2px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="furgent" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer"> <span style="color:var(--red);font-weight:700">🔴 標記為緊急（置頂顯示並提醒審核人員）</span></label></div>',
-  ()=>{
-    const t=document.getElementById('ftit').value.trim();if(!t)return;
+  function(){
+    var t=document.getElementById('ftit').value.trim();if(!t){alert('請輸入標題');return;}
+    if(_approverPicks.some(function(x){return !x;})){alert('每一階都必須選擇審核人，或請移除空白階');return;}
+    if(!_approverPicks.length){alert('請至少指定 1 位審核人');return;}
+    var seen={};
+    for(var k=0;k<_approverPicks.length;k++){
+      if(seen[_approverPicks[k]]){alert('同一審核人不可重複指派於不同階');return;}
+      seen[_approverPicks[k]]=1;
+    }
+    var ty=document.getElementById('fty').value;
+    var hoursEl=document.getElementById('fhours'),amountEl=document.getElementById('famount');
     store.formRequests.unshift({
-      id:uid(),type:document.getElementById('fty').value,title:t,
+      id:uid(),type:ty,title:t,
       applicantId:currentUser.id,date:today(),
       startDate:document.getElementById('fsd').value,
       endDate:document.getElementById('fed').value,
       reason:document.getElementById('frs').value,
-      approvers:[document.getElementById('fap').value],
-      statuses:['pending'],status:'pending',createdAt:today(),
+      approvers:_approverPicks.slice(),
+      statuses:_approverPicks.map(function(){return 'pending';}),
+      comments:[],
+      status:'pending',createdAt:today(),
       urgent:!!(document.getElementById('furgent')&&document.getElementById('furgent').checked),
-      attachment:_pendingAttachment||null
+      attachment:_pendingAttachment||null,
+      hours:hoursEl?(parseFloat(hoursEl.value)||0):undefined,
+      amount:amountEl?(parseFloat(amountEl.value)||0):undefined
     });
-    _pendingAttachment=null;
-    saveStore();closeModal();rnForms();
+    _pendingAttachment=null;_approverPicks=[''];
+    saveCollection('formRequests');closeModal();rnForms();
+    showToast('已送出申請',t,'📋');
   });
+  setTimeout(function(){onFormTypeChange();applyRuleSuggestion();},0);
 }
 
 // 值班表
