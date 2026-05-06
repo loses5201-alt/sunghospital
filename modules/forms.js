@@ -198,11 +198,37 @@ function openFormDetail(id){
   var overallSt = f.status === 'approved' ? '\u2713 \u6838\u51c6' : f.status === 'rejected' ? '\u2717 \u99b3\u56de' : f.status === 'withdrawn' ? '\u21a9 \u5df2\u64a4\u56de' : '\u5be9\u6838\u4e2d';
   var overallClr = stColors[f.status] || 'var(--amber)';
 
+  // 重申歷程：往上找父單，往下找後續重申
+  var historyHtml = '';
+  if(f.resubmittedFrom){
+    var parent = store.formRequests.find(function(x){ return x.id === f.resubmittedFrom; });
+    if(parent){
+      var rejIdx = (parent.statuses||[]).lastIndexOf('rejected');
+      var rejComment = rejIdx >= 0 && parent.comments && parent.comments[rejIdx] ? parent.comments[rejIdx] : '';
+      historyHtml += '<div style="background:#fff8e1;border-left:3px solid var(--amber,#f5a623);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6">'
+        + '<div style="font-weight:700;color:var(--amber,#c87a00);margin-bottom:4px">↩ 此為重新申請</div>'
+        + '<div style="color:var(--muted)">原申請：<a onclick="closeModal();setTimeout(function(){openFormDetail(\''+parent.id+'\');},50)" style="color:var(--primary);cursor:pointer;text-decoration:underline">'+esc(parent.title)+'</a> · '+fmtDate(parent.createdAt)+'</div>'
+        + (rejComment ? '<div style="margin-top:6px;padding:6px 8px;background:rgba(255,255,255,0.6);border-radius:4px;font-style:italic;color:var(--text)">原駁回意見：「'+esc(rejComment)+'」</div>' : '')
+        + '</div>';
+    }
+  }
+  var children = (store.formRequests||[]).filter(function(x){ return x.resubmittedFrom === f.id; });
+  if(children.length){
+    historyHtml += '<div style="background:var(--s2);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6">'
+      + '<div style="font-weight:700;margin-bottom:4px">📎 後續重申</div>'
+      + children.map(function(ch){
+          var st = ch.status==='approved'?'✓ 核准':ch.status==='rejected'?'✗ 駁回':ch.status==='withdrawn'?'↩ 撤回':'⏳ 審核中';
+          return '<div style="margin-top:3px"><a onclick="closeModal();setTimeout(function(){openFormDetail(\''+ch.id+'\');},50)" style="color:var(--primary);cursor:pointer;text-decoration:underline">'+esc(ch.title)+'</a> · '+fmtDate(ch.createdAt)+' · '+st+'</div>';
+        }).join('')
+      + '</div>';
+  }
+
   var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 12px;background:var(--s2);border-radius:var(--radius-sm)">'
     + '<span class="ftype ' + ft.c + '">' + ft.l + '</span>'
     + '<span style="font-size:13px;font-weight:700;flex:1">' + esc(f.title) + '</span>'
     + '<span style="font-size:12px;font-weight:700;color:' + overallClr + '">' + overallSt + '</span>'
     + '</div>'
+    + historyHtml
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
     + '<div class="form-row" style="margin:0"><label>\u7533\u8acb\u4eba</label><div style="font-size:13px;padding:4px 0">' + esc(userName(f.applicantId)) + '</div></div>'
     + '<div class="form-row" style="margin:0"><label>\u7533\u8acb\u65e5\u671f</label><div style="font-size:13px;padding:4px 0">' + fmtDate(f.createdAt) + '</div></div>'
