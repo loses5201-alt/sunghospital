@@ -125,6 +125,29 @@ function renderFormsPage(c){
 }
 function isApp(f){const i=f.approvers.indexOf(currentUser.id);if(i<0)return false;if(i===0)return f.statuses[0]==='pending';return f.statuses[i-1]==='approved'&&f.statuses[i]==='pending';}
 
+// ── 代理人：找到當前待審階的索引 ──
+function getActiveApproverIdx(f){
+  if(!f||!f.approvers||f.status!=='pending')return -1;
+  for(var i=0;i<f.approvers.length;i++){
+    if(f.statuses[i]==='pending'){
+      if(i===0)return 0;
+      if(f.statuses[i-1]==='approved')return i;
+      return -1;
+    }
+  }
+  return -1;
+}
+function getDelegatorByDelegate(f,delegateId){
+  // 回傳 currentUser 是某個 active approver 的代理人時，那個 approver 的 idx；否則 -1
+  var i=getActiveApproverIdx(f);
+  if(i<0)return -1;
+  if(f.approvers[i]===delegateId)return -1; // 是本人
+  var actor=(store.users||[]).find(function(u){return u.id===f.approvers[i];});
+  if(actor&&actor.delegateId===delegateId)return i;
+  return -1;
+}
+function isAppViaDelegate(f){return getDelegatorByDelegate(f,currentUser.id)>=0;}
+
 // ── 逾期判定：pending 超過 24 小時 ──
 var FORM_OVERDUE_HOURS=24;
 function isFormOverdue(f){
@@ -263,62 +286,113 @@ function openFormDetail(id){
   }, 0);
 }
 
-// ── 新版 appF：帶意見 ──
+// ── 通知下一階審核人（含其代理人） ──
+function notifyNextApprover(f,nextIdx,prevIdx){
+  if(!store.formNotifs) store.formNotifs=[];
+  var nextId=f.approvers[nextIdx];
+  if(!nextId)return;
+  store.formNotifs.unshift({
+    id:uid(),toUserId:nextId,formId:f.id,
+    title:'⏳ 待您審核：'+f.title,
+    body:'第 '+(prevIdx+1)+' 階已核准，輪到您簽核',
+    time:today()+' '+nowTime(),read:false
+  });
+  var nextUser=(store.users||[]).find(function(u){return u.id===nextId;});
+  if(nextUser&&nextUser.delegateId){
+    store.formNotifs.unshift({
+      id:uid(),toUserId:nextUser.delegateId,formId:f.id,
+      title:'⏳ 代理待審：'+f.title,
+      body:'代理 '+nextUser.name+' 簽核（第 '+(nextIdx+1)+' 階）',
+      time:today()+' '+nowTime(),read:false
+    });
+  }
+}
+
+// ── 解析當前使用者於此單可作用的階段（直接審核或代理） ──
+function _resolveActorIdx(f){
+  var i=f.approvers.indexOf(currentUser.id);
+  if(i>=0){
+    var ok=(i===0)?(f.statuses[0]==='pending'):(f.statuses[i-1]==='approved'&&f.statuses[i]==='pending');
+    if(ok)return {idx:i,viaDelegate:false};
+  }
+  var di=getDelegatorByDelegate(f,currentUser.id);
+  if(di>=0)return {idx:di,viaDelegate:true};
+  return {idx:-1,viaDelegate:false};
+}
+
+// ── 新版 appF：支援代理 ──
 function appF(id){
-  showModal('\u5be9\u6838\u610f\u898b\uff08\u9078\u586b\uff09',
-    '<div class="form-row"><label>\u9644\u5e36\u610f\u898b</label><textarea id="apComment" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="\u9078\u586b\uff0c\u4f8b\uff1a\u540c\u610f\uff0c\u8acb\u6ce8\u610f\u8865\u73ed\u4e8b\u5b9c"></textarea></div>',
+  var f0=store.formRequests.find(function(x){return x.id===id;});
+  if(!f0)return;
+  var act0=_resolveActorIdx(f0);
+  if(act0.idx<0)return;
+  var delegateNote=act0.viaDelegate
+    ? '<div style="background:#eef5ff;border-left:3px solid var(--primary);padding:8px 10px;border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text)">🤝 您正在代理 <b>'+esc(userName(f0.approvers[act0.idx]))+'</b> 簽核此單，將記錄為代理簽核。</div>'
+    : '';
+  showModal('審核意見（選填）',
+    delegateNote+
+    '<div class="form-row"><label>附帶意見</label><textarea id="apComment" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="選填，例：同意，請注意補班事宜"></textarea></div>',
     function(){
       var comment = document.getElementById('apComment') ? document.getElementById('apComment').value.trim() : '';
       var f = store.formRequests.find(function(x){ return x.id===id; });
       if(!f) return;
-      var i = f.approvers.indexOf(currentUser.id);
-      if(i<0) return;
+      var act=_resolveActorIdx(f);
+      if(act.idx<0) return;
+      var i=act.idx;
       if(!f.comments) f.comments = [];
-      f.comments[i] = comment;
+      var prefix=act.viaDelegate?'（代理：'+currentUser.name+'）':'';
+      f.comments[i] = ((comment?comment+' ':'')+prefix).trim();
       f.statuses[i] = 'approved';
+      if(!f.actuallyApprovedBy) f.actuallyApprovedBy = [];
+      f.actuallyApprovedBy[i] = currentUser.id;
       var totalStages = f.approvers.length;
       var allDone = f.statuses.every(function(s){ return s==='approved'; });
       if(allDone){
         f.status = 'approved';
         notifyFormResult(f, 'approved', comment);
       } else {
-        var nextId = f.approvers[i+1];
-        if(nextId){
-          if(!store.formNotifs) store.formNotifs = [];
-          store.formNotifs.unshift({
-            id: uid(), toUserId: nextId, formId: f.id,
-            title: '\u23f3 \u5f85\u60a8\u5be9\u6838\uff1a' + f.title,
-            body: '\u7b2c ' + (i+1) + ' \u968e\u5df2\u6838\u51c6\uff0c\u8f2a\u5230\u60a8\u7c3d\u6838',
-            time: today() + ' ' + nowTime(), read: false
-          });
-        }
+        notifyNextApprover(f, i+1, i);
       }
-      var stageLabel = totalStages > 1 ? '\uff08\u7b2c'+(i+1)+'/'+totalStages+'\u968e'+(allDone?'\u3001\u6700\u7d42':'')+'\uff09' : '';
-      logAudit('\u5be9\u6838\u901a\u904e'+stageLabel, f.title||f.type||'\u8868\u55ae');
+      var stageLabel = totalStages > 1 ? '（第'+(i+1)+'/'+totalStages+'階'+(allDone?'、最終':'')+'）' : '';
+      var actorLabel = act.viaDelegate ? '代理 '+userName(f.approvers[i])+' 簽核' : '審核通過';
+      logAudit(actorLabel+stageLabel, f.title||f.type||'表單');
       saveMultiple(['formRequests','formNotifs']); closeModal(); rnForms();
-      showToast(allDone?'\u5df2\u6838\u51c6\uff08\u6700\u7d42\uff09':'\u5df2\u6838\u51c6 '+stageLabel, f.title, '\u2705');
+      showToast(allDone?'已核准（最終）':'已核准 '+stageLabel, f.title, '✅');
     }
   );
 }
 
-// ── 新版 rejF：帶意見 ──
+// ── 新版 rejF：支援代理 ──
 function rejF(id){
-  showModal('\u99b3\u56de\u539f\u56e0\uff08\u9078\u586b\uff09',
-    '<div class="form-row"><label>\u99b3\u56de\u539f\u56e0</label><textarea id="rjComment" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="\u9078\u586b\uff0c\u4f8b\uff1a\u65e5\u671f\u885d\u7a81\uff0c\u8acb\u91cd\u65b0\u7533\u8acb"></textarea></div>',
+  var f0=store.formRequests.find(function(x){return x.id===id;});
+  if(!f0)return;
+  var act0=_resolveActorIdx(f0);
+  if(act0.idx<0)return;
+  var delegateNote=act0.viaDelegate
+    ? '<div style="background:#eef5ff;border-left:3px solid var(--primary);padding:8px 10px;border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text)">🤝 您正在代理 <b>'+esc(userName(f0.approvers[act0.idx]))+'</b> 退回此單。</div>'
+    : '';
+  showModal('駁回原因（選填）',
+    delegateNote+
+    '<div class="form-row"><label>駁回原因</label><textarea id="rjComment" rows="3" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 10px;background:var(--bg);color:var(--text);resize:vertical;line-height:1.6" placeholder="選填，例：日期衝突，請重新申請"></textarea></div>',
     function(){
       var comment = document.getElementById('rjComment') ? document.getElementById('rjComment').value.trim() : '';
       var f = store.formRequests.find(function(x){ return x.id===id; });
       if(!f) return;
-      var i = f.approvers.indexOf(currentUser.id);
-      if(i<0) return;
+      var act=_resolveActorIdx(f);
+      if(act.idx<0) return;
+      var i=act.idx;
       if(!f.comments) f.comments = [];
-      f.comments[i] = comment;
+      var prefix=act.viaDelegate?'（代理：'+currentUser.name+'）':'';
+      f.comments[i] = ((comment?comment+' ':'')+prefix).trim();
       f.statuses[i] = 'rejected';
       f.status = 'rejected';
-      logAudit('\u5be9\u6838\u9000\u56de', f.title||f.type||'\u8868\u55ae');
+      if(!f.actuallyApprovedBy) f.actuallyApprovedBy = [];
+      f.actuallyApprovedBy[i] = currentUser.id;
+      var actorLabel = act.viaDelegate ? '代理 '+userName(f.approvers[i])+' 退回' : '審核退回';
+      logAudit(actorLabel, f.title||f.type||'表單');
       notifyFormResult(f, 'rejected', comment);
       saveMultiple(['formRequests','formNotifs']); closeModal(); rnForms();
-      showToast('\u5df2\u99b3\u56de', f.title, '\u274c');
+      showToast('已駁回', f.title, '❌');
     }
   );
 }
@@ -326,7 +400,7 @@ function rejF(id){
 // ── 個人簽核儀表板：統計 + 篩選 ──
 function renderFormDashboard(all){
   var me=currentUser.id;
-  var pendingForMe=all.filter(function(f){return f.status==='pending'&&isApp(f);});
+  var pendingForMe=all.filter(function(f){return f.status==='pending'&&(isApp(f)||isAppViaDelegate(f));});
   var myPending=all.filter(function(f){return f.applicantId===me&&f.status==='pending';});
   var ym=today().slice(0,7); // YYYY-MM
   var myThisMonth=all.filter(function(f){
@@ -386,6 +460,9 @@ function rnForms(){
     }).join('');
 
     var canA = isApp(f) && f.status==='pending';
+    var canADel = !canA && isAppViaDelegate(f);
+    var delActIdx = canADel ? getDelegatorByDelegate(f, currentUser.id) : -1;
+    var delActName = delActIdx>=0 ? userName(f.approvers[delActIdx]) : '';
     var canW = f.applicantId===currentUser.id && f.status==='pending';
     var dateRange = f.startDate
       ? ' \ud83d\udcc5 ' + fmtDate(f.startDate) + (f.endDate&&f.endDate!==f.startDate?' \uff5e '+fmtDate(f.endDate):'')
@@ -421,6 +498,8 @@ function rnForms(){
       + '<span class="' + stCls + '">' + stTxt + '</span>'
       + (canA ? '<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appF(\'' + f.id + '\')">\u6838\u51c6</button>'
                + '<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejF(\'' + f.id + '\')">\u99b3\u56de</button>' : '')
+      + (canADel ? '<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" title="\u4ee3\u7406 '+esc(delActName)+' \u7c3d\u6838" onclick="appF(\'' + f.id + '\')">\ud83e\udd1d \u4ee3\u7406\u6838\u51c6</button>'
+                  + '<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" title="\u4ee3\u7406 '+esc(delActName)+' \u99c1\u56de" onclick="rejF(\'' + f.id + '\')">\ud83e\udd1d \u4ee3\u7406\u99c1\u56de</button>' : '')
       + (canW ? '<button class="btn-sm" style="font-size:11px;padding:4px 8px" onclick="withdrawForm(\'' + f.id + '\')">\u64a4\u56de</button>' : '')
       + (f.applicantId===currentUser.id&&f.status==='rejected'?'<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="resubmitForm(\''+f.id+'\')">↩ 重新申請</button>':'')
       + '</div></div>';
@@ -441,7 +520,7 @@ function rnForms(){
   var listSrc;
   var sectionLabel='';
   if(_formFilter==='pending_me'){
-    listSrc = all.filter(function(f){ return f.status==='pending' && isApp(f); });
+    listSrc = all.filter(function(f){ return f.status==='pending' && (isApp(f)||isAppViaDelegate(f)); });
     sectionLabel = '\u5f85\u6211\u5be9\u6838\uff08' + listSrc.length + '\uff09';
   } else if(_formFilter==='my_pending'){
     listSrc = all.filter(function(f){ return f.applicantId===me && f.status==='pending'; });
@@ -457,7 +536,7 @@ function rnForms(){
     sectionLabel = '\u5168\u90e8\u7533\u8acb\uff08' + listSrc.length + '\uff09';
   }
 
-  var pend = (_formFilter==='all') ? all.filter(function(f){ return f.status==='pending' && isApp(f); }) : [];
+  var pend = (_formFilter==='all') ? all.filter(function(f){ return f.status==='pending' && (isApp(f)||isAppViaDelegate(f)); }) : [];
   var emptyHtml = '<div style="padding:30px;text-align:center;color:var(--faint);font-size:13px">\u6b64\u5206\u985e\u4e0b\u6c92\u6709\u8cc7\u6599</div>';
   c.innerHTML = dash + (pend.length
     ? '<div class="sec-label">\u5f85\u6211\u5be9\u6838\uff08' + pend.length + '\uff09</div>' + pend.map(rCard).join('') + '<div class="sec-label">' + sectionLabel + '</div>'

@@ -294,6 +294,12 @@ function userFormHtml(u){
       </select>
     </div>
     <div class="form-row"><label>到職日期</label><input id="uJoinDate" type="date" value="${u?.joinDate||''}"></div>
+    <div class="form-row" style="grid-column:1/-1"><label>簽核代理人 <span style="font-size:10px;color:var(--faint);font-weight:400">（不在時可代為簽核此人應審的表單）</span></label>
+      <select id="uDelegate">
+        <option value="">（無代理人）</option>
+        ${store.users.filter(x=>x.id!==(u&&u.id)&&(x.status||'active')==='active').map(x=>`<option value="${x.id}" ${u&&u.delegateId===x.id?'selected':''}>${esc(x.name)}${x.title?' · '+esc(x.title):''}</option>`).join('')}
+      </select>
+    </div>
   </div>
   <div class="form-row" style="margin-bottom:14px"><label>備註</label>
     <textarea id="uNote" style="min-height:55px" placeholder="內部備註、設備帳號等...">${esc(u?.note||'')}</textarea>
@@ -329,7 +335,7 @@ function saveUser(){
   // 收集全部 PERMISSION_DEFS 中的勾選狀態
   const perms={};
   PERMISSION_DEFS.forEach(function(sec){sec.items.forEach(function(pd){var el=document.getElementById('perm_'+pd.k);perms[pd.k]=!!(el&&el.checked);});});
-  const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value,permissions:perms,jobType:document.getElementById('uJobType')?.value||'',status:document.getElementById('uStatus')?.value||'active',joinDate:document.getElementById('uJoinDate')?.value||'',note:document.getElementById('uNote')?.value||''};
+  const data={name,username,deptId:document.getElementById('uDept').value,title:document.getElementById('uTitle').value,role:document.getElementById('uRole').value,avatar:document.getElementById('uAvatar').value,permissions:perms,jobType:document.getElementById('uJobType')?.value||'',status:document.getElementById('uStatus')?.value||'active',joinDate:document.getElementById('uJoinDate')?.value||'',note:document.getElementById('uNote')?.value||'',delegateId:document.getElementById('uDelegate')?.value||''};
   if(editingUserId){
     const u=store.users.find(x=>x.id===editingUserId);
     Object.assign(u,data);if(password)u.password=password;

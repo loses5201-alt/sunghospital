@@ -1251,7 +1251,7 @@ function renderHomePage(c){
   var shiftInfo=SHINFO[myShift];
   var allTasks=(store.meetings||[]).flatMap(function(m){return(m.tasks||[]).map(function(t){return Object.assign({},t,{meetingTitle:m.title});});});
   var myPendTasks=allTasks.filter(function(t){return t.assigneeId===currentUser.id&&t.status!=='已完成';});
-  var pendForms=(store.formRequests||[]).filter(function(f){return f.status==='pending'&&isApp(f);});
+  var pendForms=(store.formRequests||[]).filter(function(f){return f.status==='pending'&&(isApp(f)||(typeof isAppViaDelegate==='function'&&isAppViaDelegate(f)));});
 
   // ── 需要處理 Alert Board ──
   var alerts=[];
