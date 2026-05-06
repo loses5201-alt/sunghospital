@@ -44,10 +44,10 @@ function renderStatsPage(c){
     return {name:u.name, total:assigned.length, done:done, pct:assigned.length?Math.round(done/assigned.length*100):0};
   }).filter(function(u){ return u.total>0; }).sort(function(a,b){ return b.pct-a.pct; });
 
-  var annReadRates = store.announcements.slice(0,6).map(function(a){
-    var total = store.users.length;
-    var read = Object.values(a.reads).filter(Boolean).length;
-    return {title:a.title, pct:total?Math.round(read/total*100):0};
+  var annReadRates = (store.announcements||[]).slice(0,6).map(function(a){
+    var total = (store.users||[]).length;
+    var read = Object.values(a.reads||{}).filter(Boolean).length;
+    return {title:a.title||'(無標題)', pct:total?Math.round(read/total*100):0};
   });
 
   var babies = store.babies||[];

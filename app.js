@@ -2202,13 +2202,15 @@ function renderPerformanceSection(){
   return '<div class="stat-card" style="margin-top:14px"><div class="stat-card-title">👥 人員績效出勤概覽</div>'    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'    +'<thead><tr style="color:var(--muted)">'    +'<th style="text-align:left;padding:6px 8px;font-weight:600">姓名</th>'    +'<th style="padding:6px 4px;font-weight:600">班次</th><th style="padding:6px 4px;font-weight:600">請假</th>'    +'<th style="padding:6px 4px;font-weight:600">任務</th><th style="padding:6px 4px;font-weight:600">完成率</th>'    +'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
-var _origRenderStatsPage=renderStatsPage;
-renderStatsPage=function(c){
-  _origRenderStatsPage(c);
-  if(isAdmin()||hasPerm('viewReports')){
-    setTimeout(function(){var content=c.querySelector('.admin-content');if(content)content.insertAdjacentHTML('beforeend',renderPerformanceSection());},0);
-  }
-};
+if(typeof renderStatsPage==='function'){
+  var _origRenderStatsPage=renderStatsPage;
+  renderStatsPage=function(c){
+    _origRenderStatsPage(c);
+    if(isAdmin()||hasPerm('viewReports')){
+      setTimeout(function(){var content=c.querySelector('.admin-content');if(content)content.insertAdjacentHTML('beforeend',renderPerformanceSection());},0);
+    }
+  };
+}
 
 var _origRenderDutyPage2=(typeof renderDutyPage==='function')?renderDutyPage:null;
 if(_origRenderDutyPage2){

@@ -20,11 +20,11 @@ function openAnnFromMarquee(id){
 }
 function updateAnnBadge(){
   if(!currentUser)return;
-  const n=store.announcements.filter(a=>!a.reads[currentUser.id]).length;
+  const n=(store.announcements||[]).filter(a=>!(a.reads||{})[currentUser.id]).length;
   const b=document.getElementById('badge_ann');if(b)b.style.display=n>0?'flex':'none';
 }
 function markAllAnnRead(){
-  store.announcements.forEach(a=>{if(!a.reads[currentUser.id])a.reads[currentUser.id]=true;});
+  (store.announcements||[]).forEach(a=>{if(!a.reads)a.reads={};if(!a.reads[currentUser.id])a.reads[currentUser.id]=true;});
   saveCollection('announcements');updateAnnBadge();
 }
 function renderAnnouncementsPage(c){
@@ -49,18 +49,21 @@ function infLevelBadge(lv){
 }
 function renderAnnList(){
   const c=document.getElementById('annList');if(!c)return;
-  const sorted=[...store.announcements].sort((a,b)=>{
+  // 自我修復：補上缺少的 reads / time 欄位
+  (store.announcements||[]).forEach(a=>{if(!a.reads)a.reads={};if(!a.time)a.time='';});
+  const sorted=[...(store.announcements||[])].sort((a,b)=>{
     const w=x=>x.infectionLevel==='red'?0:x.infectionLevel==='orange'?1:x.pinned?2:3;
-    return w(a)-w(b)||b.time.localeCompare(a.time);
+    return w(a)-w(b)||(b.time||'').localeCompare(a.time||'');
   });
-  const allIds=store.users.map(u=>u.id);
+  const allIds=(store.users||[]).map(u=>u.id);
   const cards=sorted.map((a,i)=>{
+    const reads=a.reads||{};
     const infClass=a.infectionLevel==='red'?'infection-red':a.infectionLevel==='orange'?'infection-orange':a.infectionLevel==='yellow'?'infection-yellow':a.pinned?'pinned':'';
     const badge=a.infectionLevel?infLevelBadge(a.infectionLevel):(a.pinned?infLevelBadge('pinned'):'');
-    const readList=allIds.map(uid=>`<span class="ann-read-chip ${a.reads[uid]?'arc-read':'arc-unread'}">${a.reads[uid]?'✓':''} ${esc(userName(uid))}</span>`).join('');
-    const readCount=allIds.filter(uid=>a.reads[uid]).length;
+    const readList=allIds.map(uid=>`<span class="ann-read-chip ${reads[uid]?'arc-read':'arc-unread'}">${reads[uid]?'✓':''} ${esc(userName(uid))}</span>`).join('');
+    const readCount=allIds.filter(uid=>reads[uid]).length;
     const readPct=allIds.length?Math.round(readCount/allIds.length*100):0;
-    const myRead=a.reads[currentUser.id];
+    const myRead=reads[currentUser.id];
     return`<div class="ann-card ${infClass}" data-ann-id="${a.id}">
       ${badge}
       <div class="ann-header">${avatarEl(a.authorId,26)}<div class="ann-title-text">${esc(a.title)}</div></div>
@@ -99,7 +102,7 @@ function saveAnn(){
   logAudit('發布公告', document.getElementById('annTitle').value.trim());
   saveCollection('announcements');closeModal();renderAnnList();updateAnnBadge();updateMarquee();
 }
-function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a)a.reads[currentUser.id]=true;saveCollection('announcements');renderAnnList();updateAnnBadge();}
+function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a){if(!a.reads)a.reads={};a.reads[currentUser.id]=true;}saveCollection('announcements');renderAnnList();updateAnnBadge();}
 function togglePin(id){const a=store.announcements.find(x=>x.id===id);if(a)a.pinned=!a.pinned;saveCollection('announcements');renderAnnList();}
 function deleteAnn(id){if(!confirm('確定刪除？'))return;const da=store.announcements.find(x=>x.id===id);store.announcements=store.announcements.filter(x=>x.id!==id);logAudit('刪除公告', da?da.title:'');saveCollection('announcements');renderAnnList();updateMarquee();}
 
