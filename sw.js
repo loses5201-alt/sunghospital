@@ -1,4 +1,4 @@
-var CACHE = 'sunghospital-20260426';
+var CACHE = 'sunghospital-20260506';
 var ASSETS = [
   '/sunghospital/',
   '/sunghospital/index.html',
