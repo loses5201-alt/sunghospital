@@ -348,7 +348,7 @@ function saveUser(){
   }
   saveCollection('users');closeModal();renderUserContent();
 }
-function deleteUser(id){if(!confirm('確定刪除此人員？'))return;const du=store.users.find(x=>x.id===id);store.users=store.users.filter(x=>x.id!==id);logAudit('刪除人員', du?du.name:'');saveCollection('users');renderUserContent();}
+function deleteUser(id){if(!isAdmin()){showToast('無權限','只有管理員能刪除人員','🔒');return;}if(id===currentUser.id){showToast('無法刪除自己','請改用停用 / 離職狀態','⚠️');return;}if(!confirm('確定刪除此人員？此動作無法復原。'))return;const du=store.users.find(x=>x.id===id);store.users=store.users.filter(x=>x.id!==id);logAudit('刪除人員', du?du.name:'');saveCollection('users');renderUserContent();}
 
 // ══════════════════════════════════════════
 // CHANGE PASSWORD

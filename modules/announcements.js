@@ -104,7 +104,7 @@ function saveAnn(){
 }
 function readAnn(id){const a=store.announcements.find(x=>x.id===id);if(a){if(!a.reads)a.reads={};a.reads[currentUser.id]=true;}saveCollection('announcements');renderAnnList();updateAnnBadge();}
 function togglePin(id){const a=store.announcements.find(x=>x.id===id);if(a)a.pinned=!a.pinned;saveCollection('announcements');renderAnnList();}
-function deleteAnn(id){if(!confirm('確定刪除？'))return;const da=store.announcements.find(x=>x.id===id);store.announcements=store.announcements.filter(x=>x.id!==id);logAudit('刪除公告', da?da.title:'');saveCollection('announcements');renderAnnList();updateMarquee();}
+function deleteAnn(id){if(!hasPerm('publishAnn')){showToast('無權限','只有公告管理者能刪除公告','🔒');return;}if(!confirm('確定刪除？'))return;const da=store.announcements.find(x=>x.id===id);store.announcements=store.announcements.filter(x=>x.id!==id);logAudit('刪除公告', da?da.title:'');saveCollection('announcements');renderAnnList();updateMarquee();}
 
 
 // ── 緊急廣播 (moved from meetings block) ──

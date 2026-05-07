@@ -590,7 +590,30 @@ function openNewFrm(){
       amount:amountEl?(parseFloat(amountEl.value)||0):undefined
     });
     _pendingAttachment=null;_approverPicks=[''];
-    saveCollection('formRequests');closeModal();rnForms();
+    // 通知第一階審核人 + 其代理人
+    var newF=store.formRequests[0];
+    if(newF&&newF.approvers&&newF.approvers[0]){
+      if(!store.formNotifs)store.formNotifs=[];
+      store.formNotifs.unshift({
+        id:uid(),toUserId:newF.approvers[0],formId:newF.id,
+        title:'⏳ 待您審核：'+newF.title,
+        body:userName(newF.applicantId)+' 送出申請，請審核',
+        time:today()+' '+nowTime(),read:false
+      });
+      var firstApr=(store.users||[]).find(function(u){return u.id===newF.approvers[0];});
+      if(firstApr&&firstApr.delegateId){
+        store.formNotifs.unshift({
+          id:uid(),toUserId:firstApr.delegateId,formId:newF.id,
+          title:'⏳ 代理待審：'+newF.title,
+          body:'代理 '+firstApr.name+' 簽核',
+          time:today()+' '+nowTime(),read:false
+        });
+      }
+      saveMultiple(['formRequests','formNotifs']);
+    } else {
+      saveCollection('formRequests');
+    }
+    closeModal();rnForms();
     showToast('已送出申請',t,'📋');
   });
   setTimeout(function(){onFormTypeChange();applyRuleSuggestion();},0);
