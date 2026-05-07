@@ -652,23 +652,91 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
 .eexp.open{display:block}
 
 /* ── LOGIN PAGE ── */
-#loginScreen{position:fixed;inset:0;overflow-y:auto;background:linear-gradient(145deg,#4a1535 0%,#8b3060 45%,#c4527a 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px}
-.login-card{position:relative;background:white;border-radius:20px;padding:20px 36px 32px;width:390px;max-width:94vw;box-shadow:0 30px 80px rgba(100,20,50,0.35)}
-.login-hero{position:absolute;top:-155px;left:50%;transform:translateX(-50%);width:160px;height:190px;z-index:10;filter:drop-shadow(0 8px 40px rgba(212,175,55,0.6))}
-.login-hero img{width:100%;height:100%;object-fit:cover;object-position:top center;border-radius:80px 80px 60px 60px;border:3px solid rgba(212,175,55,0.85)}
-.login-hero::before{content:'';position:absolute;inset:-14px;border-radius:95px 95px 75px 75px;background:radial-gradient(ellipse,rgba(212,175,55,0.25) 0%,transparent 70%);z-index:-1;animation:gpulse 2.5s ease-in-out infinite}
-@keyframes gpulse{0%,100%{opacity:.4}50%{opacity:1}}
-.login-director-name{font-size:22px;font-weight:800;color:#8a5c00;text-align:center;margin-bottom:3px;margin-top:12px;font-family:'Nunito',sans-serif;letter-spacing:-.02em}
-.login-director-title{font-size:11px;color:#c8971a;text-align:center;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:22px}
+#loginScreen{position:fixed;inset:0;overflow:hidden;background:linear-gradient(145deg,#3a0d28 0%,#7a2a55 35%,#b8407a 70%,#e8829a 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px;background-size:200% 200%;animation:loginBgShift 20s ease-in-out infinite}
+@keyframes loginBgShift{0%,100%{background-position:0% 0%}50%{background-position:100% 100%}}
+
+/* 背景：星空 + 流星 */
+.login-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.login-stars{position:absolute;inset:0;background-image:
+  radial-gradient(1px 1px at 23% 18%,rgba(255,255,255,0.9) 0%,transparent 100%),
+  radial-gradient(1px 1px at 67% 12%,rgba(255,255,255,0.7) 0%,transparent 100%),
+  radial-gradient(1px 1px at 91% 28%,rgba(255,235,180,0.85) 0%,transparent 100%),
+  radial-gradient(1.5px 1.5px at 14% 44%,rgba(255,255,255,0.95) 0%,transparent 100%),
+  radial-gradient(1px 1px at 49% 32%,rgba(255,255,255,0.6) 0%,transparent 100%),
+  radial-gradient(1px 1px at 78% 55%,rgba(255,235,180,0.8) 0%,transparent 100%),
+  radial-gradient(1px 1px at 33% 67%,rgba(255,255,255,0.7) 0%,transparent 100%),
+  radial-gradient(1.5px 1.5px at 8% 76%,rgba(255,255,255,0.9) 0%,transparent 100%),
+  radial-gradient(1px 1px at 58% 82%,rgba(255,235,180,0.75) 0%,transparent 100%),
+  radial-gradient(1px 1px at 87% 88%,rgba(255,255,255,0.8) 0%,transparent 100%),
+  radial-gradient(1px 1px at 41% 92%,rgba(255,255,255,0.6) 0%,transparent 100%),
+  radial-gradient(1px 1px at 72% 38%,rgba(255,235,180,0.7) 0%,transparent 100%);
+  animation:starsTwinkle 4s ease-in-out infinite}
+@keyframes starsTwinkle{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* 流星 — 從右上往左下劃過 */
+.login-meteor{position:absolute;width:2px;height:2px;background:white;border-radius:50%;box-shadow:0 0 8px 2px rgba(255,255,255,0.9),0 0 18px 4px rgba(255,235,180,0.5);opacity:0}
+.login-meteor::after{content:'';position:absolute;top:0;left:1px;width:140px;height:2px;background:linear-gradient(90deg,rgba(255,255,255,0.95),rgba(255,235,180,0.6) 25%,transparent);transform-origin:0 50%;transform:rotate(-45deg);filter:blur(0.5px)}
+@keyframes meteorFall{
+  0%{opacity:0;transform:translate(0,0)}
+  3%{opacity:1}
+  60%{opacity:1}
+  100%{opacity:0;transform:translate(-360px,360px)}
+}
+.login-meteor-1{top:8%;left:90%;animation:meteorFall 3.2s linear infinite;animation-delay:.4s}
+.login-meteor-2{top:18%;left:70%;animation:meteorFall 4.5s linear infinite;animation-delay:1.8s}
+.login-meteor-3{top:5%;left:55%;animation:meteorFall 3.8s linear infinite;animation-delay:3.4s}
+.login-meteor-4{top:32%;left:85%;animation:meteorFall 5.0s linear infinite;animation-delay:5.2s}
+.login-meteor-5{top:42%;left:65%;animation:meteorFall 4.2s linear infinite;animation-delay:7.0s}
+.login-meteor-6{top:14%;left:40%;animation:meteorFall 3.5s linear infinite;animation-delay:8.5s}
+.login-meteor-7{top:56%;left:80%;animation:meteorFall 4.8s linear infinite;animation-delay:10.5s}
+.login-meteor-8{top:25%;left:96%;animation:meteorFall 4.0s linear infinite;animation-delay:12.5s}
+
+.login-card{position:relative;background:white;border-radius:22px;padding:20px 36px 34px;width:400px;max-width:94vw;box-shadow:0 30px 90px rgba(100,20,50,0.4),0 0 40px rgba(255,235,180,0.15);z-index:1}
+
+/* 院長頭像 — 多層聖光 */
+.login-hero{position:absolute;top:-160px;left:50%;transform:translateX(-50%);width:170px;height:200px;z-index:10}
+.login-hero img{width:100%;height:100%;object-fit:cover;object-position:top center;border-radius:85px 85px 65px 65px;border:3px solid rgba(255,235,180,0.95);box-shadow:0 0 30px rgba(255,215,100,0.7),0 8px 30px rgba(212,175,55,0.5);position:relative;z-index:3}
+
+/* 第一層：脈動光暈 */
+.login-hero::before{content:'';position:absolute;inset:-30px;border-radius:50%;background:radial-gradient(ellipse,rgba(255,235,150,0.55) 0%,rgba(255,200,80,0.3) 30%,transparent 65%);z-index:1;animation:haloPulse 2.8s ease-in-out infinite;filter:blur(8px)}
+@keyframes haloPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+
+/* 第二層：旋轉光芒（聖光輻射）*/
+.login-hero::after{content:'';position:absolute;inset:-60px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0deg,rgba(255,235,150,0.6) 5deg,transparent 15deg,transparent 30deg,rgba(255,215,100,0.55) 35deg,transparent 45deg,transparent 60deg,rgba(255,235,150,0.5) 65deg,transparent 75deg,transparent 90deg,rgba(255,215,100,0.6) 95deg,transparent 105deg,transparent 120deg,rgba(255,235,150,0.5) 125deg,transparent 135deg,transparent 150deg,rgba(255,215,100,0.55) 155deg,transparent 165deg,transparent 180deg,rgba(255,235,150,0.6) 185deg,transparent 195deg,transparent 210deg,rgba(255,215,100,0.5) 215deg,transparent 225deg,transparent 240deg,rgba(255,235,150,0.55) 245deg,transparent 255deg,transparent 270deg,rgba(255,215,100,0.6) 275deg,transparent 285deg,transparent 300deg,rgba(255,235,150,0.5) 305deg,transparent 315deg,transparent 330deg,rgba(255,215,100,0.55) 335deg,transparent 345deg);z-index:0;animation:haloRays 18s linear infinite;filter:blur(2px);mask:radial-gradient(circle,transparent 40%,black 50%,black 80%,transparent 100%);-webkit-mask:radial-gradient(circle,transparent 40%,black 50%,black 80%,transparent 100%)}
+@keyframes haloRays{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* 反向旋轉的次級光芒 */
+.login-hero{filter:drop-shadow(0 0 20px rgba(255,215,100,0.6)) drop-shadow(0 8px 30px rgba(212,175,55,0.5))}
+.login-director-name{font-size:24px;font-weight:800;background:linear-gradient(135deg,#a86c00 0%,#d4af37 50%,#a86c00 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:4px;margin-top:14px;font-family:'Nunito',sans-serif;letter-spacing:-.01em;text-shadow:0 2px 8px rgba(212,175,55,0.15)}
+.login-director-title{font-size:12px;color:#c8971a;text-align:center;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:24px;position:relative}
+.login-director-title::before,.login-director-title::after{content:'';position:absolute;top:50%;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.6))}
+.login-director-title::before{left:50%;transform:translateX(-130px)}
+.login-director-title::after{right:50%;transform:translateX(130px) scaleX(-1)}
 .login-lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.login-input{width:100%;font-family:inherit;font-size:13px;border:1px solid var(--b2);border-radius:var(--radius-sm);padding:10px 13px;background:#fdf6f8;color:var(--text);outline:none;margin-bottom:14px;transition:border-color .15s}
-.login-input:focus{border-color:#c4527a}
-.btn-login{width:100%;padding:12px;border-radius:var(--radius-sm);border:1.5px solid rgba(212,175,55,0.5);background:linear-gradient(135deg,#c4527a,#e8829a);color:white;font-size:14px;font-family:inherit;cursor:pointer;font-weight:800;letter-spacing:.06em;transition:opacity .15s;box-shadow:0 2px 12px rgba(212,175,55,0.2)}
-.btn-login:hover{opacity:.88}
+.login-input{width:100%;font-family:inherit;font-size:14px;font-weight:500;border:1.5px solid var(--b2);border-radius:var(--radius-sm);padding:11px 14px;background:#fdf6f8;color:var(--text);outline:none;margin-bottom:14px;transition:border-color .2s,box-shadow .2s,background .2s}
+.login-input:focus{border-color:#d4af37;background:white;box-shadow:0 0 0 3px rgba(212,175,55,0.18)}
+.btn-login{width:100%;padding:14px;border-radius:var(--radius-sm);border:1.5px solid rgba(212,175,55,0.6);background:linear-gradient(135deg,#d4af37 0%,#c4527a 50%,#e8829a 100%);background-size:200% 200%;color:white;font-size:15px;font-family:inherit;cursor:pointer;font-weight:800;letter-spacing:.08em;transition:all .25s;box-shadow:0 4px 16px rgba(212,175,55,0.35),0 2px 8px rgba(196,82,122,0.25);position:relative;overflow:hidden}
+.btn-login:hover{background-position:100% 100%;transform:translateY(-1px);box-shadow:0 6px 22px rgba(212,175,55,0.45),0 4px 12px rgba(196,82,122,0.35)}
+.btn-login:active{transform:translateY(0)}
 .login-err{font-size:12px;color:#b03050;background:#fce8ee;border:1px solid #f0c0c0;border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:12px;display:none}
 .login-hints{margin-top:18px;padding:11px;background:#fdf6f8;border-radius:var(--radius-sm);font-size:11px;color:var(--faint);line-height:1.9}
 .login-hints strong{color:var(--muted)}
-.login-noc{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid rgba(212,175,55,0.15);font-size:10px;color:#c8a060;letter-spacing:.12em;font-weight:600;font-family:'Nunito',sans-serif}
+.login-noc{text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid rgba(212,175,55,0.18);font-size:11px;color:#c8a060;letter-spacing:.14em;font-weight:600;font-family:'Nunito',sans-serif}
+
+/* 行動裝置：縮小流星 + hero 等比例 */
+@media (max-width:600px){
+  .login-hero{width:140px;height:170px;top:-140px}
+  .login-hero img{border-radius:70px 70px 55px 55px}
+  .login-meteor::after{width:90px}
+  #loginScreen{padding-top:160px}
+  .login-card{padding:18px 24px 28px}
+  .login-director-name{font-size:21px}
+}
+
+/* 低效能裝置（prefers-reduced-motion）關閉動畫 */
+@media (prefers-reduced-motion:reduce){
+  .login-meteor,.login-hero::before,.login-hero::after,.login-stars,#loginScreen{animation:none !important}
+}
 
 
 #pageContainer{flex:1;overflow-y:auto;height:100%;min-height:0}
