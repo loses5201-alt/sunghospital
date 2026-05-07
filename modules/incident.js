@@ -30,7 +30,7 @@ function renderIRList(){
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <span class="ir-level ${lv.cls}">${lv.label}</span>${st}
-          <span style="font-size:11px;color:var(--faint)">${fmtDate(ir.date)} · ${esc(userDept(ir.reporterId))}</span>
+          <span style="font-size:12px;color:var(--faint)">${fmtDate(ir.date)} · ${esc(userDept(ir.reporterId))}</span>
         </div>
         ${hasPerm('manageIR')?`<select class="task-select" onchange="updateIRStatus('${ir.id}',this.value)">
           <option ${ir.status==='new'?'selected':''} value="new">新通報</option>
@@ -41,16 +41,16 @@ function renderIRList(){
       <div style="font-size:14px;font-weight:600;margin-bottom:8px">${esc(ir.title)}</div>
       <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:10px">${esc(ir.description)}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">已採取行動</div>
+        <div><div style="font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">已採取行動</div>
           <div style="font-size:12px;color:var(--muted);background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px">${esc(ir.actions)||'—'}</div></div>
-        <div><div style="font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">後續追蹤</div>
+        <div><div style="font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">後續追蹤</div>
           <div style="font-size:12px;color:var(--muted);background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px">${esc(ir.followUp)||'—'}</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b1)">
         ${avatarEl(ir.reporterId,20)}<span style="font-size:12px;color:var(--muted)">通報人：${esc(userName(ir.reporterId))}</span>
         <button class="btn-xs" style="margin-left:auto" onclick="openIRComment('${ir.id}')">💬 跟進留言</button>
       </div>
-      ${(ir.comments||[]).length?'<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">'+(ir.comments||[]).map(function(cm){return'<div style="font-size:11px;padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid var(--primary)"><span style="font-weight:600;color:var(--primary)">'+esc(userName(cm.userId))+'</span> <span style="color:var(--faint)">'+esc((cm.at||'').slice(0,10))+'</span><div style="margin-top:3px">'+esc(cm.text)+'</div></div>';}).join('')+'</div>':''}
+      ${(ir.comments||[]).length?'<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">'+(ir.comments||[]).map(function(cm){return'<div style="font-size:12px;padding:6px 10px;background:var(--bg);border-radius:var(--radius-sm);border-left:3px solid var(--primary)"><span style="font-weight:600;color:var(--primary)">'+esc(userName(cm.userId))+'</span> <span style="color:var(--faint)">'+esc((cm.at||'').slice(0,10))+'</span><div style="margin-top:3px">'+esc(cm.text)+'</div></div>';}).join('')+'</div>':''}
     </div>`;
   }).join('');
   c.innerHTML=html||'<div style="text-align:center;padding:40px;color:var(--faint);font-size:13px">尚無通報紀錄</div>';

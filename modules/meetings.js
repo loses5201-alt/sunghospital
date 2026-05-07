@@ -64,7 +64,7 @@ function renderNotes(c, m) {
     return '<div class="attendee-chip" style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm)">'
       + avatarEl(uid2, 26)
       + '<div><div style="font-size:12px;font-weight:500">' + esc(userName(uid2)) + '</div>'
-      + '<div style="font-size:10px;color:var(--faint)">' + esc(userTitle(uid2)) + ' · ' + esc(userDept(uid2)) + '</div></div>'
+      + '<div style="font-size:11px;color:var(--faint)">' + esc(userTitle(uid2)) + ' · ' + esc(userDept(uid2)) + '</div></div>'
       + '<div style="width:7px;height:7px;border-radius:50%;background:' + (r && r.read ? 'var(--green)' : 'var(--b3)') + ';margin-left:auto" title="' + (r && r.read ? '已讀' : '未讀') + '"></div>'
       + '</div>';
   }).join('');
@@ -75,7 +75,7 @@ function renderNotes(c, m) {
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">'
     + '<div class="sec-label" style="margin:0">會議摘要</div>'
     + (isAdmin() || m.attendeeIds.includes(currentUser.id)
-      ? '<button onclick="editNotesInline(\'' + m.id + '\')" style="font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">✏️ 編輯摘要</button>'
+      ? '<button onclick="editNotesInline(\'' + m.id + '\')" style="font-size:12px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">✏️ 編輯摘要</button>'
       : '')
     + '</div>'
     + '<div id="notesDisplay" style="background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius);padding:14px 16px;font-size:14px;line-height:1.8;white-space:pre-wrap">'
@@ -144,7 +144,7 @@ function renderTasks(c, m) {
   var filterHtml = '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">'
     + filterDefs.map(function(fd) {
       var active = _taskFilter === fd.k;
-      return '<button onclick="setTaskFilter(\'' + fd.k + '\')" style="padding:4px 11px;border-radius:99px;border:1.5px solid ' + (active ? 'var(--primary)' : 'var(--b2)') + ';background:' + (active ? 'var(--primary)' : 'transparent') + ';color:' + (active ? 'white' : 'var(--muted)') + ';font-size:11px;font-family:inherit;cursor:pointer;font-weight:' + (active ? '600' : '400') + ';transition:all .12s">'
+      return '<button onclick="setTaskFilter(\'' + fd.k + '\')" style="padding:4px 11px;border-radius:99px;border:1.5px solid ' + (active ? 'var(--primary)' : 'var(--b2)') + ';background:' + (active ? 'var(--primary)' : 'transparent') + ';color:' + (active ? 'white' : 'var(--muted)') + ';font-size:12px;font-family:inherit;cursor:pointer;font-weight:' + (active ? '600' : '400') + ';transition:all .12s">'
         + fd.l + (fd.n ? ' ' + fd.n : '') + '</button>';
     }).join('')
     + '</div>';
@@ -160,7 +160,7 @@ function renderTasks(c, m) {
       + (isDone ? '✓' : isIP ? '◑' : '') + '</div>'
       + '<div class="task-body">'
       + '<div class="task-text ' + (isDone ? 'done-text' : '') + '">' + esc(t.text) + '</div>'
-      + (t.note ? '<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic;line-height:1.4">📝 ' + esc(t.note) + '</div>' : '')
+      + (t.note ? '<div style="font-size:12px;color:var(--muted);margin-top:2px;font-style:italic;line-height:1.4">📝 ' + esc(t.note) + '</div>' : '')
       + '<div class="task-meta">' + avatarEl(t.assigneeId, 18) + '<span class="task-assignee">' + esc(userName(t.assigneeId)) + '</span>'
       + prioBadge(t.priority)
       + (t.due ? '<span class="due-tag ' + dc + '">' + fmtDate(t.due) + '</span>' : '')
@@ -182,7 +182,7 @@ function renderTasks(c, m) {
   c.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
     + '<div class="sec-label" style="margin:0">任務清單（' + tasks.length + '項）</div>'
     + (canEdit && doneCount
-      ? '<button onclick="clearCompletedTasks()" style="font-size:11px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">清除已完成（' + doneCount + '）</button>'
+      ? '<button onclick="clearCompletedTasks()" style="font-size:12px;padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-family:inherit;cursor:pointer">清除已完成（' + doneCount + '）</button>'
       : '')
     + '</div>'
     + filterHtml
@@ -300,11 +300,11 @@ function renderProgress(c,m){
     const col=pct===100?'pf-green':pct>0?'pf-amber':'pf-gray';
     const mini=s.tasks.map(t=>{
       const cls=t.status==='已完成'?'ms-done':t.status==='進行中'?'ms-ip':'ms-todo';
-      return`<div class="mini-task"><span class="mini-status ${cls}">${t.status}</span>${prioBadge(t.priority)}<span style="flex:1">${esc(t.text)}</span>${t.due?`<span style="font-size:10px;color:var(--faint)">${fmtDate(t.due)}</span>`:''}</div>`;
+      return`<div class="mini-task"><span class="mini-status ${cls}">${t.status}</span>${prioBadge(t.priority)}<span style="flex:1">${esc(t.text)}</span>${t.due?`<span style="font-size:11px;color:var(--faint)">${fmtDate(t.due)}</span>`:''}</div>`;
     }).join('');
     return`<div class="person-card">
       <div class="person-header">
-        <div class="person-name-row">${avatarEl(uid,24)}${esc(userName(uid))}<span style="font-size:11px;color:var(--faint)">${esc(userTitle(uid))}</span></div>
+        <div class="person-name-row">${avatarEl(uid,24)}${esc(userName(uid))}<span style="font-size:12px;color:var(--faint)">${esc(userTitle(uid))}</span></div>
         <div class="person-stats">${s.done}/${s.total} · ${pct}%</div>
       </div>
       <div class="progress-wrap"><div class="progress-fill ${col}" style="width:${pct}%"></div></div>
@@ -408,7 +408,7 @@ function renderVotes(c,m){
         <div class="vote-question">${esc(v.question)}</div><span class="${v.closed?'vs-closed':'vs-open'}">${v.closed?'已結束':'進行中'}</span>
       </div>
       <div class="vote-options">${opts}</div>
-      <div class="vote-meta"><span>${tv} 人投票</span>${!v.closed&&canManage?`<button class="btn-ghost" style="padding:4px 8px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-size:11px;font-family:inherit;cursor:pointer" onclick="closeVote(${vi})">結束</button>`:''}</div>
+      <div class="vote-meta"><span>${tv} 人投票</span>${!v.closed&&canManage?`<button class="btn-ghost" style="padding:4px 8px;border-radius:var(--radius-sm);border:1px solid var(--b2);background:transparent;color:var(--muted);font-size:12px;font-family:inherit;cursor:pointer" onclick="closeVote(${vi})">結束</button>`:''}</div>
     </div>`;
   }).join('');
   c.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">

@@ -127,7 +127,7 @@ function renderShiftList(){
     var isToday = date === today();
     var cards   = groups[date].map(function(s){ return _shiftCard(s); }).join('');
     return '<div class="home-section" style="margin-top:14px;margin-bottom:8px">'
-      +(isToday?'<span style="background:var(--primary);color:#fff;font-size:10px;padding:2px 7px;border-radius:99px;margin-right:6px">今天</span>':'')
+      +(isToday?'<span style="background:var(--primary);color:#fff;font-size:11px;padding:2px 7px;border-radius:99px;margin-right:6px">今天</span>':'')
       +fmtDate(date)+'</div>'+cards;
   }).join('');
 
@@ -151,7 +151,7 @@ function _shiftCard(s){
       +s.flags.map(function(fid){
         var fd = SH_FLAGS.find(function(f){ return f.id===fid; });
         if(!fd) return '';
-        return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:'+fd.color+'22;color:'+fd.color+'">'
+        return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:'+fd.color+'22;color:'+fd.color+'">'
           +fd.icon+' '+fd.label+'</span>';
       }).join('')
       +'</div>';
@@ -168,13 +168,13 @@ function _shiftCard(s){
     var allDone = clDone === clTotal;
     checklistHtml = '<div class="handover-field" style="margin-top:8px">'
       +'<label>✅ 待辦清單 '
-      +(allDone?'<span class="sign-chip sign-done" style="font-size:10px">全部完成 ✓</span>'
-               :'<span style="font-size:10px;color:var(--faint)">('+clDone+'/'+clTotal+')</span>')
+      +(allDone?'<span class="sign-chip sign-done" style="font-size:11px">全部完成 ✓</span>'
+               :'<span style="font-size:11px;color:var(--faint)">('+clDone+'/'+clTotal+')</span>')
       +'</label>'
       +'<div class="cl-list">'
       +s.checklist.map(function(item){
         var ts = item.done && item.doneAt
-          ? '<span style="font-size:10px;color:var(--faint);margin-left:auto;white-space:nowrap">'+esc(userName(item.doneBy||''))+' '+esc((item.doneAt||'').slice(11,16))+'</span>'
+          ? '<span style="font-size:11px;color:var(--faint);margin-left:auto;white-space:nowrap">'+esc(userName(item.doneBy||''))+' '+esc((item.doneAt||'').slice(11,16))+'</span>'
           : '';
         return '<label class="cl-item'+(item.done?' cl-done':'')+'" style="display:flex;align-items:center;gap:6px">'
           +'<input type="checkbox" '+(item.done?'checked':'')
@@ -283,7 +283,7 @@ function openNewShift(){
 
     // 快速範本
     +'<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">'
-    +'<span style="font-size:11px;color:var(--faint);align-self:center">快速範本：</span>'
+    +'<span style="font-size:12px;color:var(--faint);align-self:center">快速範本：</span>'
     +'<button class="btn-xs" onclick="_fillShiftTemplate(\'maternity\')">🏥 產後病房</button>'
     +'<button class="btn-xs" onclick="_fillShiftTemplate(\'nicu\')">🍼 新生兒室</button>'
     +'<button class="btn-xs" onclick="_fillShiftTemplate(\'delivery\')">🌸 產房</button>'
@@ -527,8 +527,8 @@ function openShiftHelp(){
     +'<div class="hc-header"><span class="shift-badge shift-night">🌙 夜班</span><div class="hc-title">產後護理 3A 病房</div>'
     +'<span class="sign-chip sign-pending"><span class="sign-dot"></span>待接班確認</span></div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px">'
-    +'<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:#e0500022;color:#e05000">🚫 禁食 NPO</span>'
-    +'<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:#c0003022;color:#c00030">💊 藥物過敏警示</span>'
+    +'<span style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:#e0500022;color:#e05000">🚫 禁食 NPO</span>'
+    +'<span style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:#c0003022;color:#c00030">💊 藥物過敏警示</span>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +'<div class="handover-field"><label>🛏 病患狀況</label><p>收治 10 位，床 301 產後第2日血壓 148/92 持續監測；床 305 剖腹產後第1日傷口滲液已處置。</p></div>'
@@ -537,19 +537,19 @@ function openShiftHelp(){
     +'<div class="handover-field"><label>💊 用藥/點滴</label><p>床 301 Labetalol IV 仍在進行；Oxytocin 剩 80mL。</p></div>'
     +'</div>'
     +'<div class="handover-field" style="margin-top:8px"><label>🧪 待追蹤檢驗值</label><p style="color:var(--amber)">床 301 血液常規 02:00 後回報，追蹤 PLT 是否 &lt;100K；床 303 CBC 明早追蹤。</p></div>'
-    +'<div class="handover-field" style="margin-top:8px"><label>✅ 待辦清單 <span style="font-size:10px;color:var(--faint)">(1/3)</span></label>'
+    +'<div class="handover-field" style="margin-top:8px"><label>✅ 待辦清單 <span style="font-size:11px;color:var(--faint)">(1/3)</span></label>'
     +'<div class="cl-list">'
-    +'<label class="cl-item cl-done" style="display:flex;align-items:center;gap:6px"><input type="checkbox" checked disabled style="accent-color:#c4527a;flex-shrink:0"> <span style="flex:1">床 305 傷口換藥</span><span style="font-size:10px;color:var(--faint);margin-left:auto">王護理師 22:30</span></label>'
+    +'<label class="cl-item cl-done" style="display:flex;align-items:center;gap:6px"><input type="checkbox" checked disabled style="accent-color:#c4527a;flex-shrink:0"> <span style="flex:1">床 305 傷口換藥</span><span style="font-size:11px;color:var(--faint);margin-left:auto">王護理師 22:30</span></label>'
     +'<label class="cl-item" style="display:flex;align-items:center;gap:6px"><input type="checkbox" disabled style="accent-color:#c4527a;flex-shrink:0"> <span style="flex:1">床 301 每30分血壓紀錄</span></label>'
     +'<label class="cl-item" style="display:flex;align-items:center;gap:6px"><input type="checkbox" disabled style="accent-color:#c4527a;flex-shrink:0"> <span style="flex:1">06:00 床 303 採血</span></label>'
     +'</div></div>'
     +'<div class="sign-row">'
     +'<span style="font-size:12px;color:var(--muted)">交班：</span>'
-    +'<div style="width:20px;height:20px;border-radius:50%;background:#c4527a;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700">王</div>'
+    +'<div style="width:20px;height:20px;border-radius:50%;background:#c4527a;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">王</div>'
     +'<span style="font-size:12px">王護理師</span>'
     +'<span class="sign-chip sign-done"><span class="sign-dot"></span>已簽</span>'
     +'<span style="font-size:12px;color:var(--muted);margin-left:8px">接班：</span>'
-    +'<div style="width:20px;height:20px;border-radius:50%;background:#5ba5e0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700">李</div>'
+    +'<div style="width:20px;height:20px;border-radius:50%;background:#5ba5e0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">李</div>'
     +'<span style="font-size:12px">李護理師</span>'
     +'<span class="sign-chip sign-pending"><span class="sign-dot"></span>待簽</span>'
     +'<button class="btn-sm primary" style="margin-left:auto;opacity:.5;cursor:default">✓ 我要簽收</button>'

@@ -38,7 +38,7 @@ function rnPatientBoard(){
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 12px;background:var(--surface);border-radius:10px;border:1.5px solid var(--b1);box-shadow:0 1px 4px rgba(0,0,0,.04)">'
       +'<span style="width:10px;height:10px;border-radius:50%;background:'+col+';flex-shrink:0;display:inline-block;box-shadow:0 0 6px '+col+'66"></span>'
       +'<span style="font-size:12px;font-weight:800;color:var(--text)">'+stage+'</span>'
-      +'<span style="margin-left:auto;font-size:11px;font-weight:800;background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:99px">'+pts.length+'</span>'
+      +'<span style="margin-left:auto;font-size:12px;font-weight:800;background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:99px">'+pts.length+'</span>'
       +'</div>';
     if(!pts.length){
       html += '<div style="border:1.5px dashed var(--b2);border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--faint)">無病患</div>';
@@ -54,11 +54,11 @@ function rnPatientBoard(){
   if(discharged.length){
     var recent = discharged.slice(-8).reverse();
     html += '<div style="margin-top:8px;padding-top:18px;border-top:1px solid var(--b1)">'
-      +'<div style="font-size:11px;font-weight:800;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">最近出院（'+discharged.length+'）</div>'
+      +'<div style="font-size:12px;font-weight:800;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">最近出院（'+discharged.length+'）</div>'
       +'<div style="display:flex;flex-wrap:wrap;gap:8px">'
       +recent.map(function(p){
         return '<div style="padding:6px 14px;background:var(--s2);border-radius:99px;font-size:12px;color:var(--faint)">'
-          +esc(p.name)+' <span style="font-size:10px">· '+esc(p.roomNo||'-')+'</span></div>';
+          +esc(p.name)+' <span style="font-size:11px">· '+esc(p.roomNo||'-')+'</span></div>';
       }).join('')
       +'</div></div>';
   }
@@ -77,14 +77,14 @@ function renderPatientCard(p, si, col){
     +'<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+col+';opacity:.5;border-radius:12px 12px 0 0"></div>'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;margin-top:2px">'
     +'<div><div style="font-size:14px;font-weight:800;color:var(--text)">'+esc(p.name)+'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-top:1px">'+esc(p.roomNo||'未分配')+(p.age?' · '+esc(p.age)+'歲':'')+'</div></div>'
-    +'<div style="text-align:right"><div style="font-size:10px;color:var(--faint)">'+elapsed+'</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-top:1px">'+esc(p.roomNo||'未分配')+(p.age?' · '+esc(p.age)+'歲':'')+'</div></div>'
+    +'<div style="text-align:right"><div style="font-size:11px;color:var(--faint)">'+elapsed+'</div>'
     +(flags?'<div style="font-size:12px;margin-top:2px">'+flags+'</div>':'')
     +'</div></div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:5px">'
+    +'<div style="font-size:12px;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:5px">'
     +avatarEl(p.assigneeId, 16)+' '+esc(assigneeName)
     +'</div>'
-    +(p.note?'<div style="font-size:11px;color:var(--muted);background:var(--s2);border-radius:6px;padding:4px 8px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.note)+'</div>':'')
+    +(p.note?'<div style="font-size:12px;color:var(--muted);background:var(--s2);border-radius:6px;padding:4px 8px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(p.note)+'</div>':'')
     +'<div style="display:flex;gap:5px;flex-wrap:wrap" onclick="event.stopPropagation()">'
     +(canPrev?'<button class="btn-xs" onclick="movePtStage(\''+p.id+'\',-1)" title="退回上一階段">◀</button>':'')
     +(canNext?'<button class="btn-xs success" onclick="movePtStage(\''+p.id+'\',1)">下一階段 ▶</button>':'')

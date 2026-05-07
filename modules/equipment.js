@@ -22,17 +22,17 @@ function renderEquipmentPage(c){
        +(canResolve?'<button class="btn-xs success" onclick="setEqStatus(\''+e.id+'\',\'resolved\')">標記解決</button>':'')
        +'<button class="btn-xs" onclick="openEqComment(\''+e.id+'\')">💬 跟進</button>'
        +(isAdmin()?'<button class="btn-xs danger" onclick="deleteEqReport(\''+e.id+'\')">刪除</button>':'')
-      :'<span style="font-size:11px;color:var(--faint)">解決日期：'+esc(e.resolvedAt||'')+'</span>'
+      :'<span style="font-size:12px;color:var(--faint)">解決日期：'+esc(e.resolvedAt||'')+'</span>'
        +'<button class="btn-xs" onclick="openEqComment(\''+e.id+'\')" style="margin-left:6px">💬 跟進</button>';
     var comments=(e.comments||[]).map(function(cm){
-      return '<div style="font-size:11px;padding:5px 8px;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--primary);margin-top:4px">'
+      return '<div style="font-size:12px;padding:5px 8px;background:var(--bg);border-radius:var(--radius-sm);border-left:2px solid var(--primary);margin-top:4px">'
         +'<span style="font-weight:600;color:var(--primary)">'+esc(userName(cm.userId))+'</span>'
         +' <span style="color:var(--faint)">'+esc((cm.at||'').slice(0,10))+'</span>'
         +'<div style="margin-top:2px;color:var(--text)">'+esc(cm.text)+'</div></div>';
     }).join('');
     return '<div class="eq-card eq-s-'+e.status+'">'
       +'<div class="eq-card-top"><span class="eq-cat-badge">'+esc(EQ_CATS[e.category]||e.category)+'</span>'
-      +'<span style="font-size:11px;color:var(--faint)">'+priLabel+'</span>'
+      +'<span style="font-size:12px;color:var(--faint)">'+priLabel+'</span>'
       +'<span class="eq-status-lbl eq-sl-'+e.status+'">'+esc(EQ_STATUS[e.status]||e.status)+'</span></div>'
       +'<div class="eq-name">'+esc(e.name)+'</div>'
       +'<div class="eq-meta">📍 '+esc(e.location||'未指定')+' &nbsp;·&nbsp; 回報者：'+esc(userName(e.reportedBy))+' &nbsp;·&nbsp; '+esc((e.reportedAt||'').slice(0,10))+'</div>'

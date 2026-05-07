@@ -89,11 +89,11 @@ function renderApproverPicker(){
     return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
       +'<div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">'+(i+1)+'</div>'
       +'<select onchange="setApproverPick('+i+',this.value)" style="flex:1;padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit">'+approverOptionsHtml(picked)+'</select>'
-      +(canRemove?'<button type="button" class="btn-sm" style="font-size:11px;padding:4px 8px" onclick="removeApproverStage('+i+')" title="移除這一階">×</button>':'<span style="display:inline-block;width:32px"></span>')
+      +(canRemove?'<button type="button" class="btn-sm" style="font-size:12px;padding:4px 8px" onclick="removeApproverStage('+i+')" title="移除這一階">×</button>':'<span style="display:inline-block;width:32px"></span>')
       +'</div>';
   }).join('');
-  var addBtn=_approverPicks.length<maxStages?'<button type="button" class="btn-sm" style="font-size:11px;padding:5px 10px" onclick="addApproverStage()">＋ 加一階</button>':'';
-  var ruleBtn='<button type="button" class="btn-sm primary" style="font-size:11px;padding:5px 10px" onclick="applyRuleSuggestion()" title="依規則自動填入建議審核人">🎯 依規則建議</button>';
+  var addBtn=_approverPicks.length<maxStages?'<button type="button" class="btn-sm" style="font-size:12px;padding:5px 10px" onclick="addApproverStage()">＋ 加一階</button>':'';
+  var ruleBtn='<button type="button" class="btn-sm primary" style="font-size:12px;padding:5px 10px" onclick="applyRuleSuggestion()" title="依規則自動填入建議審核人">🎯 依規則建議</button>';
   box.innerHTML=rows+'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'+addBtn+ruleBtn+'</div>';
 }
 
@@ -110,7 +110,7 @@ function updateRuleBanner(){
   var ty=document.getElementById('fty'),banner=document.getElementById('ruleBanner');
   if(!ty||!banner)return;
   var rule=FORM_RULES[ty.value]||FORM_RULES.other;
-  banner.innerHTML=rule.describe(rule.getCtx())+' <span style="color:var(--faint);font-size:11px">（可手動調整）</span>';
+  banner.innerHTML=rule.describe(rule.getCtx())+' <span style="color:var(--faint);font-size:12px">（可手動調整）</span>';
 }
 function onFormTypeChange(){
   var ty=document.getElementById('fty');if(!ty)return;
@@ -209,7 +209,7 @@ function openFormDetail(id){
     var clr = stColors[st] || 'var(--muted)';
     var lbl = stLabels[st] || st;
     var dot = '<div style="width:28px;height:28px;border-radius:50%;background:' + clr
-      + ';color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">'
+      + ';color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">'
       + (i+1) + '</div>';
     var line = i < f.approvers.length-1
       ? '<div style="width:2px;flex:1;min-height:14px;background:var(--b2);margin:2px auto 0;margin-left:13px"></div>'
@@ -221,7 +221,7 @@ function openFormDetail(id){
       + '<div style="display:flex;flex-direction:column;align-items:flex-start">' + dot + line + '</div>'
       + '<div style="padding-top:4px;flex:1;padding-bottom:10px">'
       + '<div style="font-size:13px;font-weight:600">' + esc(userName(uid2)) + '</div>'
-      + '<div style="font-size:11px;color:' + clr + ';margin-top:1px">' + lbl + '</div>'
+      + '<div style="font-size:12px;color:' + clr + ';margin-top:1px">' + lbl + '</div>'
       + commentHtml
       + '</div></div>';
   }).join('');
@@ -417,9 +417,9 @@ function renderFormDashboard(all){
     return '<div'+(key?' onclick="setFormFilter(\''+key+'\')"':'')
       +' style="flex:1;min-width:130px;background:var(--surface);border:1px solid var(--b1);border-radius:var(--radius-sm);padding:10px 12px;'+cursor+'"'
       +(active?' data-active="1"':'')+'>'
-      +'<div style="font-size:11px;color:var(--muted)">'+label+'</div>'
+      +'<div style="font-size:12px;color:var(--muted)">'+label+'</div>'
       +'<div style="font-size:22px;font-weight:700;color:'+clr+';line-height:1.1;margin-top:2px">'+val+'</div>'
-      +(sub?'<div style="font-size:10px;color:var(--faint);margin-top:2px">'+sub+'</div>':'')
+      +(sub?'<div style="font-size:11px;color:var(--faint);margin-top:2px">'+sub+'</div>':'')
       +'</div>';
   }
   return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
@@ -432,7 +432,7 @@ function renderFormDashboard(all){
     +['all:全部','pending_me:待我審核','my_pending:我送出（審核中）','my_all:我送出（全部）','overdue:逾期'].map(function(s){
       var p=s.split(':'),k=p[0],l=p[1];
       var on=_formFilter===k;
-      return '<button class="btn-sm'+(on?' primary':'')+'" style="font-size:11px;padding:4px 10px" onclick="setFormFilter(\''+k+'\')">'+l+'</button>';
+      return '<button class="btn-sm'+(on?' primary':'')+'" style="font-size:12px;padding:4px 10px" onclick="setFormFilter(\''+k+'\')">'+l+'</button>';
     }).join('')
     +'</div>';
 }
@@ -451,12 +451,12 @@ function rnForms(){
       var dot = (st==='approved'?'\u2713':st==='rejected'?'\u2717':String(i+1));
       var comment = f.comments && f.comments[i] ? f.comments[i] : '';
       var cHtml = comment
-        ? '<div style="font-size:10px;color:var(--muted);margin-top:2px;font-style:italic;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(comment) + '">\u201c' + esc(comment.slice(0,12)) + (comment.length>12?'\u2026':'') + '\u201d</div>'
+        ? '<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(comment) + '">\u201c' + esc(comment.slice(0,12)) + (comment.length>12?'\u2026':'') + '\u201d</div>'
         : '';
       return '<div class="astep"><div class="adot ' + cls + '">' + dot + '</div>'
-        + '<span style="font-size:11px;color:var(--muted)">' + esc(userName(uid2)) + '</span>'
+        + '<span style="font-size:12px;color:var(--muted)">' + esc(userName(uid2)) + '</span>'
         + cHtml + '</div>'
-        + (i < f.approvers.length-1 ? '<span style="color:var(--faint);font-size:10px">\u2192</span>' : '');
+        + (i < f.approvers.length-1 ? '<span style="color:var(--faint);font-size:11px">\u2192</span>' : '');
     }).join('');
 
     var canA = isApp(f) && f.status==='pending';
@@ -477,16 +477,16 @@ function rnForms(){
 
     var overdue = isFormOverdue(f);
     var ovHtml = overdue
-      ? '<span style="font-size:10px;font-weight:700;color:#b8001f;background:#fde8ec;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px" title="送出後已超過 '+FORM_OVERDUE_HOURS+' 小時尚未完成">🕒 逾期 '+overdueHours(f)+'h</span>'
+      ? '<span style="font-size:11px;font-weight:700;color:#b8001f;background:#fde8ec;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px" title="送出後已超過 '+FORM_OVERDUE_HOURS+' 小時尚未完成">🕒 逾期 '+overdueHours(f)+'h</span>'
       : '';
     return '<div class="frq-card'+(f.urgent&&f.status==='pending'?' frq-urgent':'')+(overdue?' frq-overdue':'')+'">'
-      +(f.urgent&&f.status==='pending'?'<span style="font-size:10px;font-weight:700;color:var(--red);background:#fce8e8;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px">🔴 緊急</span>':'')
+      +(f.urgent&&f.status==='pending'?'<span style="font-size:11px;font-weight:700;color:var(--red);background:#fce8e8;border-radius:99px;padding:2px 7px;flex-shrink:0;align-self:flex-start;margin-right:2px">🔴 緊急</span>':'')
       +ovHtml
       +'<span class="ftype ' + ft.c + '">' + ft.l + '</span>'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:13px;font-weight:600;margin-bottom:3px;cursor:pointer" onclick="openFormDetail(\'' + f.id + '\')">'
-      + esc(f.title) + ' <span style="font-size:10px;color:var(--primary);font-weight:400">\u8a73\u60c5 \u203a</span></div>'
-      + '<div style="font-size:11px;color:var(--faint);display:flex;gap:8px;flex-wrap:wrap">'
+      + esc(f.title) + ' <span style="font-size:11px;color:var(--primary);font-weight:400">\u8a73\u60c5 \u203a</span></div>'
+      + '<div style="font-size:12px;color:var(--faint);display:flex;gap:8px;flex-wrap:wrap">'
       + '<span>' + esc(userName(f.applicantId)) + '</span>'
       + '<span>' + fmtDate(f.createdAt) + '</span>'
       + (dateRange ? '<span>' + dateRange + '</span>' : '')
@@ -496,12 +496,12 @@ function rnForms(){
       + attHtml + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
       + '<span class="' + stCls + '">' + stTxt + '</span>'
-      + (canA ? '<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="appF(\'' + f.id + '\')">\u6838\u51c6</button>'
-               + '<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" onclick="rejF(\'' + f.id + '\')">\u99b3\u56de</button>' : '')
-      + (canADel ? '<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" title="\u4ee3\u7406 '+esc(delActName)+' \u7c3d\u6838" onclick="appF(\'' + f.id + '\')">\ud83e\udd1d \u4ee3\u7406\u6838\u51c6</button>'
-                  + '<button class="btn-sm danger" style="font-size:11px;padding:4px 8px" title="\u4ee3\u7406 '+esc(delActName)+' \u99c1\u56de" onclick="rejF(\'' + f.id + '\')">\ud83e\udd1d \u4ee3\u7406\u99c1\u56de</button>' : '')
-      + (canW ? '<button class="btn-sm" style="font-size:11px;padding:4px 8px" onclick="withdrawForm(\'' + f.id + '\')">\u64a4\u56de</button>' : '')
-      + (f.applicantId===currentUser.id&&f.status==='rejected'?'<button class="btn-sm primary" style="font-size:11px;padding:4px 8px" onclick="resubmitForm(\''+f.id+'\')">↩ 重新申請</button>':'')
+      + (canA ? '<button class="btn-sm primary" style="font-size:12px;padding:4px 8px" onclick="appF(\'' + f.id + '\')">\u6838\u51c6</button>'
+               + '<button class="btn-sm danger" style="font-size:12px;padding:4px 8px" onclick="rejF(\'' + f.id + '\')">\u99b3\u56de</button>' : '')
+      + (canADel ? '<button class="btn-sm primary" style="font-size:12px;padding:4px 8px" title="\u4ee3\u7406 '+esc(delActName)+' \u7c3d\u6838" onclick="appF(\'' + f.id + '\')">\ud83e\udd1d \u4ee3\u7406\u6838\u51c6</button>'
+                  + '<button class="btn-sm danger" style="font-size:12px;padding:4px 8px" title="\u4ee3\u7406 '+esc(delActName)+' \u99c1\u56de" onclick="rejF(\'' + f.id + '\')">\ud83e\udd1d \u4ee3\u7406\u99c1\u56de</button>' : '')
+      + (canW ? '<button class="btn-sm" style="font-size:12px;padding:4px 8px" onclick="withdrawForm(\'' + f.id + '\')">\u64a4\u56de</button>' : '')
+      + (f.applicantId===currentUser.id&&f.status==='rejected'?'<button class="btn-sm primary" style="font-size:12px;padding:4px 8px" onclick="resubmitForm(\''+f.id+'\')">↩ 重新申請</button>':'')
       + '</div></div>';
   }
 
@@ -640,7 +640,7 @@ function startPresence(){
     const bar=document.getElementById('presenceBar');
     if(!bar)return;
     const others=Object.values(data).filter(u=>u.id!==currentUser.id);
-    if(!others.length){bar.innerHTML='<span style="font-size:10px;color:var(--faint);padding:2px 2px">目前只有你在線上</span>';return;}
+    if(!others.length){bar.innerHTML='<span style="font-size:11px;color:var(--faint);padding:2px 2px">目前只有你在線上</span>';return;}
     bar.innerHTML=others.map(u=>`<span class="presence-dot">${esc(u.name)}</span>`).join('');
   });
 }

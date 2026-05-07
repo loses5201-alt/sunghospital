@@ -6,15 +6,19 @@
   --sans: 'Nunito', 'Noto Sans TC', system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  --primary: #1a3c5e;
+  --primary: #c4527a;
+  --primary-dark: #a8405f;
+  --primary-light: #fde8f0;
   --accent: #2e7d5a;
-  --bg-page: #f5f7fa;
+  --bg-page: #fef7f2;
   --bg-card: #ffffff;
-  --border: #e5e4e7;
-  --text: #333;
-  --text-muted: #888;
+  --border: #ead8de;
+  --text: #231a1e;
+  --text-muted: #5d4350;
+  --text-faint: #8e6a78;
 
-  font: 15px/1.6 var(--sans);
+  font: 16px/1.6 var(--sans);
+  font-weight: 500;
   color: var(--text);
   background: var(--bg-page);
   -webkit-font-smoothing: antialiased;
@@ -44,7 +48,7 @@ input, select, textarea { font-family: inherit; }
    440px: small phone — modal full-screen, tighter typography */
 
 @media (max-width: 768px) {
-  :root { font-size: 14px; }
+  :root { font-size: 15px; }
   .hide-mobile { display: none !important; }
 }
 
@@ -53,8 +57,29 @@ input, select, textarea { font-family: inherit; }
 }
 
 @media (max-width: 440px) {
-  :root { font-size: 13px; }
+  :root { font-size: 14px; }
   .hide-xs { display: none !important; }
+}
+
+/* ════ Readability uplift（2026-05-07）════ */
+button, input, select, textarea { font-weight: 500; }
+h1 { color: var(--primary-dark); font-weight: 800; }
+h2 { font-weight: 700; }
+
+/* 明亮的主要按鈕 */
+.btn-primary {
+  background: linear-gradient(135deg, #d65a85, #c4527a) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(196,82,122,0.28);
+  font-weight: 700 !important;
+  letter-spacing: .02em;
+  transition: filter .15s, box-shadow .15s, transform .15s;
+}
+.btn-primary:hover { filter: brightness(1.07); box-shadow: 0 4px 14px rgba(196,82,122,0.36); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: .5; }
+
+@media (max-width: 768px) {
+  .btn-primary, .btn-ghost, button { min-height: 40px; }
 }
 
 /* ---------- Mobile utility classes ----------

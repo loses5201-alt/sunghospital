@@ -72,7 +72,7 @@ function renderAnnList(){
       <div class="ann-read-progress"><span class="ann-read-pct">${readCount}/${allIds.length} 人已讀（${readPct}%）</span><div class="ann-read-bar-wrap"><div class="ann-read-bar" style="width:${readPct}%"></div></div></div>
       <div class="ann-read-list">${readList}</div>
       <div class="ann-actions">
-        ${!myRead?`<button class="btn-sm" onclick="readAnn('${a.id}')">✓ 標示已讀</button>`:'<span style="font-size:11px;color:var(--green)">✓ 已讀</span>'}
+        ${!myRead?`<button class="btn-sm" onclick="readAnn('${a.id}')">✓ 標示已讀</button>`:'<span style="font-size:12px;color:var(--green)">✓ 已讀</span>'}
         ${hasPerm('publishAnn')?`<button class="btn-sm" onclick="togglePin('${a.id}')">${a.pinned?'取消置頂':'📌 置頂'}</button>
         <button class="btn-sm danger" onclick="deleteAnn('${a.id}')">刪除</button>`:''}
       </div>
@@ -156,7 +156,7 @@ function showEmergencyOverlay(em){
   const confirmList=store.users.map(u=>`<div class="em-confirm-item">
     <div class="em-read-dot" style="background:${em.confirms[u.id]?'var(--green)':'#ccc'}"></div>
     <span style="font-size:12px">${esc(u.name)}</span>
-    <span style="font-size:10px;color:var(--faint);margin-left:auto">${em.confirms[u.id]?'已確認':'待確認'}</span>
+    <span style="font-size:11px;color:var(--faint);margin-left:auto">${em.confirms[u.id]?'已確認':'待確認'}</span>
   </div>`).join('');
   document.getElementById('emConfirmList').innerHTML=confirmList;
   document.getElementById('emergencyOverlay').dataset.emId=em.id;

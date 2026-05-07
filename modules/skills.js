@@ -76,7 +76,7 @@ function rnSkills(){
   }
 
   // Legend
-  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:11px">'
+  html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:12px">'
     +Object.entries(SKILL_LEVELS).map(function(e){
       return '<span style="padding:3px 10px;border-radius:99px;background:'+e[1].bg+';color:'+e[1].color+';font-weight:700">'+e[1].label+'</span>';
     }).join('')
@@ -88,10 +88,10 @@ function rnSkills(){
     +'<th style="min-width:130px;position:sticky;left:0;background:var(--s2);z-index:2">人員</th>'
     +skills.map(function(s){
       return '<th style="min-width:90px;text-align:center;vertical-align:bottom">'
-        +'<div style="font-size:11px;font-weight:800">'+esc(s.name)+'</div>'
+        +'<div style="font-size:12px;font-weight:800">'+esc(s.name)+'</div>'
         +'<div style="font-size:9px;color:var(--faint);font-weight:400;margin-top:1px">'+esc(s.category)+'</div>'
-        +(isAdmin()?'<div style="margin-top:3px"><button style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--faint);padding:0" onclick="openEditSkillDef(\''+s.id+'\')">✏️</button>'
-          +'<button style="background:none;border:none;cursor:pointer;font-size:10px;color:var(--faint);padding:0" onclick="deleteSkillDef(\''+s.id+'\')">🗑️</button></div>':'')
+        +(isAdmin()?'<div style="margin-top:3px"><button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--faint);padding:0" onclick="openEditSkillDef(\''+s.id+'\')">✏️</button>'
+          +'<button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--faint);padding:0" onclick="deleteSkillDef(\''+s.id+'\')">🗑️</button></div>':'')
         +'</th>';
     }).join('')+'</tr></thead><tbody>'
     +users.map(function(u){
@@ -99,7 +99,7 @@ function rnSkills(){
       return '<tr><td style="position:sticky;left:0;background:var(--surface);z-index:1">'
         +'<div style="display:flex;align-items:center;gap:7px">'+avatarEl(u.id,24)
         +'<div><div style="font-size:13px;font-weight:700">'+esc(u.name)+'</div>'
-        +'<div style="font-size:10px;color:var(--faint)">'+esc(u.title||'')+'</div></div>'
+        +'<div style="font-size:11px;color:var(--faint)">'+esc(u.title||'')+'</div></div>'
         +'</div></td>'
         +skills.map(function(s){
           var cell = um[s.id]||{};
@@ -113,8 +113,8 @@ function rnSkills(){
           var label = expired?'✗ 過期':expiringSoon?'⚠ 即將':lv?lv.label:'—';
           return '<td style="text-align:center;padding:8px">'
             +(isAdmin()
-              ?'<button onclick="openSkillCell(\''+u.id+'\',\''+s.id+'\')" style="background:'+bg+';color:'+fc+';border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer;min-width:70px;transition:all .12s">'+label+'</button>'
-              :'<span style="background:'+bg+';color:'+fc+';border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;display:inline-block;min-width:70px">'+label+'</span>')
+              ?'<button onclick="openSkillCell(\''+u.id+'\',\''+s.id+'\')" style="background:'+bg+';color:'+fc+';border:none;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;min-width:70px;transition:all .12s">'+label+'</button>'
+              :'<span style="background:'+bg+';color:'+fc+';border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;display:inline-block;min-width:70px">'+label+'</span>')
             +(exp&&lvl?'<div style="font-size:9px;color:'+(expired?'var(--red)':expiringSoon?'var(--amber)':'var(--faint)')+'">'+exp+'</div>':'')
             +'</td>';
         }).join('')

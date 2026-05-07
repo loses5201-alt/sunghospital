@@ -31,7 +31,7 @@ function renderMessagesPage(c){
   c.innerHTML='<div class="admin-layout" style="flex-direction:row;height:100%;overflow:hidden">'
     +'<div class="msg-sidebar">'
     +'<div class="msg-sidebar-hdr" style="display:flex;align-items:center;justify-content:space-between"><h2>💬 站內訊息</h2>'
-    +'<button class="btn-xs" onclick="openCreateGroup()" title="建立群組" style="border-radius:99px;padding:4px 10px;font-size:11px">＋群組</button></div>'
+    +'<button class="btn-xs" onclick="openCreateGroup()" title="建立群組" style="border-radius:99px;padding:4px 10px;font-size:12px">＋群組</button></div>'
     +'<div style="padding:10px 10px 8px;border-bottom:1px solid rgba(196,82,122,.1);display:flex;flex-wrap:wrap;gap:6px">'+userBtns+'</div>'
     +'<div id="roomList" style="flex:1;overflow-y:auto;padding:6px">'+roomList+'</div>'
     +'</div>'
@@ -39,7 +39,7 @@ function renderMessagesPage(c){
     +(_activeChatRoom?''
       :'<div class="chat-empty-ph">'
       +'<svg viewBox="0 0 48 48" fill="none" width="64" height="64"><circle cx="24" cy="24" r="22" fill="rgba(196,82,122,.1)"/><path d="M14 20h20M14 27h13" stroke="#c4527a" stroke-width="2.2" stroke-linecap="round"/><path d="M34 14H14a3 3 0 00-3 3v14a3 3 0 003 3h3l3 4 3-4h11a3 3 0 003-3V17a3 3 0 00-3-3z" stroke="#c4527a" stroke-width="2" fill="rgba(196,82,122,.05)"/></svg>'
-      +'<p>選個人開始聊天吧 ✨<br><span style="font-size:11px">點上方名字或左側對話　或建立群組</span></p>'
+      +'<p>選個人開始聊天吧 ✨<br><span style="font-size:12px">點上方名字或左側對話　或建立群組</span></p>'
       +'</div>')
     +'</div></div>';
   if(_activeChatRoom)renderChatThread(_activeChatRoom);
@@ -95,7 +95,7 @@ function renderChatThread(roomId){
       if(a.mime&&a.mime.startsWith('image/')){
         att='<img src="'+a.data+'" style="max-width:200px;max-height:180px;border-radius:8px;display:block;margin-top:'+(m.text?'6px':'0')+';cursor:zoom-in" onclick="chatImgZoom(\''+m.id+'\')">';
       } else {
-        att='<a href="'+a.data+'" download="'+esc(a.name)+'" style="display:flex;align-items:center;gap:6px;margin-top:'+(m.text?'6px':'0')+';padding:6px 10px;background:rgba(0,0,0,.1);border-radius:8px;font-size:11px;color:inherit;text-decoration:none;max-width:200px">'
+        att='<a href="'+a.data+'" download="'+esc(a.name)+'" style="display:flex;align-items:center;gap:6px;margin-top:'+(m.text?'6px':'0')+';padding:6px 10px;background:rgba(0,0,0,.1);border-radius:8px;font-size:12px;color:inherit;text-decoration:none;max-width:200px">'
           +'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M13 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7z"/><path d="M13 2v5h5"/></svg>'
           +esc(a.name)+'</a>';
       }
@@ -158,7 +158,7 @@ function renderChatThread(roomId){
     headerSub=room.members.length+'位成員';
   } else {
     var onlineSub=isOnline(otherId)?'<span style="color:var(--green);font-weight:600">● 最近活躍</span>':'<span>'+esc(userDept(otherId))+'</span>';
-    headerAvHtml='<div style="position:relative;flex-shrink:0"><div class="'+other.avatar+'" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 8px rgba(196,82,122,.25)">'+initials(other.name)+'</div>'+(isOnline(otherId)?'<span class="presence-online"></span>':'')+'</div>';
+    headerAvHtml='<div style="position:relative;flex-shrink:0"><div class="'+other.avatar+'" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(196,82,122,.25)">'+initials(other.name)+'</div>'+(isOnline(otherId)?'<span class="presence-online"></span>':'')+'</div>';
     headerName=esc(other.name);
     headerSub=onlineSub;
   }

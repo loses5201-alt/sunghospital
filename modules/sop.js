@@ -60,10 +60,10 @@ function rnSop(){
       +'<div style="flex:1">'
       +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">'
       +'<span style="font-size:15px;font-weight:800;color:var(--text)">'+esc(s.title)+'</span>'
-      +'<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:var(--lavender-bg);color:var(--lavender);font-weight:800">v'+esc(s.version||'1.0')+'</span>'
-      +'<span style="font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;background:'+catColor+'22;color:'+catColor+'">'+esc(s.category)+'</span>'
+      +'<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--lavender-bg);color:var(--lavender);font-weight:800">v'+esc(s.version||'1.0')+'</span>'
+      +'<span style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700;background:'+catColor+'22;color:'+catColor+'">'+esc(s.category)+'</span>'
       +'</div>'
-      +'<div style="font-size:11px;color:var(--faint)">最後更新：'+esc((s.updatedAt||'').slice(0,10))+' · '+esc(userName(s.updatedBy||''))+'</div>'
+      +'<div style="font-size:12px;color:var(--faint)">最後更新：'+esc((s.updatedAt||'').slice(0,10))+' · '+esc(userName(s.updatedBy||''))+'</div>'
       +'</div>'
       +(isAdmin()?'<div style="display:flex;gap:5px;flex-shrink:0">'
         +'<button class="btn-xs" onclick="openEditSop(\''+s.id+'\')">編輯</button>'
@@ -72,7 +72,7 @@ function rnSop(){
       +'</div>'
       +(isAdmin()
         ?'<div style="margin:12px 0">'
-          +'<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:5px">'
+          +'<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:5px">'
           +'<span>確認閱讀率</span>'
           +'<span style="font-weight:800;color:var(--primary)">'+pct+'%</span>'
           +'<span style="color:var(--faint)">('+ackCnt+'/'+allIds.length+' 人)</span>'
@@ -84,7 +84,7 @@ function rnSop(){
       +'<div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">'
       +'<button class="btn-sm" onclick="togSopBody(\''+s.id+'\')">📖 閱讀內容</button>'
       +(myAck
-        ?'<span style="font-size:11px;color:var(--green);font-weight:800;display:flex;align-items:center;gap:4px">✓ 已確認閱讀 <span style="font-weight:400;color:var(--faint)">'+esc((acks[currentUser.id]||'').slice(0,10))+'</span></span>'
+        ?'<span style="font-size:12px;color:var(--green);font-weight:800;display:flex;align-items:center;gap:4px">✓ 已確認閱讀 <span style="font-weight:400;color:var(--faint)">'+esc((acks[currentUser.id]||'').slice(0,10))+'</span></span>'
         :'<button class="btn-sm primary" onclick="ackSop(\''+s.id+'\')">✓ 確認已讀</button>')
       +'</div>'
       +'</div>';

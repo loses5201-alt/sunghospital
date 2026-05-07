@@ -58,9 +58,9 @@ function renderPostCard(j){
     +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
     +'<span style="font-size:13px;font-weight:700">'+esc(userName(j.userId))+'</span>'
     +'<span class="board-cat '+cat.c+'">'+cat.e+' '+cat.l+'</span>'
-    +(j.edited?'<span style="font-size:10px;color:var(--faint)">(已編輯)</span>':'')
+    +(j.edited?'<span style="font-size:11px;color:var(--faint)">(已編輯)</span>':'')
     +'</div>'
-    +'<div style="font-size:11px;color:var(--faint)">'+ts+'</div>'
+    +'<div style="font-size:12px;color:var(--faint)">'+ts+'</div>'
     +'</div>'
     +(canEdit?'<div class="board-card-menu" onclick="togglePostMenu(\''+j.id+'\')">'
       +'<svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/></svg>'
@@ -82,7 +82,7 @@ function renderPostCard(j){
     +'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="15" height="15"><path d="M2 5a2 2 0 012-2h11a2 2 0 012 2v7a2 2 0 01-2 2H9l-4 3V14H4a2 2 0 01-2-2V5z"/></svg>'
     +(j.comments&&j.comments.length?'<span>'+j.comments.length+'</span>':'')
     +'</button>'
-    +'<span style="margin-left:auto;font-size:11px;color:var(--faint)">'+(j.comments&&j.comments.length?j.comments.length+'則留言':'')+'</span>'
+    +'<span style="margin-left:auto;font-size:12px;color:var(--faint)">'+(j.comments&&j.comments.length?j.comments.length+'則留言':'')+'</span>'
     +'</div></div>';
 }
 
@@ -100,14 +100,14 @@ function renderPostDetail(c,postId){
       +'<div style="flex:1;min-width:0">'
       +'<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:3px">'
       +'<span style="font-size:12px;font-weight:700">'+esc(userName(cm.userId))+'</span>'
-      +'<span style="font-size:10px;color:var(--faint)">'+((cm.createdAt||'').slice(5,16).replace('-','/'))+'</span>'
+      +'<span style="font-size:11px;color:var(--faint)">'+((cm.createdAt||'').slice(5,16).replace('-','/'))+'</span>'
       +'</div>'
       +'<div style="font-size:13px;line-height:1.6;white-space:pre-wrap">'+esc(cm.text)+'</div>'
       +'<div style="display:flex;gap:10px;margin-top:5px">'
-      +'<button class="board-action-btn'+(cmLiked?' liked':'')+'" style="font-size:11px" onclick="likeComment(\''+postId+'\',\''+cm.id+'\')">'
+      +'<button class="board-action-btn'+(cmLiked?' liked':'')+'" style="font-size:12px" onclick="likeComment(\''+postId+'\',\''+cm.id+'\')">'
       +'<svg viewBox="0 0 20 20" fill="'+(cmLiked?'#c4527a':'none')+'" stroke="#c4527a" stroke-width="1.5" width="12" height="12"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/></svg>'
       +(cm.likes&&cm.likes.length?'<span>'+cm.likes.length+'</span>':'')+'</button>'
-      +(canDel?'<button class="board-action-btn" style="font-size:11px;color:var(--faint)" onclick="deleteComment(\''+postId+'\',\''+cm.id+'\')">刪除</button>':'')
+      +(canDel?'<button class="board-action-btn" style="font-size:12px;color:var(--faint)" onclick="deleteComment(\''+postId+'\',\''+cm.id+'\')">刪除</button>':'')
       +'</div></div></div>';
   }).join('')||'<div style="text-align:center;padding:24px;color:var(--faint);font-size:13px">還沒有留言，來說第一句話吧 🌸</div>';
 
@@ -118,8 +118,8 @@ function renderPostDetail(c,postId){
     +'<div style="flex:1"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'
     +'<span style="font-size:14px;font-weight:800">'+esc(userName(j.userId))+'</span>'
     +'<span class="board-cat '+cat.c+'">'+cat.e+' '+cat.l+'</span>'
-    +(j.edited?'<span style="font-size:10px;color:var(--faint)">(已編輯)</span>':'')
-    +'</div><div style="font-size:11px;color:var(--faint)">'+ts+'</div></div></div>'
+    +(j.edited?'<span style="font-size:11px;color:var(--faint)">(已編輯)</span>':'')
+    +'</div><div style="font-size:12px;color:var(--faint)">'+ts+'</div></div></div>'
     +(j.title?'<div style="font-size:18px;font-weight:800;margin-bottom:10px;line-height:1.4">'+esc(j.title)+'</div>':'')
     +'<div style="font-size:14px;line-height:1.8;white-space:pre-wrap;margin-bottom:12px">'+esc(j.content)+'</div>'
     +(j.image?'<img src="'+j.image+'" style="max-width:100%;border-radius:var(--radius);margin-bottom:14px;display:block">':'')

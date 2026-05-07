@@ -32,12 +32,12 @@ function rnBaby(q){
     if(b.discharged){
       daysLabel='<span class="badge-discharged">🏠 已出院'+(b.dischargeDate?' · '+fmtDate(b.dischargeDate):'')+'</span>';
     } else if(days===0){
-      daysLabel='<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:2px 7px;border-radius:99px;font-weight:600">今日出生</span>';
+      daysLabel='<span style="font-size:11px;background:#fce8e8;color:#b03050;padding:2px 7px;border-radius:99px;font-weight:600">今日出生</span>';
     } else {
-      daysLabel='<span style="font-size:10px;background:#fdf0dc;color:#8f5208;padding:2px 7px;border-radius:99px;font-weight:600">第 '+days+' 天</span>';
+      daysLabel='<span style="font-size:11px;background:#fdf0dc;color:#8f5208;padding:2px 7px;border-radius:99px;font-weight:600">第 '+days+' 天</span>';
     }
-    const dischargeBtn=!b.discharged&&isAdmin()?'<button class="btn-sm" style="font-size:10px;padding:2px 8px;margin-top:5px" onclick="dischargeBaby(\''+b.id+'\')">🏠 出院</button>':'';
-    const editBtn=isAdmin()?'<button class="btn-sm" style="font-size:10px;padding:2px 8px;margin-top:5px" onclick="openEditBaby(\''+b.id+'\')">✏ 編輯</button>':'';
+    const dischargeBtn=!b.discharged&&isAdmin()?'<button class="btn-sm" style="font-size:11px;padding:2px 8px;margin-top:5px" onclick="dischargeBaby(\''+b.id+'\')">🏠 出院</button>':'';
+    const editBtn=isAdmin()?'<button class="btn-sm" style="font-size:11px;padding:2px 8px;margin-top:5px" onclick="openEditBaby(\''+b.id+'\')">✏ 編輯</button>':'';
     const apgar=b.apgar1||b.apgar5?'<span>APGAR '+(b.apgar1||'?')+' / '+(b.apgar5||'?')+'</span>':'';
     const ga=b.ga?'<span>胎齡 '+esc(b.ga)+'週</span>':'';
     const bMethod=b.birthMethod?'<span>'+(b.birthMethod==='normal'?'自然產':b.birthMethod==='csection'?'剖腹產':esc(b.birthMethod))+'</span>':'';

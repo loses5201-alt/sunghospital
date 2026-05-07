@@ -45,7 +45,7 @@ function rnLeave(){
   // Update pending badge
   var pend = (store.leaves||[]).filter(function(l){ return l.status==='pending'; }).length;
   var pb = document.getElementById('leavePendBadge');
-  if(pb) pb.innerHTML = pend ? '<span style="background:var(--red);color:white;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:5px">'+pend+'</span>' : '';
+  if(pb) pb.innerHTML = pend ? '<span style="background:var(--red);color:white;border-radius:99px;font-size:11px;padding:1px 6px;margin-left:5px">'+pend+'</span>' : '';
 
   if(_leaveTab==='mine') rnLeaveMine(c);
   else if(_leaveTab==='pending') rnLeavePending(c);
@@ -69,9 +69,9 @@ function rnLeaveMine(c){
     var fc = remain<=0 ? 'var(--red)' : remain<3 ? 'var(--amber)' : lt.color;
     html += '<div style="background:var(--surface);border:1.5px solid var(--b1);border-radius:14px;padding:14px 18px;min-width:100px;text-align:center;position:relative;overflow:hidden">'
       +'<div style="position:absolute;top:0;left:0;right:0;height:3px;background:'+lt.color+'"></div>'
-      +'<div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+lt.label+'</div>'
+      +'<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+lt.label+'</div>'
       +'<div style="font-size:28px;font-weight:900;color:'+fc+';line-height:1">'+remain+'</div>'
-      +'<div style="font-size:10px;color:var(--faint);margin-top:3px">已用 '+used+' / 共 '+total+' 天</div>'
+      +'<div style="font-size:11px;color:var(--faint);margin-top:3px">已用 '+used+' / 共 '+total+' 天</div>'
       +'</div>';
   });
   html += '</div></div>';
@@ -114,7 +114,7 @@ function rnLeaveBalance(c){
           var remain = total - used;
           var fc = remain<=0?'var(--red)':remain<3?'var(--amber)':'var(--green)';
           return '<td style="text-align:center"><span style="font-weight:800;color:'+fc+'">'+remain+'</span>'
-            +'<span style="color:var(--faint);font-size:11px"> / '+total+'</span></td>';
+            +'<span style="color:var(--faint);font-size:12px"> / '+total+'</span></td>';
         }).join('')
         +'<td><button class="btn-xs" onclick="openEditBalance(\''+u.id+'\')">調整</button></td></tr>';
     }).join('')
@@ -135,14 +135,14 @@ function _leaveTable(leaves, showUser, showApprove){
       var stLabel = l.status==='approved'?'✓ 核准':l.status==='rejected'?'✗ 駁回':'⏳ 待審核';
       return '<tr>'
         +(showUser?'<td><div style="display:flex;align-items:center;gap:7px">'+avatarEl(l.userId,22)+'<span>'+esc(userName(l.userId))+'</span></div></td>':'')
-        +'<td><span style="font-size:11px;padding:2px 9px;border-radius:99px;font-weight:700;background:'+lt.color+'22;color:'+lt.color+'">'+lt.label+'</span></td>'
+        +'<td><span style="font-size:12px;padding:2px 9px;border-radius:99px;font-weight:700;background:'+lt.color+'22;color:'+lt.color+'">'+lt.label+'</span></td>'
         +'<td style="font-size:12px;white-space:nowrap">'+esc(l.startDate||'')+' → '+esc(l.endDate||'')+'</td>'
         +'<td style="font-weight:800;text-align:center">'+( l.days||0 )+'天</td>'
         +'<td style="color:var(--muted);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.reason||'')+'</td>'
-        +'<td><span style="font-size:11px;padding:3px 9px;border-radius:99px;font-weight:700;background:'+stBg+';color:'+stFc+'">'+stLabel+'</span></td>'
+        +'<td><span style="font-size:12px;padding:3px 9px;border-radius:99px;font-weight:700;background:'+stBg+';color:'+stFc+'">'+stLabel+'</span></td>'
         +(showApprove&&hasPerm('approveLeave')&&l.status==='pending'
           ?'<td><button class="btn-xs success" onclick="approveLeave(\''+l.id+'\',true)">核准</button> <button class="btn-xs danger" onclick="approveLeave(\''+l.id+'\',false)">駁回</button></td>'
-          :'<td style="font-size:11px;color:var(--faint)">'+( l.approverId?'by '+esc(userName(l.approverId)):'' )+'</td>')
+          :'<td style="font-size:12px;color:var(--faint)">'+( l.approverId?'by '+esc(userName(l.approverId)):'' )+'</td>')
         +'</tr>';
     }).join('')
     +'</tbody></table></div>';

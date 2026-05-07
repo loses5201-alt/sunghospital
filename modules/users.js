@@ -46,13 +46,13 @@ function renderRulesTab(c){
     +'</div>'
     +'<div class="form-row"><label>請假門檻（天）</label>'
       +'<input id="ruleLeaveDays" type="number" min="1" step="1" value="'+cfg.leaveDays+'" style="width:160px">'
-      +'<div style="font-size:11px;color:var(--faint);margin-top:4px">請假天數 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
+      +'<div style="font-size:12px;color:var(--faint);margin-top:4px">請假天數 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
     +'<div class="form-row"><label>加班門檻（小時）</label>'
       +'<input id="ruleOvertimeHours" type="number" min="0.5" step="0.5" value="'+cfg.overtimeHours+'" style="width:160px">'
-      +'<div style="font-size:11px;color:var(--faint);margin-top:4px">加班時數 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
+      +'<div style="font-size:12px;color:var(--faint);margin-top:4px">加班時數 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
     +'<div class="form-row"><label>物品申請門檻（元）</label>'
       +'<input id="ruleSupplyAmount" type="number" min="100" step="100" value="'+cfg.supplyAmount+'" style="width:160px">'
-      +'<div style="font-size:11px;color:var(--faint);margin-top:4px">申請金額 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
+      +'<div style="font-size:12px;color:var(--faint);margin-top:4px">申請金額 ≤ 此值 → 1 階；超過 → 2 階</div></div>'
     +'<div style="display:flex;gap:8px;margin-top:18px">'
       +'<button class="btn-sm primary" onclick="saveRuleConfig()">💾 儲存</button>'
       +'<button class="btn-sm" onclick="resetRuleConfig()">↺ 還原預設</button>'
@@ -164,7 +164,7 @@ function renderUserContent(){
     <select onchange="userFilter.dept=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${dOpts}</select>
     <select onchange="userFilter.status=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${stOpts}</select>
     <select onchange="userFilter.jobType=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${jtOpts}</select>
-    <span style="font-size:11px;color:var(--faint);margin-left:auto">共 ${store.users.filter(u=>u.status!=='disabled'&&u.status!=='resigned').length} 位在職</span>
+    <span style="font-size:12px;color:var(--faint);margin-left:auto">共 ${store.users.filter(u=>u.status!=='disabled'&&u.status!=='resigned').length} 位在職</span>
   </div>`;
   let users=[...store.users];
   if(userFilter.q){const q=userFilter.q.toLowerCase();users=users.filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q));}
@@ -181,13 +181,13 @@ function renderUserContent(){
     const permsHtml=u.role==='admin'?'':(u.role==='supervisor'?'<span class="perm-tag" style="background:#f0e0f8;color:#8a40a0">主管審核</span>':
       (u.permissions?Object.keys(u.permissions).filter(k=>u.permissions[k]&&PERM_SHORT[k]).slice(0,5).map(k=>`<span class="perm-tag">${PERM_SHORT[k]}</span>`).join(''):''));
     const btns=u.id===currentUser.id
-      ?'<span style="font-size:11px;color:var(--faint);padding:5px 6px">本人</span>'
+      ?'<span style="font-size:12px;color:var(--faint);padding:5px 6px">本人</span>'
       :`<button class="btn-sm" onclick="openEditUser('${u.id}')">編輯</button>
         ${st==='active'?`<button class="btn-sm" onclick="setUserStatus('${u.id}','disabled')" title="停用帳號">停用</button>`:`<button class="btn-sm" onclick="setUserStatus('${u.id}','active')" title="重新啟用">啟用</button>`}
         ${st!=='resigned'?`<button class="btn-sm" onclick="setUserStatus('${u.id}','resigned')" title="標記離職">離職</button>`:''}
         <button class="btn-sm danger" onclick="deleteUser('${u.id}')">刪除</button>`;
     return`<tr style="${st!=='active'?'opacity:.55':''}">
-      <td><div style="display:flex;align-items:center;gap:9px">${avatarEl(u.id,28)}<div><div style="font-size:13px;font-weight:500">${esc(u.name)}</div><div style="font-size:11px;color:var(--faint)">@${esc(u.username)}${u.joinDate?' · 到職:'+fmtDate(u.joinDate):''}</div></div></div></td>
+      <td><div style="display:flex;align-items:center;gap:9px">${avatarEl(u.id,28)}<div><div style="font-size:13px;font-weight:500">${esc(u.name)}</div><div style="font-size:12px;color:var(--faint)">@${esc(u.username)}${u.joinDate?' · 到職:'+fmtDate(u.joinDate):''}</div></div></div></td>
       <td>${u.deptId?`<span class="dept-chip">${esc(userDept(u.id))}</span>`:'—'}${jtBadge}</td>
       <td>${u.title?`<span class="title-chip">${esc(u.title)}</span>`:'—'}</td>
       <td><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span class="role-badge ${u.role==='admin'?'rb-admin':u.role==='supervisor'?'rb-supervisor':'rb-member'}">${ROLELABELS[u.role]||'一般'}</span>${stBadge}${permsHtml}</div></td>
@@ -240,11 +240,11 @@ function userFormHtml(u){
     const items=sec.items.map(pd=>
       `<label style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;cursor:pointer">
         <input type="checkbox" id="perm_${pd.k}" ${p[pd.k]?'checked':''} style="margin-top:3px;accent-color:#c4527a;width:14px;height:14px;flex-shrink:0">
-        <div><div style="font-size:12px;font-weight:600">${pd.l}</div><div style="font-size:10px;color:var(--faint);margin-top:1px">${pd.desc}</div></div>
+        <div><div style="font-size:12px;font-weight:600">${pd.l}</div><div style="font-size:11px;color:var(--faint);margin-top:1px">${pd.desc}</div></div>
       </label>`
     ).join('');
     return `<div style="border:1px solid var(--b1);border-radius:8px;padding:10px 12px;background:var(--surface)">
-      <div style="font-size:10px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--b1)">${sec.section}</div>
+      <div style="font-size:11px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--b1)">${sec.section}</div>
       ${items}
     </div>`;
   }).join('');
@@ -294,7 +294,7 @@ function userFormHtml(u){
       </select>
     </div>
     <div class="form-row"><label>到職日期</label><input id="uJoinDate" type="date" value="${u?.joinDate||''}"></div>
-    <div class="form-row" style="grid-column:1/-1"><label>簽核代理人 <span style="font-size:10px;color:var(--faint);font-weight:400">（不在時可代為簽核此人應審的表單）</span></label>
+    <div class="form-row" style="grid-column:1/-1"><label>簽核代理人 <span style="font-size:11px;color:var(--faint);font-weight:400">（不在時可代為簽核此人應審的表單）</span></label>
       <select id="uDelegate">
         <option value="">（無代理人）</option>
         ${store.users.filter(x=>x.id!==(u&&u.id)&&(x.status||'active')==='active').map(x=>`<option value="${x.id}" ${u&&u.delegateId===x.id?'selected':''}>${esc(x.name)}${x.title?' · '+esc(x.title):''}</option>`).join('')}
@@ -312,7 +312,7 @@ function userFormHtml(u){
       <div style="font-size:12px;font-weight:700;color:#c4527a;text-transform:uppercase;letter-spacing:.08em;flex:1">功能權限</div>
       <button type="button" class="btn-xs" onclick="applyJobTypeDefaults()" title="根據職類帶入預設勾選">套用職種預設</button>
       <select id="copyFromUser" onchange="copyPermsFrom(this.value)"
-        style="font-size:11px;padding:4px 8px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer">
+        style="font-size:12px;padding:4px 8px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer">
         <option value="">複製自...</option>${copyOpts}
       </select>
     </div>
@@ -320,7 +320,7 @@ function userFormHtml(u){
       主管自動擁有 <strong>審核請假、審核/簽核表單、管理排班換班</strong>，以下可額外賦予其他功能
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${permSections}</div>
-    <div style="font-size:11px;color:var(--faint);margin-top:8px">管理員自動擁有全部權限；主管自動擁有審核相關權限；以下設定適用一般成員與主管</div>
+    <div style="font-size:12px;color:var(--faint);margin-top:8px">管理員自動擁有全部權限；主管自動擁有審核相關權限；以下設定適用一般成員與主管</div>
   </div>`;
 }
 let editingUserId=null;
@@ -430,7 +430,7 @@ function handleAttachment(input){
     const prev=document.getElementById('fattachPreview');if(!prev)return;
     prev.innerHTML=file.type.startsWith('image/')
       ?'<img src="'+e.target.result+'" style="max-height:72px;max-width:180px;border-radius:6px;border:1px solid var(--b1);margin-top:4px;cursor:pointer" onclick="viewAttachment(\'__preview__\')">'
-      :'<span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">📎 '+esc(file.name)+'</span>';
+      :'<span style="font-size:12px;color:var(--muted);margin-top:4px;display:block">📎 '+esc(file.name)+'</span>';
   };
   r.readAsDataURL(file);
 }

@@ -56,7 +56,7 @@ function rnDuty(){
   var myPend=pSw.filter(function(s){return s.toId===currentUser.id;});
   var totalBadge=myPend.length+(hasPerm('manageSchedule')?pSw.filter(function(s){return s.fromId!==currentUser.id&&s.toId!==currentUser.id;}).length:0);
   var bdg=document.getElementById('swapPendBadge');
-  if(bdg)bdg.innerHTML=totalBadge?'<span style="font-size:10px;background:#fce8e8;color:#b03050;padding:1px 6px;border-radius:99px;margin-left:4px">'+totalBadge+'</span>':'';
+  if(bdg)bdg.innerHTML=totalBadge?'<span style="font-size:11px;background:#fce8e8;color:#b03050;padding:1px 6px;border-radius:99px;margin-left:4px">'+totalBadge+'</span>':'';
   // 分頁路由
   if(_dutyTab==='week')rnDutyWeek(c);
   else if(_dutyTab==='month')rnDutyMonth(c);
@@ -92,8 +92,8 @@ function rnDutyWeek(c){
       var warn=Object.entries(minStaff).some(function(e){return (cov[e[0]]||0)<Number(e[1]);});
       var note=store.dutyNotes[d]||'';
       return '<div class="dcell dc-hd'+(isToday?' dc-today':'')+(warn?' dc-warn':'')+'">'
-        +'<div style="font-size:11px;font-weight:800">'+DLBLS[i]+'</div>'
-        +'<div style="font-size:10px;color:var(--faint)">'+d.slice(5)+'</div>'
+        +'<div style="font-size:12px;font-weight:800">'+DLBLS[i]+'</div>'
+        +'<div style="font-size:11px;color:var(--faint)">'+d.slice(5)+'</div>'
         +'<div class="duty-cov-row">'
         +'<span class="dcov dcov-m" title="早班">'+cov.morning+'</span>'
         +'<span class="dcov dcov-a" title="午班">'+cov.afternoon+'</span>'
@@ -187,7 +187,7 @@ function rnDutyMonth(c){
       var note=store.dutyNotes[d]||'';
       return '<div class="duty-month-cell'+(isToday?' dmc-today':'')+(!cell.cur?' dmc-other':'')+(warn?' dmc-warn':'')+'">'
         +'<div class="dmc-date'+(isToday?' dmc-date-today':'')+'">'+(parseInt(d.slice(8))+'')+'</div>'
-        +(cell.cur?'<span class="'+(onLeave?'sh-leave':s.c)+'" style="font-size:10px;padding:2px 5px;display:inline-block;margin:1px 0">'+(onLeave?'請假':s.l)+'</span>':'')
+        +(cell.cur?'<span class="'+(onLeave?'sh-leave':s.c)+'" style="font-size:11px;padding:2px 5px;display:inline-block;margin:1px 0">'+(onLeave?'請假':s.l)+'</span>':'')
         +(cell.cur?'<div class="dmc-cov">'
           +'<span class="dcov dcov-m" title="早班">'+cov.morning+'</span>'
           +'<span class="dcov dcov-a" title="午班">'+cov.afternoon+'</span>'
@@ -209,7 +209,7 @@ function rnDutyMonth(c){
     +'<div class="duty-month-hdr">'+DLBLS.map(function(l){return '<div class="dmc-hdr">'+l+'</div>';}).join('')+'</div>'
     +rowsHtml
     +'</div>'
-    +'<div style="font-size:11px;color:var(--faint);margin-top:10px">彩色班別 = 我的班表 · 數字 = 全院各班人數</div>'
+    +'<div style="font-size:12px;color:var(--faint);margin-top:10px">彩色班別 = 我的班表 · 數字 = 全院各班人數</div>'
     +'</div>';
 }
 
@@ -271,10 +271,10 @@ function rnDutyMine(c){
     +'</div>'
     // 下一班提示
     +(nextShift?'<div class="duty-next-shift">'
-      +'<span style="font-size:11px;color:var(--muted)">下一班：</span>'
+      +'<span style="font-size:12px;color:var(--muted)">下一班：</span>'
       +'<strong>'+fmtDate(nextShift.date)+'</strong>'
       +'<span class="'+(SHINFO[nextShift.shift]||SHINFO.off).c+'" style="margin-left:8px">'+(SHINFO[nextShift.shift]||SHINFO.off).l+'</span>'
-      +'<span style="font-size:11px;color:var(--faint);margin-left:8px">'+(SHINFO[nextShift.shift]||SHINFO.off).time+'</span>'
+      +'<span style="font-size:12px;color:var(--faint);margin-left:8px">'+(SHINFO[nextShift.shift]||SHINFO.off).time+'</span>'
       +'</div>':'')
     +'<div class="sec-label" style="margin-bottom:12px">未來 28 天班表</div>'
     +'<div class="duty-mine-list">'+weeksHtml+'</div>'
@@ -301,12 +301,12 @@ function rnDutySwap(c){
     var timeline='<div class="sw-timeline">'
       +'<div class="sw-step sw-step-done">'+avatarEl(s.fromId,22)+'<div>'
       +'<div style="font-size:12px;font-weight:700">'+esc(userName(s.fromId))+'</div>'
-      +'<div style="font-size:10px;color:var(--faint)">'+fmtDate(s.fromDate)+'<br>'+(SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+(SHINFO[s.fromShift]&&SHINFO[s.fromShift].time?' '+SHINFO[s.fromShift].time:'')+'</div>'
+      +'<div style="font-size:11px;color:var(--faint)">'+fmtDate(s.fromDate)+'<br>'+(SHINFO[s.fromShift]?SHINFO[s.fromShift].l:'')+(SHINFO[s.fromShift]&&SHINFO[s.fromShift].time?' '+SHINFO[s.fromShift].time:'')+'</div>'
       +'</div></div>'
       +'<div class="sw-arrow">⇄</div>'
       +'<div class="sw-step '+(s.status==='approved'?'sw-step-done':s.status==='rejected'?'sw-step-rej':'sw-step-pend')+'">'+avatarEl(s.toId,22)+'<div>'
       +'<div style="font-size:12px;font-weight:700">'+esc(userName(s.toId))+'</div>'
-      +'<div style="font-size:10px;color:var(--faint)">'+fmtDate(s.toDate)+'<br>'+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+(SHINFO[s.toShift]&&SHINFO[s.toShift].time?' '+SHINFO[s.toShift].time:'')+'</div>'
+      +'<div style="font-size:11px;color:var(--faint)">'+fmtDate(s.toDate)+'<br>'+(SHINFO[s.toShift]?SHINFO[s.toShift].l:'')+(SHINFO[s.toShift]&&SHINFO[s.toShift].time?' '+SHINFO[s.toShift].time:'')+'</div>'
       +'</div></div></div>';
     var actions='';
     if(amRecip){
@@ -316,8 +316,8 @@ function rnDutySwap(c){
         +'</div>';
     } else if(canMgr){
       actions='<div style="display:flex;gap:8px;margin-top:12px">'
-        +'<button class="btn-sm primary" style="font-size:11px" onclick="appSw(\''+s.id+'\')">核准</button>'
-        +'<button class="btn-sm danger" style="font-size:11px" onclick="rejectSw(\''+s.id+'\')">拒絕</button>'
+        +'<button class="btn-sm primary" style="font-size:12px" onclick="appSw(\''+s.id+'\')">核准</button>'
+        +'<button class="btn-sm danger" style="font-size:12px" onclick="rejectSw(\''+s.id+'\')">拒絕</button>'
         +'</div>';
     } else if(amReq&&s.status==='pending'){
       actions='<div style="margin-top:10px"><button class="btn-sm" onclick="cancelSwap(\''+s.id+'\')">撤回申請</button></div>';
@@ -326,9 +326,9 @@ function rnDutySwap(c){
       +(amRecip?'<div class="swcard-recip-tip">📬 對方請求與您換班，請確認</div>':'')
       +'<div style="flex:1;min-width:0">'+timeline
       +(s.reason?'<div class="swcard-reason">💬 '+esc(s.reason)+'</div>':'')
-      +'<div style="font-size:10px;color:var(--faint);margin-top:5px">申請時間：'+(s.createdAt||'')+'</div>'
+      +'<div style="font-size:11px;color:var(--faint);margin-top:5px">申請時間：'+(s.createdAt||'')+'</div>'
       +actions+'</div>'
-      +'<div><span style="font-size:10px;padding:3px 9px;border-radius:99px;font-weight:700;background:'+stBg+';color:'+stClr+'">'+stTxt+'</span></div>'
+      +'<div><span style="font-size:11px;padding:3px 9px;border-radius:99px;font-weight:700;background:'+stBg+';color:'+stClr+'">'+stTxt+'</span></div>'
       +'</div>';
   }
 
@@ -412,10 +412,10 @@ function rnDutyStats(c){
     var warnN=cov.night<(minStaff.night||0);
     var dayName=DLBLS[(new Date(d).getDay()+6)%7];
     return '<tr>'
-      +'<td>'+dayName+' <span style="color:var(--faint);font-size:11px">'+d.slice(5)+'</span></td>'
-      +'<td style="text-align:center;background:'+(warnM?'var(--red-bg)':'')+'"><span style="color:#f59e0b;font-weight:700">'+cov.morning+'</span>'+(warnM?'<span style="color:var(--red);font-size:10px"> ⚠</span>':'')+'</td>'
-      +'<td style="text-align:center;background:'+(warnA?'var(--red-bg)':'')+'"><span style="color:#3b82f6;font-weight:700">'+cov.afternoon+'</span>'+(warnA?'<span style="color:var(--red);font-size:10px"> ⚠</span>':'')+'</td>'
-      +'<td style="text-align:center;background:'+(warnN?'var(--red-bg)':'')+'"><span style="color:#6366f1;font-weight:700">'+cov.night+'</span>'+(warnN?'<span style="color:var(--red);font-size:10px"> ⚠</span>':'')+'</td>'
+      +'<td>'+dayName+' <span style="color:var(--faint);font-size:12px">'+d.slice(5)+'</span></td>'
+      +'<td style="text-align:center;background:'+(warnM?'var(--red-bg)':'')+'"><span style="color:#f59e0b;font-weight:700">'+cov.morning+'</span>'+(warnM?'<span style="color:var(--red);font-size:11px"> ⚠</span>':'')+'</td>'
+      +'<td style="text-align:center;background:'+(warnA?'var(--red-bg)':'')+'"><span style="color:#3b82f6;font-weight:700">'+cov.afternoon+'</span>'+(warnA?'<span style="color:var(--red);font-size:11px"> ⚠</span>':'')+'</td>'
+      +'<td style="text-align:center;background:'+(warnN?'var(--red-bg)':'')+'"><span style="color:#6366f1;font-weight:700">'+cov.night+'</span>'+(warnN?'<span style="color:var(--red);font-size:11px"> ⚠</span>':'')+'</td>'
       +'</tr>';
   }).join('');
 

@@ -484,7 +484,7 @@ function initApp(){
   if (_pc) _pc.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px">'
     + '<div style="width:38px;height:38px;border:3px solid var(--b2);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite"></div>'
     + '<div style="font-size:14px;font-weight:700;color:var(--text)">正在同步院內資料</div>'
-    + '<div style="font-size:11px;color:var(--faint)">連線中，請稍候…</div>'
+    + '<div style="font-size:12px;color:var(--faint)">連線中，請稍候…</div>'
     + '</div>';
 
   startFirebaseSync(function() {
@@ -864,7 +864,7 @@ function renderMyTasksMain() {
       + '<div class="task-body">'
       + '<div class="task-text ' + (t.status === '已完成' ? 'done-text' : '') + '">' + esc(t.text) + '</div>'
       + '<div class="task-meta">'
-      + '<span style="font-size:11px;color:var(--primary);font-weight:500">' + esc(m.title) + '</span>'
+      + '<span style="font-size:12px;color:var(--primary);font-weight:500">' + esc(m.title) + '</span>'
       + prioBadge(t.priority)
       + (t.due ? '<span class="due-tag ' + dc + '">' + fmtDate(t.due) + '</span>' : '')
       + '</div></div></div>';
@@ -1012,7 +1012,7 @@ document.addEventListener('keydown',function(e){
 function doSearch(q){
   const res=document.getElementById('searchResults');if(!res)return;
   q=(q||'').trim().toLowerCase();
-  if(!q){res.innerHTML='<div class="search-empty">輸入關鍵字開始搜尋<br><small style="font-size:11px;margin-top:4px;display:block">支援：會議、公告、寶寶、日誌、衛教</small></div>';return;}
+  if(!q){res.innerHTML='<div class="search-empty">輸入關鍵字開始搜尋<br><small style="font-size:12px;margin-top:4px;display:block">支援：會議、公告、寶寶、日誌、衛教</small></div>';return;}
   const hits=[];
   // 會議
   (store.meetings||[]).forEach(m=>{
@@ -1361,9 +1361,9 @@ function renderHomePage(c){
     var isToday=d===todayStr;
     var shClr={morning:'#f59e0b',afternoon:'#3b82f6',night:'#6366f1',off:'var(--faint)'};
     return '<div class="home-week-cell'+(isToday?' today-cell':'')+'">'
-      +'<div style="font-size:10px;color:var(--faint)">'+['一','二','三','四','五','六','日'][i]+'</div>'
-      +'<div style="font-size:10px;color:var(--muted)">'+d.slice(5)+'</div>'
-      +'<div style="font-size:11px;font-weight:700;color:'+(sh==='off'?'var(--faint)':shClr[sh]||'var(--primary)')+';margin-top:3px">'+si.l+'</div>'
+      +'<div style="font-size:11px;color:var(--faint)">'+['一','二','三','四','五','六','日'][i]+'</div>'
+      +'<div style="font-size:11px;color:var(--muted)">'+d.slice(5)+'</div>'
+      +'<div style="font-size:12px;font-weight:700;color:'+(sh==='off'?'var(--faint)':shClr[sh]||'var(--primary)')+';margin-top:3px">'+si.l+'</div>'
       +'</div>';
   }).join('');
 
@@ -1379,8 +1379,8 @@ function renderHomePage(c){
         return '<div class="home-mtg-item" onclick="setPage(\'meetings\')">'
           +'<div class="home-mtg-dot'+(isToday2?' home-mtg-today':'')+'"></div>'
           +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.title)+'</div>'
-          +'<div style="font-size:11px;color:var(--muted)">'+(isToday2?'今天 ':'')+(m.time||'')+' '+fmtDate(m.date)+(m.location?' · '+esc(m.location):'')+'</div></div>'
-          +(totalC?'<div style="font-size:11px;color:var(--faint);flex-shrink:0">'+doneC+'/'+totalC+'</div>':'')
+          +'<div style="font-size:12px;color:var(--muted)">'+(isToday2?'今天 ':'')+(m.time||'')+' '+fmtDate(m.date)+(m.location?' · '+esc(m.location):'')+'</div></div>'
+          +(totalC?'<div style="font-size:12px;color:var(--faint);flex-shrink:0">'+doneC+'/'+totalC+'</div>':'')
           +'</div>';
       }).join('')
     :'<div style="font-size:12px;color:var(--faint);padding:8px 0">本週無安排會議</div>';
@@ -1408,7 +1408,7 @@ function renderHomePage(c){
     var stTxt={approved:'✓ 核准',rejected:'✗ 駁回',withdrawn:'↩ 撤回',pending:'⏳ 待審'}[f.status]||'待審';
     return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--b1)">'
       +'<div style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.title)+'</div>'
-      +'<span class="'+stCls+'" style="font-size:10px;flex-shrink:0">'+stTxt+'</span></div>';
+      +'<span class="'+stCls+'" style="font-size:11px;flex-shrink:0">'+stTxt+'</span></div>';
   }).join('');
   var sideSection='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'
     +'<div><div class="sec-label" style="margin-bottom:6px">日誌紀錄</div>'+streakHtml
@@ -1426,14 +1426,14 @@ function renderHomePage(c){
       return '<div class="home-pend-row">'
         +'<span class="ftype '+ft.c+'" style="flex-shrink:0">'+ft.l+'</span>'
         +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer" onclick="setPage(\'forms\')" title="'+esc(f.title)+'">'+esc(f.title)+'</div>'
-        +'<div style="font-size:11px;color:var(--faint)">'+esc(userName(f.applicantId))+' · '+fmtDate(f.createdAt)+'</div></div>'
+        +'<div style="font-size:12px;color:var(--faint)">'+esc(userName(f.applicantId))+' · '+fmtDate(f.createdAt)+'</div></div>'
         +'<div style="display:flex;gap:5px;flex-shrink:0">'
-        +'<button class="btn-sm primary" style="font-size:11px;padding:3px 9px" onclick="appF(\''+f.id+'\')">核准</button>'
-        +'<button class="btn-sm danger" style="font-size:11px;padding:3px 9px" onclick="rejF(\''+f.id+'\')">駁回</button>'
+        +'<button class="btn-sm primary" style="font-size:12px;padding:3px 9px" onclick="appF(\''+f.id+'\')">核准</button>'
+        +'<button class="btn-sm danger" style="font-size:12px;padding:3px 9px" onclick="rejF(\''+f.id+'\')">駁回</button>'
         +'</div></div>';
     }).join('');
     pendHtml='<div class="home-section" style="display:flex;align-items:center;justify-content:space-between">'
-      +'<span>待我簽核</span><span style="font-size:11px;font-weight:400;color:var(--primary);cursor:pointer" onclick="setPage(\'forms\')">全部 ›</span></div>'
+      +'<span>待我簽核</span><span style="font-size:12px;font-weight:400;color:var(--primary);cursor:pointer" onclick="setPage(\'forms\')">全部 ›</span></div>'
       +'<div class="home-pend-list">'+prows+'</div>';
   }
 
@@ -1457,7 +1457,7 @@ function renderHomePage(c){
     +'<div class="home-sub">今天是 '+todayStr
     +(shiftInfo?'<span class="home-duty-badge" style="background:var(--s2);margin-left:10px">'+shiftInfo.l+'</span>':'<span class="home-duty-badge" style="background:var(--s2);color:var(--faint);margin-left:10px">未排班</span>')
     +'</div>'
-    +'<div class="home-section">需要處理 '+(alerts.length?'<span style="font-size:10px;background:var(--red-bg);color:var(--red);padding:1px 8px;border-radius:99px;font-weight:700;text-transform:none;letter-spacing:0">'+alerts.length+'</span>':'')+'</div>'
+    +'<div class="home-section">需要處理 '+(alerts.length?'<span style="font-size:11px;background:var(--red-bg);color:var(--red);padding:1px 8px;border-radius:99px;font-weight:700;text-transform:none;letter-spacing:0">'+alerts.length+'</span>':'')+'</div>'
     +'<div class="home-alert-list">'+alertsHtml+'</div>'
     +'<div class="home-section">本週班表</div>'
     +'<div class="home-week-strip">'+weekHtml+'</div>'
@@ -1465,7 +1465,7 @@ function renderHomePage(c){
     +'<div class="home-quick">'+quickHtml+'</div>'
     +'<div class="home-section">今日概覽</div>'
     +'<div class="home-grid">'+cardsHtml+'</div>'
-    +'<div class="home-section">本週會議 <span style="font-size:11px;font-weight:400;color:var(--primary);text-transform:none;letter-spacing:0;cursor:pointer" onclick="setPage(\'meetings\')">全部 ›</span></div>'
+    +'<div class="home-section">本週會議 <span style="font-size:12px;font-weight:400;color:var(--primary);text-transform:none;letter-spacing:0;cursor:pointer" onclick="setPage(\'meetings\')">全部 ›</span></div>'
     +'<div class="home-mtg-list">'+mtgHtml+'</div>'
     +pendHtml
     +sideSection
@@ -1694,7 +1694,7 @@ function renderBackupLog(){
         + '</td><td style="font-size:12px">' + esc(l.action||'下載備份')
         + '</td><td style="font-size:12px;color:var(--faint)">' + (l.size||'-') + '</td></tr>';
     }).join('');
-    wrap.innerHTML = '<div style="font-size:11px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">備份紀錄（最近 10 筆）</div>'
+    wrap.innerHTML = '<div style="font-size:12px;font-weight:800;color:#c4527a;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">備份紀錄（最近 10 筆）</div>'
       + '<div class="table-wrap"><table><thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>大小</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   });
 }
@@ -1735,9 +1735,9 @@ function renderAuditLog(wrap){
     var rows=logs.map(function(l){
       var color=getColor(l.action||'');
       return '<tr>'
-        +'<td style="font-size:11px;white-space:nowrap;color:var(--faint)">'+(l.at||'').slice(0,16).replace('T',' ')+'</td>'
+        +'<td style="font-size:12px;white-space:nowrap;color:var(--faint)">'+(l.at||'').slice(0,16).replace('T',' ')+'</td>'
         +'<td style="font-size:12px">'+esc(l.by||'')+'</td>'
-        +'<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;background:'+color+'22;color:'+color+'">'+esc(l.action||'')+'</span></td>'
+        +'<td><span style="font-size:12px;font-weight:700;padding:2px 7px;border-radius:10px;background:'+color+'22;color:'+color+'">'+esc(l.action||'')+'</span></td>'
         +'<td style="font-size:12px;color:var(--muted)">'+esc(l.detail||'')+'</td>'
         +'</tr>';
     }).join('');
@@ -1903,7 +1903,7 @@ function renderShiftCalView(){
   var cells = '';
   var dow = ['\u65e5','\u4e00','\u4e8c','\u4e09','\u56db','\u4e94','\u516d'];
   var headers = dow.map(function(d){
-    return '<div style="font-size:10px;font-weight:700;color:var(--faint);text-align:center;padding:4px 0">'+d+'</div>';
+    return '<div style="font-size:11px;font-weight:700;color:var(--faint);text-align:center;padding:4px 0">'+d+'</div>';
   }).join('');
 
   // Empty cells before first day
@@ -1933,7 +1933,7 @@ function renderShiftCalView(){
 
     var handoverDot = handovers.length ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--primary);display:inline-block;margin-left:2px" title="'+handovers.length+'\u7b46\u4ea4\u73ed"></span>' : '';
 
-    cells += '<div style="min-height:60px;padding:4px;border:1px solid var(--b2);border-radius:6px;background:'+(isToday?'var(--primary-bg,#fdf0f5)':'var(--surface)')+';font-size:11px">'
+    cells += '<div style="min-height:60px;padding:4px;border:1px solid var(--b2);border-radius:6px;background:'+(isToday?'var(--primary-bg,#fdf0f5)':'var(--surface)')+';font-size:12px">'
       +'<div style="font-weight:'+(isToday?'800':'500')+';color:'+(isToday?'var(--primary)':'var(--text)')+';margin-bottom:2px">'+dt+handoverDot+'</div>'
       +innerShifts
       +'</div>';
@@ -1942,7 +1942,7 @@ function renderShiftCalView(){
   var monthName = (month+1)+'\u6708 '+year;
   wrap.innerHTML = '<div style="padding:16px 20px">'
     +'<div style="font-size:15px;font-weight:700;margin-bottom:12px;color:var(--text)">'+monthName+'</div>'
-    +'<div style="font-size:11px;color:var(--faint);margin-bottom:8px">'
+    +'<div style="font-size:12px;color:var(--faint);margin-bottom:8px">'
     +[{sh:'morning',l:'\ud83c\udf05 \u65e9\u73ed'},{sh:'afternoon',l:'\u2600\ufe0f \u5348\u73ed'},{sh:'night',l:'\ud83c\udf19 \u591c\u73ed'}].map(function(x){
       return '<span style="margin-right:12px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+SHIFT_CLR[x.sh]+';margin-right:3px"></span>'+x.l+'</span>';
     }).join('')
@@ -2081,7 +2081,7 @@ function handleChatFile(input){
     prev.innerHTML=(file.type.startsWith('image/')
       ?'<img src="'+e.target.result+'" style="max-height:48px;max-width:120px;border-radius:5px;object-fit:cover">'
       :'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M13 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7z"/><path d="M13 2v5h5"/></svg>')
-      +'<span style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(file.name)+'</span>'
+      +'<span style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(file.name)+'</span>'
       +'<button onclick="_clearChatFilePreview()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;line-height:1;padding:0 2px">×</button>';
   };
   r.readAsDataURL(file);
@@ -2146,7 +2146,7 @@ function showDailySummary(){
   if(myTasks)items.push('<div class="summary-item summary-task" onclick="closeModal();setPage(\'meetings\')" style="cursor:pointer">✅ 待完成任務 <strong>'+myTasks+' 項</strong></div>');
   if(unreadMsg)items.push('<div class="summary-item summary-msg" onclick="closeModal();setPage(\'messages\')" style="cursor:pointer">💬 未讀訊息 <strong>'+unreadMsg+' 則</strong></div>');
   showModal('👋 早安，'+esc(currentUser.name)+'！',
-    '<div class="summary-sub">今日工作重點</div><div class="summary-list">'+items.join('')+'</div>'    +'<div style="font-size:11px;color:var(--faint);margin-top:12px;text-align:center">點擊項目可快速跳轉 · 今日僅顯示一次</div>',null);
+    '<div class="summary-sub">今日工作重點</div><div class="summary-list">'+items.join('')+'</div>'    +'<div style="font-size:12px;color:var(--faint);margin-top:12px;text-align:center">點擊項目可快速跳轉 · 今日僅顯示一次</div>',null);
   setTimeout(function(){var f=document.querySelector('.modal-footer');if(f)f.style.display='none';},0);
 }
 
@@ -2243,7 +2243,7 @@ function renderResolutions(c, m) {
       + '<div class="res-status ' + statusCls + '">' + statusLbl + '</div>'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:13px;font-weight:600;margin-bottom:4px">' + esc(r.content) + '</div>'
-      + '<div style="display:flex;gap:12px;font-size:11px;color:var(--muted);flex-wrap:wrap">'
+      + '<div style="display:flex;gap:12px;font-size:12px;color:var(--muted);flex-wrap:wrap">'
       + (assignee ? '<span>👤 ' + esc(assignee.name) + '</span>' : '<span style="color:var(--faint)">未指定負責人</span>')
       + (r.deadline ? '<span>📅 ' + fmtDate(r.deadline) + (overdue ? ' <span style="color:var(--red);font-weight:700">逾期</span>' : '') + '</span>' : '')
       + '</div></div>'
@@ -2259,7 +2259,7 @@ function renderResolutions(c, m) {
 
   c.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
     + '<div class="sec-label" style="margin:0">決議追蹤'
-    + (total ? ' <span style="font-size:11px;color:var(--muted);font-weight:400">(' + doneCount + '/' + total + ' 完成)</span>' : '')
+    + (total ? ' <span style="font-size:12px;color:var(--muted);font-weight:400">(' + doneCount + '/' + total + ' 完成)</span>' : '')
     + '</div>'
     + (canEdit ? '<button class="btn-sm primary" onclick="openAddResolution(\''+m.id+'\')">+ 新增決議</button>' : '')
     + '</div>'
@@ -2334,8 +2334,8 @@ function renderSignoffSection(m) {
       + avatarEl(uid2, 22)
       + '<span style="font-size:12px;font-weight:600">' + esc(userName(uid2)) + '</span>'
       + (signed
-        ? '<span style="font-size:10px;color:var(--green);margin-left:auto">✓ ' + (s.time||'').slice(5,16) + '</span>'
-        : '<span style="font-size:10px;color:var(--faint);margin-left:auto">待簽核</span>')
+        ? '<span style="font-size:11px;color:var(--green);margin-left:auto">✓ ' + (s.time||'').slice(5,16) + '</span>'
+        : '<span style="font-size:11px;color:var(--faint);margin-left:auto">待簽核</span>')
       + '</div>';
   }).join('');
 
@@ -2352,7 +2352,7 @@ function renderSignoffSection(m) {
       ? '<button class="btn-sm" onclick="lockMeetingMinutes(\''+m.id+'\')">🔏 發布簽核</button>'
       : '')
     + (isAdmin() && locked && !allSigned
-      ? '<button class="btn-sm" onclick="unlockMeetingMinutes(\''+m.id+'\')" style="font-size:11px">解除鎖定</button>'
+      ? '<button class="btn-sm" onclick="unlockMeetingMinutes(\''+m.id+'\')" style="font-size:12px">解除鎖定</button>'
       : '')
     + '</div></div>'
     + (locked
@@ -2490,8 +2490,8 @@ function setReply(msgId,text,fromName){
   if(prev){
     prev.style.display='flex';
     prev.innerHTML='<div class="reply-preview-bar">'
-      +'<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;color:var(--primary)">↩ 回覆 '+esc(fromName)+'</div>'
-      +'<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc((text||'📎 附件').slice(0,50))+'</div></div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:700;color:var(--primary)">↩ 回覆 '+esc(fromName)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc((text||'📎 附件').slice(0,50))+'</div></div>'
       +'<button onclick="clearReply()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0 4px;flex-shrink:0">×</button>'
       +'</div>';
   }
@@ -2549,11 +2549,11 @@ function manageChatGroup(roomId){
   var memberList=room.members.map(function(uid2){
     return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+avatarEl(uid2,26)
       +'<span style="font-size:13px;font-weight:600">'+esc(userName(uid2))+'</span>'
-      +(uid2===currentUser.id?'<span style="font-size:10px;color:var(--faint)">(我)</span>':'')
+      +(uid2===currentUser.id?'<span style="font-size:11px;color:var(--faint)">(我)</span>':'')
       +'</div>';
   }).join('');
   var html='<div class="form-row"><label>群組名稱</label><input id="editGrpName" value="'+esc(room.groupName)+'"></div>'
-    +'<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">成員（'+room.members.length+'）</div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">成員（'+room.members.length+'）</div>'
     +'<div style="border:1px solid var(--b1);border-radius:var(--radius-sm);padding:8px 12px;max-height:180px;overflow-y:auto">'+memberList+'</div>';
   showModal('群組資訊',html,function(){
     var n=document.getElementById('editGrpName').value.trim();

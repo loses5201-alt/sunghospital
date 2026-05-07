@@ -55,10 +55,10 @@ function renderCalendar(){
   <div class="cal-grid-header">${dayLabels}</div>
   <div class="cal-grid">${cellHtml}</div>
   <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--blue-bg);border-radius:2px;display:inline-block"></span>會議</span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--green-bg);border-radius:2px;display:inline-block"></span>交班</span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--amber-bg);border-radius:2px;display:inline-block"></span>我的班別</span>
-    <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:10px;height:10px;background:#fce8e8;border-radius:2px;display:inline-block"></span>核准假單</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--blue-bg);border-radius:2px;display:inline-block"></span>會議</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--green-bg);border-radius:2px;display:inline-block"></span>交班</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;background:var(--amber-bg);border-radius:2px;display:inline-block"></span>我的班別</span>
+    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)"><span style="width:10px;height:10px;background:#fce8e8;border-radius:2px;display:inline-block"></span>核准假單</span>
   </div>`;
 }
 function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}else if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}

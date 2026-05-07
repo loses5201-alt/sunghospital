@@ -30,8 +30,8 @@ function rnEdu(kw){
     const myRead=readers[currentUser.id];
     const pct=allIds.length?Math.round(readCnt/allIds.length*100):0;
     const progressHtml=isAdmin()
-      ?'<div style="margin-top:6px;display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--b1);border-radius:4px"><div style="width:'+pct+'%;height:4px;background:var(--primary);border-radius:4px;transition:width .3s"></div></div><span style="font-size:10px;color:var(--faint);white-space:nowrap">'+readCnt+'/'+allIds.length+' 人已讀</span></div>'
-      :(myRead?'<span style="font-size:10px;color:var(--green);margin-top:4px;display:block">✓ 已讀</span>':'');
+      ?'<div style="margin-top:6px;display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--b1);border-radius:4px"><div style="width:'+pct+'%;height:4px;background:var(--primary);border-radius:4px;transition:width .3s"></div></div><span style="font-size:11px;color:var(--faint);white-space:nowrap">'+readCnt+'/'+allIds.length+' 人已讀</span></div>'
+      :(myRead?'<span style="font-size:11px;color:var(--green);margin-top:4px;display:block">✓ 已讀</span>':'');
     const adminBtns=isAdmin()
       ?'<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--b1)">'
         +'<button class="btn-xs" onclick="event.stopPropagation();openEditEdu(\''+esc(e.id)+'\')">✏ 編輯</button>'

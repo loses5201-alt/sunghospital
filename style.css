@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#fdf8f5;--surface:#ffffff;--s2:#faf4f0;--s3:#f5ebe5;
-  --b1:rgba(180,100,120,0.1);--b2:rgba(180,100,120,0.18);--b3:rgba(180,100,120,0.32);
-  --text:#2d1f24;--muted:#7a5862;--faint:#c0909a;
+  --bg:#fef7f2;--surface:#ffffff;--s2:#faefe8;--s3:#f5e3d8;
+  --b1:rgba(180,100,120,0.14);--b2:rgba(180,100,120,0.24);--b3:rgba(180,100,120,0.4);
+  --text:#231a1e;--muted:#5d4350;--faint:#8e6a78;
   --primary:#c4527a;--primary-light:#fde8f0;--primary-dark:#a8405f;
   --lavender:#9b8fd4;--lavender-bg:#f0edfb;--lavender-light:#e4dff6;
   --green:#1a6645;--green-bg:#e4f2eb;--green-light:#c8e6d4;
@@ -22,13 +22,13 @@
   --t-med:.22s cubic-bezier(.4,0,.2,1);
   --t-spring:.3s cubic-bezier(.34,1.56,.64,1);
 }
-body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:'Nunito','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:16px;font-weight:500;line-height:1.65;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 
 /* ── Dark Mode ── */
 body.dark{
   --bg:#111318;--surface:#1c1f26;--s2:#22262f;--s3:#2a2f3a;
   --b1:rgba(255,255,255,0.07);--b2:rgba(255,255,255,0.13);--b3:rgba(255,255,255,0.22);
-  --text:#e8eaf0;--muted:#9fa3b0;--faint:#5a5f70;
+  --text:#e8eaf0;--muted:#bcc1cd;--faint:#7d8190;
   --primary:#d4699a;--primary-light:#2d1a22;--primary-dark:#c4527a;
   --green:#2ecc71;--green-bg:#0d2b1a;--green-light:#1a3d28;
   --blue:#5b9cf6;--blue-bg:#0d1e3a;
@@ -2098,4 +2098,78 @@ body.dark .sw-step{background:var(--s2)}
   .pp-name { font-size: 14px; }
   .pp-controls { padding: 9px; }
   .pp-mini-btn { min-height: 32px; padding: 6px 12px; }
+}
+
+/* ════ Readability uplift（2026-05-07）══════════════════════════════════════ */
+/* 字級提升、字重加粗、對比加深、品牌色更亮 */
+
+/* Form 元件可讀性 */
+.form-row label{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;display:block;letter-spacing:.01em}
+.form-row input,.form-row textarea,.form-row select{font-size:15px;font-weight:500;padding:10px 13px;border-radius:var(--radius-sm);border:1.5px solid var(--b2);background:var(--surface);color:var(--text);font-family:inherit;width:100%;box-sizing:border-box;transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.form-row input:focus,.form-row textarea:focus,.form-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(196,82,122,0.12)}
+
+/* 主要按鈕提亮：粉色漸變 + 微陰影 */
+.btn-primary,.btn-sm.primary{
+  background:linear-gradient(135deg,#d65a85,#c4527a);
+  color:white;border:none;
+  box-shadow:0 2px 8px rgba(196,82,122,0.28);
+  font-weight:700;letter-spacing:.02em;
+  transition:transform var(--t-fast),box-shadow var(--t-fast),filter var(--t-fast);
+}
+.btn-primary:hover,.btn-sm.primary:hover{filter:brightness(1.07);box-shadow:0 4px 14px rgba(196,82,122,0.36);transform:translateY(-1px)}
+.btn-primary:active,.btn-sm.primary:active{transform:translateY(0)}
+.btn-primary{font-size:15px;padding:10px 22px;border-radius:var(--radius-sm)}
+
+/* 小按鈕字級提升 */
+.btn-sm{font-size:13px;font-weight:600;padding:7px 14px;border-radius:var(--radius-sm)}
+.btn-xs{font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--radius-xs)}
+
+/* 主標題/次標題 */
+.main-header h1{font-size:22px;font-weight:800;letter-spacing:.01em;color:var(--text)}
+.main-header-meta{font-size:13px;color:var(--muted);font-weight:500;margin-top:2px}
+
+/* 卡片字級提升（不影響現有 inline override） */
+.frq-card{font-size:14px}
+.task-card{font-size:14px}
+.meeting-item{font-size:14px}
+.ann-card{font-size:15px}
+.ann-card .ann-title-text{font-size:16px;font-weight:700}
+.ann-card .ann-body{font-size:14px;line-height:1.7}
+
+/* 表格字級提升 */
+table{font-size:14px}
+.user-table th,.user-table td{font-size:14px}
+
+/* sec-label / 區段標籤更明顯 */
+.sec-label{font-size:13px;font-weight:700;color:var(--primary);letter-spacing:.05em;text-transform:uppercase;padding:14px 0 8px}
+
+/* Modal 標題加粗 */
+.modal h2{font-size:18px;font-weight:800;color:var(--text);margin-bottom:14px}
+
+/* 提升入口陣列卡片 */
+.metric-box{padding:14px 12px}
+.metric-num{font-size:28px;font-weight:800}
+.metric-lbl{font-size:13px;font-weight:600;color:var(--muted);margin-top:4px}
+
+/* Badge / 提示加粗 */
+.badge-open,.badge-done,.badge-urgent,.badge-unread{font-weight:700;letter-spacing:.02em}
+
+/* 篩選 chip */
+.ftab,.btn-sm.primary{min-height:36px}
+
+/* 增加整體空氣感的明亮陰影 */
+.modal,.card,.stat-card,.frq-card{box-shadow:0 1px 4px rgba(196,82,122,0.06),0 6px 20px rgba(196,82,122,0.05)}
+
+/* PeoplePicker 字級小幅提升 */
+.pp-name{font-size:14px;font-weight:600}
+.pp-meta{font-size:12px}
+.pp-search{font-size:13px;padding:8px 12px;font-weight:500}
+.pp-mini-btn{font-size:12px;padding:6px 11px;font-weight:600}
+
+/* 行動裝置觸控目標 */
+@media (max-width:768px){
+  body{font-size:16px}
+  .btn-sm,.btn-primary{min-height:44px}
+  .form-row input,.form-row textarea,.form-row select{font-size:16px;padding:11px 14px}
+  .metric-num{font-size:26px}
 }
