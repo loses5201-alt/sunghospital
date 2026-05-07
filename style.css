@@ -652,7 +652,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
 .eexp.open{display:block}
 
 /* ── LOGIN PAGE ── */
-#loginScreen{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#0a1438 0%,#1a2a5a 30%,#2e4282 60%,#5878b8 90%,#8aa8d8 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:280px 20px 40px;background-size:100% 200%;animation:loginBgShift 30s ease-in-out infinite}
+#loginScreen{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#0a1438 0%,#1a2a5a 30%,#2e4282 60%,#5878b8 90%,#8aa8d8 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px;background-size:100% 200%;animation:loginBgShift 30s ease-in-out infinite}
 @keyframes loginBgShift{0%,100%{background-position:0% 0%}50%{background-position:0% 30%}}
 
 /* 背景：星空 + 流星 */
@@ -672,10 +672,6 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
   radial-gradient(1px 1px at 72% 38%,rgba(255,235,180,0.7) 0%,transparent 100%);
   animation:starsTwinkle 4s ease-in-out infinite}
 @keyframes starsTwinkle{0%,100%{opacity:.5}50%{opacity:1}}
-
-/* 月亮 — 右上角靜態明月 */
-.login-moon{position:absolute;top:60px;right:80px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8e0 0%,#f5e8a8 35%,#e0c870 70%,#b8983a 100%);box-shadow:0 0 30px rgba(255,240,180,0.55),0 0 70px rgba(255,220,130,0.3),0 0 130px rgba(255,200,100,0.18),inset -8px -10px 20px rgba(140,100,30,0.25);z-index:1;animation:moonGlow 8s ease-in-out infinite}
-@keyframes moonGlow{0%,100%{box-shadow:0 0 30px rgba(255,240,180,0.55),0 0 70px rgba(255,220,130,0.3),0 0 130px rgba(255,200,100,0.18),inset -8px -10px 20px rgba(140,100,30,0.25)}50%{box-shadow:0 0 40px rgba(255,240,180,0.7),0 0 90px rgba(255,220,130,0.4),0 0 160px rgba(255,200,100,0.22),inset -8px -10px 20px rgba(140,100,30,0.25)}}
 
 /* 流星 — 從右上往左下劃過 */
 .login-meteor{position:absolute;width:2px;height:2px;background:white;border-radius:50%;box-shadow:0 0 8px 2px rgba(255,255,255,0.9),0 0 18px 4px rgba(255,235,180,0.5);opacity:0}
@@ -705,14 +701,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
 .login-meteor-17{top:46%; left:38%; animation:meteorFall 4.8s linear infinite; animation-delay:12.8s}
 .login-meteor-18{top:28%; left:18%; animation:meteorFall 5.0s linear infinite; animation-delay:13.6s}
 
-.login-card{position:relative;background:white;border-radius:22px;padding:20px 36px 34px;width:400px;max-width:94vw;box-shadow:0 30px 90px rgba(10,20,60,0.55),0 0 50px rgba(255,235,180,0.2);z-index:2}
-
-/* 醫院品牌 — 螢幕上方金色標題 */
-.login-brand{position:absolute;top:50px;left:50%;transform:translateX(-50%);text-align:center;z-index:3;width:90%;max-width:480px;pointer-events:none}
-.login-brand-name{font-size:30px;font-weight:800;background:linear-gradient(135deg,#c89030 0%,#ffefb4 35%,#ffe680 50%,#ffefb4 65%,#c89030 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.06em;text-shadow:0 2px 16px rgba(212,175,55,0.25);font-family:'Noto Sans TC','Nunito',sans-serif;animation:brandShine 5s ease-in-out infinite}
-@keyframes brandShine{0%,100%{background-position:0% 0%}50%{background-position:100% 0%}}
-.login-brand-slogan{font-size:13px;color:rgba(255,240,200,0.88);font-weight:500;margin-top:10px;letter-spacing:.22em;font-style:italic;font-family:'Noto Sans TC',serif;text-shadow:0 1px 6px rgba(0,0,0,0.25)}
-.login-brand-slogan::before,.login-brand-slogan::after{content:'•';color:rgba(255,235,180,0.5);margin:0 12px;font-style:normal}
+.login-card{position:relative;background:white;border-radius:22px;padding:20px 36px 34px;width:400px;max-width:94vw;box-shadow:0 30px 90px rgba(10,20,60,0.55),0 0 50px rgba(255,235,180,0.2);z-index:1}
 
 /* 院長頭像 — 多層聖光 */
 .login-hero{position:absolute;top:-160px;left:50%;transform:translateX(-50%);width:170px;height:200px;z-index:10}
@@ -749,14 +738,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
   .login-hero{width:140px;height:170px;top:-140px}
   .login-hero img{border-radius:70px 70px 55px 55px}
   .login-meteor::after{width:90px}
-  #loginScreen{padding-top:240px}
+  #loginScreen{padding-top:160px}
   .login-card{padding:18px 24px 28px}
   .login-director-name{font-size:21px}
-  .login-moon{top:30px;right:24px;width:70px;height:70px}
-  .login-brand{top:36px}
-  .login-brand-name{font-size:23px;letter-spacing:.04em}
-  .login-brand-slogan{font-size:11px;letter-spacing:.18em;margin-top:6px}
-  .login-brand-slogan::before,.login-brand-slogan::after{margin:0 8px}
 }
 
 /* 低效能裝置（prefers-reduced-motion）關閉動畫 */
