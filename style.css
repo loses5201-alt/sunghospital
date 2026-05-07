@@ -652,8 +652,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
 .eexp.open{display:block}
 
 /* ── LOGIN PAGE ── */
-#loginScreen{position:fixed;inset:0;overflow:hidden;background:linear-gradient(145deg,#3a0d28 0%,#7a2a55 35%,#b8407a 70%,#e8829a 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px;background-size:200% 200%;animation:loginBgShift 20s ease-in-out infinite}
-@keyframes loginBgShift{0%,100%{background-position:0% 0%}50%{background-position:100% 100%}}
+#loginScreen{position:fixed;inset:0;overflow:hidden;background:linear-gradient(180deg,#0a1438 0%,#1a2a5a 30%,#2e4282 60%,#5878b8 90%,#8aa8d8 100%);display:flex;align-items:flex-start;justify-content:center;z-index:9999;padding:180px 20px 40px;background-size:100% 200%;animation:loginBgShift 30s ease-in-out infinite}
+@keyframes loginBgShift{0%,100%{background-position:0% 0%}50%{background-position:0% 30%}}
 
 /* 背景：星空 + 流星 */
 .login-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
@@ -691,7 +691,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
 .login-meteor-7{top:56%;left:80%;animation:meteorFall 4.8s linear infinite;animation-delay:10.5s}
 .login-meteor-8{top:25%;left:96%;animation:meteorFall 4.0s linear infinite;animation-delay:12.5s}
 
-.login-card{position:relative;background:white;border-radius:22px;padding:20px 36px 34px;width:400px;max-width:94vw;box-shadow:0 30px 90px rgba(100,20,50,0.4),0 0 40px rgba(255,235,180,0.15);z-index:1}
+.login-card{position:relative;background:white;border-radius:22px;padding:20px 36px 34px;width:400px;max-width:94vw;box-shadow:0 30px 90px rgba(10,20,60,0.55),0 0 50px rgba(255,235,180,0.2);z-index:1}
 
 /* 院長頭像 — 多層聖光 */
 .login-hero{position:absolute;top:-160px;left:50%;transform:translateX(-50%);width:170px;height:200px;z-index:10}
