@@ -2251,3 +2251,87 @@ table{font-size:14px}
   .form-row input,.form-row textarea,.form-row select{font-size:16px;padding:11px 14px}
   .metric-num{font-size:26px}
 }
+
+/* ════ UI Polish v3（2026-05-07） ══════════════════════════════════════ */
+/* 全站排版優化：modals、tables、headers、卡片質感統一 */
+
+/* ── 主要區域背景：加上極淡的暖色漸層感 ── */
+#pageContainer{background:linear-gradient(180deg,var(--bg) 0%,#fef0e8 100%);background-attachment:fixed}
+
+/* ── 頁面表頭 — 加金色細線分隔下方 ── */
+.main-header{padding:22px 24px}
+.main-header::after{content:'';position:absolute;bottom:-1px;left:24px;right:24px;height:2px;background:linear-gradient(90deg,var(--primary) 0%,#d4699a 25%,rgba(196,82,122,0.35) 60%,transparent 100%);border-radius:2px;opacity:.7;pointer-events:none}
+.main-header h1{font-size:24px}
+.main-header-meta{font-size:13px;color:var(--muted);font-weight:500;margin-top:4px}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ── Modal 質感優化 ── */
+.modal{padding:30px 34px;background:linear-gradient(180deg,#ffffff 0%,#fffaf6 100%);box-shadow:0 30px 80px rgba(100,30,60,0.18),0 6px 24px rgba(196,82,122,0.08),0 0 0 1px rgba(196,82,122,0.06)}
+.modal h2{font-size:19px;padding-bottom:14px;margin-bottom:20px;border-bottom:1px dashed rgba(196,82,122,0.18);position:relative}
+.modal h2::after{content:'';position:absolute;bottom:-1px;left:0;width:60px;height:2px;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:2px}
+.modal .form-row{margin-bottom:14px}
+.modal-footer{padding-top:18px;margin-top:24px;border-top:1px solid var(--b1)}
+
+/* ── 表格優化 — 斑馬條紋、hover、表頭漸變 ── */
+.user-table,table.data-table{width:100%;border:1px solid var(--b1);border-radius:var(--radius);overflow:hidden;border-collapse:separate;border-spacing:0;background:white;box-shadow:0 2px 8px rgba(196,82,122,0.04)}
+.user-table thead th,table.data-table thead th{background:linear-gradient(180deg,#fdf3ee 0%,#f8e8df 100%);color:var(--text);font-weight:800;font-size:13px;letter-spacing:.04em;padding:12px 14px;border-bottom:2px solid var(--b2);text-align:left;white-space:nowrap}
+.user-table tbody td,table.data-table tbody td{padding:11px 14px;font-size:14px;border-bottom:1px solid var(--b1);vertical-align:middle}
+.user-table tbody tr:nth-child(even),table.data-table tbody tr:nth-child(even){background:#fdf8f4}
+.user-table tbody tr:hover,table.data-table tbody tr:hover{background:linear-gradient(90deg,rgba(196,82,122,0.06),rgba(196,82,122,0.02))}
+.user-table tbody tr:last-child td,table.data-table tbody tr:last-child td{border-bottom:none}
+
+/* ── 行政頁 admin-content 加上下邊距 ── */
+.admin-content{padding:18px 24px 32px}
+
+/* ── 章節 sec-label 額外間距，配合內容區結構 ── */
+.sec-label{margin-top:24px;margin-bottom:14px;font-size:12px}
+.sec-label:first-child{margin-top:8px}
+
+/* ── 統計卡 metric-box 優化 ── */
+.metric-box{background:linear-gradient(180deg,white 0%,#fffaf6 100%);border:1px solid var(--b1);border-radius:var(--radius);padding:16px 14px;text-align:center;transition:transform .15s,box-shadow .15s,border-color .15s;cursor:default;position:relative;overflow:hidden}
+.metric-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--lavender),var(--primary));opacity:.6;border-radius:var(--radius) var(--radius) 0 0}
+.metric-box:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(196,82,122,0.1);border-color:var(--b2)}
+
+/* ── 狀態 / 標籤 chip 統一質感 ── */
+.fst-p,.fst-a,.fst-r,.fst-w,.status-chip{padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.02em;display:inline-block}
+.fst-p{background:linear-gradient(135deg,#fff4cc,#fde9a8);color:#7a5500}
+.fst-a{background:linear-gradient(135deg,#d8f0e0,#b8e0c8);color:#1a6645}
+.fst-r{background:linear-gradient(135deg,#fcdcdc,#f5c5c5);color:#952020}
+.fst-w{background:linear-gradient(135deg,#ececec,#dcdcdc);color:#666}
+
+/* ── 空白狀態 ── */
+.admin-content > div[style*="text-align:center"][style*="color:var(--faint)"]{padding:50px 20px !important;background:linear-gradient(180deg,transparent,rgba(196,82,122,0.03));border:1px dashed var(--b2);border-radius:var(--radius);font-size:14px !important;color:var(--muted) !important;font-weight:500}
+
+/* ── 卡片群陰影提升質感 ── */
+.frq-card{padding:16px 18px;border-radius:var(--radius);box-shadow:0 1px 3px rgba(196,82,122,0.05),0 4px 12px rgba(196,82,122,0.04)}
+.frq-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(196,82,122,0.1),0 8px 22px rgba(196,82,122,0.08)}
+.ann-card{padding:18px 20px;border-radius:var(--radius);box-shadow:0 1px 3px rgba(196,82,122,0.05),0 4px 12px rgba(196,82,122,0.04);transition:transform .15s,box-shadow .15s}
+.ann-card:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(196,82,122,0.08)}
+
+/* ── 輸入欄位 hover 微亮 ── */
+.form-row input:hover:not(:focus),.form-row textarea:hover:not(:focus),.form-row select:hover:not(:focus){border-color:rgba(196,82,122,0.4)}
+
+/* ── 滾動條美化 ── */
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(196,82,122,0.25),rgba(196,82,122,0.4));border-radius:10px;border:2px solid var(--bg)}
+*::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(196,82,122,0.4),rgba(196,82,122,0.6))}
+
+/* ── 行動裝置 polish ── */
+@media (max-width:768px){
+  .main-header{padding:16px 18px}
+  .main-header h1{font-size:20px}
+  .modal{padding:22px 20px}
+  .admin-content{padding:14px 16px 24px}
+  .user-table thead th,table.data-table thead th{padding:10px 10px;font-size:12px}
+  .user-table tbody td,table.data-table tbody td{padding:9px 10px;font-size:13px}
+}
+
+/* ── 暗色模式對應 ── */
+body.dark .modal{background:linear-gradient(180deg,var(--surface) 0%,#252a35 100%)}
+body.dark .user-table,body.dark table.data-table{background:var(--surface)}
+body.dark .user-table thead th,body.dark table.data-table thead th{background:linear-gradient(180deg,var(--s2) 0%,var(--s3) 100%);color:var(--text)}
+body.dark .user-table tbody tr:nth-child(even),body.dark table.data-table tbody tr:nth-child(even){background:var(--s2)}
+body.dark .user-table tbody tr:hover,body.dark table.data-table tbody tr:hover{background:rgba(212,105,154,0.08)}
+body.dark .metric-box{background:linear-gradient(180deg,var(--surface) 0%,var(--s2) 100%)}
+body.dark #pageContainer{background:var(--bg)}
