@@ -221,33 +221,41 @@ function openEditTaskById(taskId) {
   var m = _getMtg(); if (!m) return;
   var t = _getTask(taskId); if (!t) return;
   var attendees = m.attendeeIds || [];
-  var assigneeOpts = attendees.map(function(u) {
-    return '<option value="' + u + '"' + (t.assigneeId === u ? ' selected' : '') + '>' + esc(userName(u)) + '</option>';
-  }).join('');
+  var attendeeSet = {};
+  attendees.forEach(function(id){ attendeeSet[id] = true; });
+  var assigneePicker = renderPeoplePicker('etAssigneePicker', {
+    mode: 'single',
+    selectedId: t.assigneeId || '',
+    filterFn: function(u){ return !!attendeeSet[u.id]; },
+    maxHeight: 180,
+    placeholder: '🔍 從與會成員中搜尋...'
+  });
   showModal('編輯任務',
     '<div class="form-row"><label>任務內容</label><input id="etText" value="' + esc(t.text || '') + '"></div>'
+    + '<div class="form-row"><label>負責人</label>' + assigneePicker + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-    + '<div class="form-row"><label>負責人</label><select id="etAssignee">' + assigneeOpts + '</select></div>'
     + '<div class="form-row"><label>優先等級</label><select id="etPrio">'
     + '<option value="normal"' + (t.priority === 'normal' ? ' selected' : '') + '>一般</option>'
     + '<option value="urgent"' + (t.priority === 'urgent' ? ' selected' : '') + '>急件</option>'
     + '<option value="critical"' + (t.priority === 'critical' ? ' selected' : '') + '>緊急</option>'
-    + '</select></div></div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    + '</select></div>'
     + '<div class="form-row"><label>到期日</label><input id="etDue" type="date" value="' + (t.due || '') + '"></div>'
+    + '</div>'
     + '<div class="form-row"><label>狀態</label><select id="etStatus">'
     + '<option' + (t.status === '待辦' ? ' selected' : '') + '>待辦</option>'
     + '<option' + (t.status === '進行中' ? ' selected' : '') + '>進行中</option>'
     + '<option' + (t.status === '已完成' ? ' selected' : '') + '>已完成</option>'
-    + '</select></div></div>'
+    + '</select></div>'
     + '<div class="form-row"><label>備註（選填）</label><input id="etNote" value="' + esc(t.note || '') + '"></div>',
   function() {
     var m2 = _getMtg(); if (!m2) return;
     var t2 = _getTask(taskId); if (!t2) return;
     var txt = document.getElementById('etText').value.trim();
     if (!txt) return;
+    var newAssignee = pickerSelectedId('etAssigneePicker');
+    if (!newAssignee) { alert('請選擇負責人'); return; }
     t2.text = txt;
-    t2.assigneeId = document.getElementById('etAssignee').value;
+    t2.assigneeId = newAssignee;
     t2.priority = document.getElementById('etPrio').value;
     t2.due = document.getElementById('etDue').value;
     t2.status = document.getElementById('etStatus').value;
@@ -436,21 +444,21 @@ function openNewMeeting(){
 function openEditMeeting(){editingMeetingId=currentMeetingId;const m=store.meetings.find(x=>x.id===currentMeetingId);showModal('編輯會議',meetingForm(m),saveMeeting);}
 function deleteMeeting(){if(!confirm('確定刪除這場會議？'))return;const dm=store.meetings.find(x=>x.id===currentMeetingId);store.meetings=store.meetings.filter(x=>x.id!==currentMeetingId);logAudit('刪除會議', dm?dm.title:'');currentMeetingId=null;saveCollection('meetings');renderSidebar();renderEmptyMain();}
 function meetingForm(m){
-  const allUsers=store.users.filter(u=>u.role!=='admin'||u.id===currentUser.id);
-  const checks=store.users.map(u=>`<label style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;cursor:pointer">
-    <input type="checkbox" value="${u.id}" ${m&&m.attendeeIds.includes(u.id)?'checked':''}>
-    ${avatarEl(u.id,20)} ${esc(u.name)} <span style="font-size:11px;color:var(--faint)">${esc(u.title||'')} · ${esc(userDept(u.id))}</span>
-  </label>`).join('');
+  const picker = renderPeoplePicker('mtgAttendeePicker', {
+    mode: 'multi',
+    selectedIds: m?.attendeeIds || [],
+    maxHeight: 240
+  });
   return`<div class="form-row"><label>會議主題</label><input id="fTitle" value="${esc(m?.title||'')}" placeholder="例：內科部主任會議"></div>
     <div class="form-row"><label>日期</label><input id="fDate" type="date" value="${m?.date||today()}"></div>
-    <div class="form-row"><label>與會成員</label><div style="background:var(--bg);border:1px solid var(--b2);border-radius:var(--radius-sm);padding:8px 12px;max-height:160px;overflow-y:auto">${checks}</div></div>
+    <div class="form-row"><label>與會成員</label>${picker}</div>
     <div class="form-row"><label>會議摘要</label><textarea id="fNotes" placeholder="討論重點、決議...">${esc(m?.notes||'')}</textarea></div>`;
 }
 function saveMeeting(){
   const title=document.getElementById('fTitle').value.trim();if(!title)return;
   const date=document.getElementById('fDate').value;
   const notes=document.getElementById('fNotes').value;
-  const attendeeIds=Array.from(document.querySelectorAll('#modalContent input[type=checkbox]:checked')).map(cb=>cb.value);
+  const attendeeIds=pickerSelectedIds('mtgAttendeePicker');
   if(editingMeetingId){
     const m=store.meetings.find(x=>x.id===editingMeetingId);
     m.title=title;m.date=date;m.notes=notes;m.attendeeIds=attendeeIds;

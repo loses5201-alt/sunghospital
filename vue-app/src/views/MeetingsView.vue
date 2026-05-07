@@ -58,12 +58,7 @@
           </div>
           <div class="form-row">
             <label>與會成員</label>
-            <div class="member-checkboxes">
-              <label v-for="u in users" :key="u.id" class="checkbox-row">
-                <input v-model="modal.attendeeIds" type="checkbox" :value="u.id" />
-                {{ u.name }}
-              </label>
-            </div>
+            <PeoplePicker v-model="modal.attendeeIds" :multi="true" :max-height="240" />
           </div>
           <div class="modal-actions">
             <button class="btn-ghost" @click="modal.open = false">取消</button>
@@ -80,6 +75,7 @@ import { computed, reactive, ref } from 'vue'
 import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
 import MeetingDetail from '../components/meetings/MeetingDetail.vue'
+import PeoplePicker from '../components/PeoplePicker.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
 

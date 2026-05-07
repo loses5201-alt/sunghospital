@@ -232,22 +232,10 @@
             </label>
           </div>
 
-          <!-- Approvers - auto-filled with managers, can modify -->
+          <!-- Approvers - searchable picker -->
           <div class="form-row">
-            <label>審核人（依序）<span class="label-hint">主管/管理員已自動帶入</span></label>
-            <div class="approver-list">
-              <div class="approver-group-label">主管 / 管理員</div>
-              <label v-for="u in managerUsers" :key="u.id" class="checkbox-row">
-                <input v-model="newModal.approvers" type="checkbox" :value="u.id" />
-                <span class="approver-name">{{ u.name }}</span>
-                <span :class="['role-tag', u.role === 'admin' ? 'tag-admin' : 'tag-mgr']">{{ u.role === 'admin' ? '管理員' : '主管' }}</span>
-              </label>
-              <div v-if="memberUsers.length" class="approver-group-label" style="margin-top:8px">其他人員（選填）</div>
-              <label v-for="u in memberUsers" :key="u.id" class="checkbox-row">
-                <input v-model="newModal.approvers" type="checkbox" :value="u.id" />
-                <span class="approver-name">{{ u.name }}</span>
-              </label>
-            </div>
+            <label>審核人 <span class="label-hint">主管/管理員已自動帶入，可搜尋勾選其他人</span></label>
+            <PeoplePicker v-model="newModal.approvers" :multi="true" :exclude-ids="[currentUserId]" :max-height="220" />
           </div>
 
           <div class="modal-actions">
@@ -278,6 +266,7 @@
 import { computed, reactive, ref } from 'vue'
 import { todayStr } from '../utils/date'
 import AppShell from '../components/layout/AppShell.vue'
+import PeoplePicker from '../components/PeoplePicker.vue'
 import { useRtdbStore } from '../stores/rtdb'
 import { useAuthStore } from '../stores/auth'
 import type { FormRequest, FormNotif } from '../types'
@@ -306,14 +295,10 @@ const LEAVE_TYPE_LABELS: Record<string, string> = {
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
 
-// Approver candidates
-const managerUsers = computed(() =>
-  users.value.filter(u => (u.role === 'admin' || u.role === 'manager') && u.id !== currentUserId.value && (u.status ?? 'active') === 'active')
+// 預設帶入主管/管理員為審核人（PeoplePicker 仍可搜尋勾選其他人）
+const defaultApprovers = computed(() =>
+  users.value.filter(u => (u.role === 'admin' || u.role === 'manager') && u.id !== currentUserId.value && (u.status ?? 'active') === 'active').map(u => u.id)
 )
-const memberUsers = computed(() =>
-  users.value.filter(u => u.role === 'member' && u.id !== currentUserId.value && (u.status ?? 'active') === 'active')
-)
-const defaultApprovers = computed(() => managerUsers.value.map(u => u.id))
 
 const forms = computed(() => [...(rtdb.store?.formRequests ?? [])].sort((a, b) => {
   if (a.urgent && !b.urgent) return -1

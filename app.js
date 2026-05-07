@@ -2520,20 +2520,18 @@ function scrollToMsg(msgId){
 }
 
 function openCreateGroup(){
-  var activeUsers=store.users.filter(function(u){return u.status==='active'&&u.id!==currentUser.id;});
-  var checks=activeUsers.map(function(u){
-    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:13px">'
-      +'<input type="checkbox" class="grp-member" value="'+u.id+'" style="width:15px;height:15px;accent-color:var(--primary)">'
-      +avatarEl(u.id,22)+esc(u.name)+'</label>';
-  }).join('');
+  var picker=renderPeoplePicker('grpMemberPicker',{
+    mode:'multi',
+    excludeIds:[currentUser.id],
+    maxHeight:240
+  });
   showModal('建立群組聊天',
     '<div class="form-row"><label>群組名稱</label><input id="grpName" placeholder="例：護理站小隊 🌸"></div>'
-    +'<div class="form-row"><label>選擇成員</label><div style="max-height:200px;overflow-y:auto;border:1px solid var(--b1);border-radius:var(--radius-sm);padding:8px 12px">'+checks+'</div></div>',
+    +'<div class="form-row"><label>選擇成員</label>'+picker+'</div>',
     function(){
       var name=document.getElementById('grpName').value.trim();
       if(!name)return;
-      var members=[currentUser.id];
-      document.querySelectorAll('.grp-member:checked').forEach(function(cb){members.push(cb.value);});
+      var members=[currentUser.id].concat(pickerSelectedIds('grpMemberPicker'));
       if(members.length<2){alert('請至少選擇一位成員');return;}
       if(!store.chatRooms)store.chatRooms=[];
       var room={id:uid(),isGroup:true,groupName:name,members:members,lastMsg:'',lastTs:''};
