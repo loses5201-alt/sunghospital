@@ -492,6 +492,8 @@ function initApp(){
     updateAnnBadge(); updateIrBadge(); updateCalBadge();
     updateNotifBadge((store.announcements||[]).filter(function(a){ return !(a.reads||{})[currentUser && currentUser.id]; }).length);
     renderSidebar();
+    // admin 第一次登入時自動建立部門 + 初始帳號（idempotent，已存在則跳過）
+    if(isAdmin())seedDeptsAndUsers();
     setPage('home');
     checkPendingEmergency();
     setTimeout(showDailySummary, 800);
@@ -500,6 +502,75 @@ function initApp(){
     // 啟動閒置計時器
     startIdleTimer();
   });
+}
+
+// ── 自動建立部門 + 初始員工帳號（idempotent） ──
+// 規則：依 dept name 與 username 比對，已存在則跳過。可重複觸發。
+function seedDeptsAndUsers(){
+  if(!store.users||!store.departments)return;
+  var deptSpec=[
+    {name:'院長室',color:'amber'},
+    {name:'行銷部',color:'pink'},
+    {name:'會計部',color:'blue'},
+    {name:'總務部',color:'green'},
+    {name:'人事部',color:'lavender'},
+    {name:'護理部',color:'green'},
+    {name:'資訊部',color:'teal'}
+  ];
+  var deptIdByName={};
+  store.departments.forEach(function(d){deptIdByName[d.name]=d.id;});
+  var deptsChanged=false;
+  deptSpec.forEach(function(d){
+    if(!deptIdByName[d.name]){
+      var newId='d_'+Math.random().toString(36).slice(2,9);
+      store.departments.push({id:newId,name:d.name,color:d.color});
+      deptIdByName[d.name]=newId;
+      deptsChanged=true;
+    }
+  });
+
+  var userSpec=[
+    {u:'adm01',dept:'院長室'},{u:'adm02',dept:'院長室'},
+    {u:'mkt01',dept:'行銷部'},{u:'mkt02',dept:'行銷部'},
+    {u:'ga01',dept:'總務部'},{u:'ga02',dept:'總務部'},
+    {u:'hr01',dept:'人事部'},
+    {u:'n01',dept:'護理部'}
+  ];
+  var existingUsernames={};
+  store.users.forEach(function(u){existingUsernames[u.username]=true;});
+  var usersChanged=false;
+  var created=[];
+  userSpec.forEach(function(s){
+    if(!existingUsernames[s.u]){
+      store.users.push({
+        id:uid(),
+        username:s.u,
+        password:s.u,           // 帳密相同（admin 應提醒員工首次登入後改密）
+        name:s.u,                // 姓名先用帳號，admin 之後可改
+        role:'member',
+        deptId:deptIdByName[s.dept]||'',
+        title:'',
+        avatar:'av-a',
+        status:'active',
+        permissions:{}
+      });
+      created.push(s.u);
+      usersChanged=true;
+    }
+  });
+
+  if(deptsChanged||usersChanged){
+    var keys=[];
+    if(deptsChanged)keys.push('departments');
+    if(usersChanged)keys.push('users');
+    saveMultiple(keys);
+    if(typeof logAudit==='function'){
+      logAudit('初始化部門/帳號',(deptsChanged?'部門 ':'')+(usersChanged?'帳號 '+created.join(','):''));
+    }
+    if(typeof showToast==='function'){
+      showToast('初始化完成','建立部門與帳號 '+created.length+' 個','🆕');
+    }
+  }
 }
 function updateNavUser(){
   if(!currentUser)return;
