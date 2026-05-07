@@ -538,8 +538,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)
 
 /* ── FAB ── */
 .fab-wrap{position:fixed;bottom:24px;right:24px;z-index:7000;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.fab-btn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#6b2040,#3a0d20);border:none;color:white;cursor:pointer;box-shadow:0 4px 20px rgba(107,32,64,0.5);display:flex;align-items:center;justify-content:center;transition:all .2s}
-.fab-btn:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(107,32,64,0.6)}
+.fab-btn{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#6b2040,#3a0d20);border:none;color:white;cursor:pointer;box-shadow:0 2px 8px rgba(58,13,32,0.25),0 1px 3px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.fab-btn:hover{transform:scale(1.05);box-shadow:0 3px 12px rgba(58,13,32,0.35),0 2px 4px rgba(0,0,0,0.12)}
 .fab-btn.open{transform:rotate(45deg)}
 .fab-menu{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .fab-item{display:flex;align-items:center;gap:8px;padding:8px 14px 8px 12px;border-radius:99px;border:none;background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-md);transition:all .15s;white-space:nowrap;font-family:inherit}
