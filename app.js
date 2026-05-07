@@ -224,6 +224,10 @@ function startFirebaseSync(onReady) {
           var prevIrLen  = (store.incidents||[]).length;
           store = normalizeStore(d);
           mergeNewLocal();
+          // 衝突偵測：modal 開著時，外部資料剛被別人寫入 → 標記提醒
+          if(window._modalOpenedAt && (store._savedAt||0) > (window._modalBaselineSavedAt||0)){
+            window._concurrentChangeDuringModal = true;
+          }
           var newAnns = (store.announcements||[]).length - prevAnnLen;
           var newIrs  = (store.incidents||[]).length  - prevIrLen;
           if (newAnns > 0) { var a = store.announcements[0]; showToast('新公告', a ? a.title : '', '📢'); }
@@ -541,6 +545,8 @@ function initApp(){
     setTimeout(showDailySummary, 800);
     // 每天自動備份一次（靜默，不打擾使用者）
     setTimeout(autoBackupDaily, 3000);
+    // 每小時備份一次（保留 48 個快照）
+    startHourlyBackup();
     // 啟動閒置計時器
     startIdleTimer();
   });
@@ -1710,6 +1716,38 @@ function autoBackupDaily(){
       });
     }).catch(function(e){ console.warn('[AutoBackup] 備份失敗', e); });
   });
+}
+
+// ── 每小時備份（保留 24 小時，covers 中午有人誤刪資料的情境） ──
+function autoBackupHourly(){
+  if(!fbDb || !currentUser) return;
+  var now = new Date();
+  var hourKey = today() + '_' + String(now.getHours()).padStart(2,'0');
+  fbDb.ref('backupsHourly/' + hourKey + '/_backupAt').once('value').then(function(snap){
+    if(snap.val()) return; // 此小時已備份過
+    var snapshot = JSON.parse(JSON.stringify(store));
+    snapshot._backupAt = now.toISOString();
+    snapshot._backupBy = 'auto-hourly';
+    fbDb.ref('backupsHourly/' + hourKey).set(snapshot).then(function(){
+      console.log('[AutoBackupHourly] 完成：' + hourKey);
+      // 只留最近 48 個 hourly snapshot（兩天份）
+      fbDb.ref('backupsHourly').orderByKey().once('value').then(function(s){
+        var keys = [];
+        s.forEach(function(c){ keys.push(c.key); });
+        if(keys.length > 48){
+          keys.slice(0, keys.length - 48).forEach(function(k){
+            fbDb.ref('backupsHourly/' + k).remove();
+          });
+        }
+      });
+    }).catch(function(e){ console.warn('[AutoBackupHourly] 失敗', e); });
+  });
+}
+function startHourlyBackup(){
+  // 啟動後 5 分鐘做第一次（避開登入瞬間流量）
+  setTimeout(autoBackupHourly, 5 * 60 * 1000);
+  // 之後每小時跑一次
+  setInterval(autoBackupHourly, 60 * 60 * 1000);
 }
 
 // 資料備份 / 還原

@@ -409,7 +409,18 @@ function openChangePassword(){
 // ══════════════════════════════════════════
 let modalSaveFn=null;
 function showModal(title,bodyHtml,onSave){
-  modalSaveFn=onSave;
+  // 紀錄 modal 開啟時間 + 開啟時的 store._savedAt，作為衝突偵測基準
+  window._modalOpenedAt = Date.now();
+  window._modalBaselineSavedAt = (typeof store!=='undefined'&&store)?store._savedAt:0;
+  window._concurrentChangeDuringModal = false;
+  modalSaveFn = function(){
+    // 衝突偵測：開啟期間其他人寫入新版本
+    if(window._concurrentChangeDuringModal){
+      var ok = confirm('⚠ 其他使用者剛剛更新了部分資料。\n\n仍要儲存嗎？（你的版本可能會覆蓋掉他們的變更）\n\n建議：取消後檢視最新內容再決定。');
+      if(!ok) return;
+    }
+    if(onSave) onSave();
+  };
   document.getElementById('modalContent').innerHTML=`<h2>${esc(title)}</h2>${bodyHtml}
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">取消</button>
@@ -417,7 +428,11 @@ function showModal(title,bodyHtml,onSave){
     </div>`;
   document.getElementById('overlay').classList.add('open');
 }
-function closeModal(){document.getElementById('overlay').classList.remove('open');}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+  window._modalOpenedAt = 0;
+  window._concurrentChangeDuringModal = false;
+}
 document.getElementById('overlay').onclick=function(e){if(e.target===this)closeModal();};
 
 function hideSidebar(){const sb=document.getElementById('sidebar');if(sb)sb.style.display='none';}
