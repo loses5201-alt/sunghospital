@@ -1885,8 +1885,8 @@ button[onclick*="setTaskFilter"]{
 }
 .btn-save:hover{transform:translateY(-2px) !important;box-shadow:0 8px 24px rgba(196,82,122,.44) !important}
 
-/* ── 表單 input 高度一致 ── */
-.form-row input,.form-row select{height:42px !important;padding:0 14px !important}
+/* ── 表單 input 高度一致（排除 checkbox/radio） ── */
+.form-row input:not([type="checkbox"]):not([type="radio"]),.form-row select{height:42px !important;padding:0 14px !important}
 .form-row textarea{height:auto !important;min-height:80px !important;padding:11px 14px !important}
 
 /* ── 頁面標題區 ── */
@@ -2468,4 +2468,38 @@ body.dark .stat-item:hover{background:var(--s3)}
   .ftab{padding:8px 14px;font-size:12px}
   .home-greeting{font-size:23px}
   .alert{padding:10px 14px;font-size:12.5px}
+}
+
+/* ════ FIX: 還原 checkbox / radio 原生尺寸 ════
+   先前 .form-row input{width:100%;height:42px;padding:...} 規則一視同仁，
+   把 checkbox 跟 radio 都拉成大白方塊。這裡用最高優先級還原原生樣貌。 */
+input[type="checkbox"],
+input[type="radio"]{
+  width:16px !important;
+  height:16px !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 4px 0 0 !important;
+  border:initial !important;
+  background:initial !important;
+  background-color:initial !important;
+  background-image:none !important;
+  box-shadow:none !important;
+  font-size:inherit !important;
+  vertical-align:middle;
+  flex-shrink:0;
+  cursor:pointer;
+  appearance:auto !important;
+  -webkit-appearance:auto !important;
+  accent-color:var(--primary);
+}
+input[type="radio"]{border-radius:50% !important}
+
+/* PeoplePicker 內也統一 16px（原 15px） */
+.pp-row input[type="checkbox"],
+.pp-row input[type="radio"]{margin-right:0 !important}
+
+/* 行動裝置稍大一點符合觸控標準 */
+@media (max-width:768px){
+  input[type="checkbox"],input[type="radio"]{width:18px !important;height:18px !important}
 }
