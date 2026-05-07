@@ -2395,3 +2395,77 @@ body.dark #pageContainer{background:var(--bg)}
   .stats-bar{padding:10px 14px;gap:12px}
   .stat-num{font-size:19px}
 }
+
+/* ════ UI Polish v5（2026-05-07）— 收尾 ══════════════════════════════════════ */
+/* Badges、Alerts、Progress、Filter chips、Search、Home page、Dark mode 補齊 */
+
+/* ── Badges 全面升級為漸層 ── */
+.mi-badge{padding:2px 8px;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+.badge-open{background:linear-gradient(135deg,#fff0d0,#fde4a8);color:#7a4a00;border:1px solid rgba(143,82,8,0.18)}
+.badge-done{background:linear-gradient(135deg,#d8f0e0,#b8e0c8);color:#0d4a30;border:1px solid rgba(26,102,69,0.2)}
+.badge-unread{background:linear-gradient(135deg,#dceaf8,#b8d0f0);color:#0d3870;border:1px solid rgba(21,88,160,0.2)}
+.badge-urgent{background:linear-gradient(135deg,#fcdcdc,#f5c5c5);color:#7a1010;border:1px solid rgba(149,32,32,0.22);animation:badgePulse 2s ease-in-out infinite}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 rgba(149,32,32,0.3)}50%{box-shadow:0 0 8px rgba(149,32,32,0.45)}}
+
+/* ann-pin-badge（公告置頂/感染警示）也升級 */
+.ann-pin-badge{font-weight:800;letter-spacing:.04em;padding:4px 10px;border-radius:99px;font-size:11px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+
+/* ── Alerts 質感 ── */
+.alert{padding:12px 16px;border-radius:var(--radius);font-size:13px;border-width:1px;border-left-width:4px;line-height:1.6;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.alert-info{background:linear-gradient(90deg,var(--blue-bg),rgba(230,238,249,0.5));border-left-color:var(--blue)}
+.alert-warn{background:linear-gradient(90deg,var(--amber-bg),rgba(253,240,220,0.5));border-left-color:var(--amber)}
+.alert-danger{background:linear-gradient(90deg,var(--red-bg),rgba(252,232,232,0.5));border-left-color:var(--red)}
+
+/* ── Progress bars 漸變 ── */
+.ann-read-bar-wrap{height:6px;background:linear-gradient(90deg,#f0e0e0,var(--s3));border-radius:99px;border:1px solid rgba(0,0,0,0.04)}
+.ann-read-bar{background:linear-gradient(90deg,#3dd6c8,#1a6645);box-shadow:0 0 6px rgba(26,102,69,0.4);border-radius:99px}
+
+/* ── Filter chips（.ftab） ── */
+.ftab{padding:7px 16px;background:var(--surface);border:1.5px solid var(--b2);color:var(--muted);font-weight:600;transition:all .15s}
+.ftab:hover{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.ftab.active{background:linear-gradient(135deg,var(--primary) 0%,#d4699a 100%);color:white;border-color:transparent;box-shadow:0 3px 10px rgba(196,82,122,0.3);font-weight:700}
+.ftab-badge{background:rgba(255,255,255,0.32);font-weight:800}
+.ftab.active .ftab-badge{background:rgba(255,255,255,0.4);color:white}
+
+/* ── Search input 框（.search-input-wrap） ── */
+.search-input-wrap{padding:16px 20px;background:linear-gradient(180deg,white,#fffaf6)}
+.search-input-wrap input{font-size:16px;font-weight:500}
+
+/* ── Home greeting 強化 ── */
+.home-greeting{font-size:28px;letter-spacing:.02em}
+.home-sub{font-size:14px;font-weight:500;color:var(--muted)}
+
+/* Home cards 質感升級：頂部加裝飾條 */
+.home-card{position:relative;overflow:hidden}
+.home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--primary),var(--lavender),var(--sakura,#e8709a));opacity:.7;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.home-card-num{background:linear-gradient(135deg,var(--primary) 0%,#d4699a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ── attendee-chip（會議與會者）── */
+.attendee-chip{transition:all .15s;cursor:default}
+.attendee-chip:hover{background:linear-gradient(135deg,var(--surface),var(--s2)) !important;border-color:rgba(196,82,122,0.25) !important;transform:translateY(-1px);box-shadow:0 2px 8px rgba(196,82,122,0.08)}
+
+/* ── 公告卡 hover 加金光感 ── */
+.ann-card.infection-red:hover{box-shadow:0 8px 24px rgba(149,32,32,0.15)}
+.ann-card.infection-orange:hover{box-shadow:0 8px 24px rgba(160,64,16,0.15)}
+.ann-card.pinned:hover{box-shadow:0 8px 24px rgba(212,175,55,0.18)}
+
+/* ── 暗色模式：v3/v4/v5 補齊 ── */
+body.dark .ftab{background:var(--s2);border-color:var(--b2);color:var(--muted)}
+body.dark .ftab:hover{background:var(--primary-light);color:var(--primary)}
+body.dark .ftab.active{color:white}
+body.dark .alert-info{background:linear-gradient(90deg,var(--blue-bg),rgba(13,30,58,0.5))}
+body.dark .alert-warn{background:linear-gradient(90deg,var(--amber-bg),rgba(42,32,16,0.5))}
+body.dark .alert-danger{background:linear-gradient(90deg,var(--red-bg),rgba(43,16,16,0.5))}
+body.dark .ann-read-bar-wrap{background:linear-gradient(90deg,var(--s2),var(--s3))}
+body.dark .search-input-wrap{background:linear-gradient(180deg,var(--surface),var(--s2))}
+body.dark .home-card-num{-webkit-text-fill-color:initial;background:none;color:var(--primary)}
+body.dark .toast{background:linear-gradient(180deg,var(--surface),var(--s2));border-color:var(--b2)}
+body.dark .meeting-item.active{background:linear-gradient(90deg,rgba(212,105,154,0.15),transparent)}
+body.dark .stat-item:hover{background:var(--s3)}
+
+/* ── 行動裝置 v5 polish ── */
+@media (max-width:768px){
+  .ftab{padding:8px 14px;font-size:12px}
+  .home-greeting{font-size:23px}
+  .alert{padding:10px 14px;font-size:12.5px}
+}
