@@ -20,6 +20,10 @@ function normalizeArr(val) {
   return Object.values(val);
 }
 function normalizeStore(s) {
+  try { return _normalizeStoreInner(s); }
+  catch(e) { console.error('[normalizeStore] failed', e); return s; }
+}
+function _normalizeStoreInner(s) {
   if (!s || typeof s !== 'object') return s;
   ['meetings','users','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
@@ -27,13 +31,51 @@ function normalizeStore(s) {
    'patients','sops','inventory','inventoryLogs','skillDefs','leaves'].forEach(function(f) {
     s[f] = normalizeArr(s[f]);
   });
+  // 防禦：補上每筆記錄缺少的關鍵欄位，避免 render 時 crash
   s.meetings.forEach(function(m) {
     m.tasks = normalizeArr(m.tasks);
     m.chat = normalizeArr(m.chat);
     m.votes = normalizeArr(m.votes);
+    m.attendeeIds = normalizeArr(m.attendeeIds);
+    if(!m.reads || typeof m.reads !== 'object') m.reads = {};
     m.votes.forEach(function(v) {
       v.options = normalizeArr(v.options);
     });
+  });
+  s.announcements.forEach(function(a) {
+    if(!a.reads || typeof a.reads !== 'object') a.reads = {};
+    if(typeof a.time !== 'string') a.time = a.time || '';
+  });
+  s.formRequests.forEach(function(f) {
+    f.approvers = normalizeArr(f.approvers);
+    f.statuses = normalizeArr(f.statuses);
+    f.comments = normalizeArr(f.comments);
+    // 確保 approvers 和 statuses 長度一致
+    while(f.statuses.length < f.approvers.length) f.statuses.push('pending');
+    if(!f.status) f.status = 'pending';
+    if(!f.createdAt) f.createdAt = '';
+  });
+  s.shifts.forEach(function(sh) {
+    sh.flags = normalizeArr(sh.flags);
+    sh.checklist = normalizeArr(sh.checklist);
+  });
+  s.incidents.forEach(function(ir) {
+    if(!ir.reads || typeof ir.reads !== 'object') ir.reads = {};
+    ir.comments = normalizeArr(ir.comments);
+  });
+  s.emergencies.forEach(function(em) {
+    if(!em.confirms || typeof em.confirms !== 'object') em.confirms = {};
+  });
+  s.messages.forEach(function(msg) {
+    if(!msg.reads || typeof msg.reads !== 'object') msg.reads = {};
+    if(!msg.reactions || typeof msg.reactions !== 'object') msg.reactions = {};
+  });
+  s.users.forEach(function(u) {
+    if(!u.permissions || typeof u.permissions !== 'object') u.permissions = {};
+    if(!u.status) u.status = 'active';
+  });
+  s.equipment.forEach(function(eq) {
+    eq.comments = normalizeArr(eq.comments);
   });
   return s;
 }
