@@ -1885,8 +1885,8 @@ button[onclick*="setTaskFilter"]{
 }
 .btn-save:hover{transform:translateY(-2px) !important;box-shadow:0 8px 24px rgba(196,82,122,.44) !important}
 
-/* ── 表單 input 高度一致（排除 checkbox/radio） ── */
-.form-row input:not([type="checkbox"]):not([type="radio"]),.form-row select{height:42px !important;padding:0 14px !important}
+/* ── 表單 input 高度一致（排除特殊類型） ── */
+.form-row input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),.form-row select{height:42px !important;padding:0 14px !important}
 .form-row textarea{height:auto !important;min-height:80px !important;padding:11px 14px !important}
 
 /* ── 頁面標題區 ── */
