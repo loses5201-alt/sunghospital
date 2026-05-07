@@ -81,16 +81,35 @@ function resetRuleConfig(){
 var userFilter={q:'',dept:'',status:'',jobType:''};
 const JOBTYPES={
   '':'',
-  nurse:'護理師',
+  // ── 主管階層 ──
+  director_chief:'院長',
+  director_vice:'副院長',
+  director_dept:'主任',
+  assistant_special:'特助',
+  // ── 醫療專業 ──
   doctor:'醫師',
+  nurse:'護理師',
+  pharmacist:'藥師',
+  medlab:'醫檢師',
+  physio:'物理治療師',
+  radiologist:'放射師',
+  nutritionist:'營養師',
+  socialworker:'社工師',
+  // ── 行政 ──
   admin:'行政',
   admin_finance:'行政-財務',
+  accountant:'會計',
   admin_hr:'行政-人事',
   admin_purchase:'行政-採購',
   admin_general:'行政-總務',
   admin_it:'行政-資訊',
   admin_warehouse:'行政-倉管',
+  marketing:'行銷',
+  // ── 技術 / 後勤 ──
   it:'IT（資訊）',
+  cleaner:'清潔',
+  security:'保全',
+  guard:'警衛',
   other:'其他'
 };
 const STATUSLBLS={active:'在職',disabled:'停用',resigned:'離職'};
@@ -141,24 +160,43 @@ var PERMISSION_DEFS=[
 
 // ── 職種預設權限 ──
 var JOB_TYPE_DEFAULTS={
-  doctor:        {viewPatients:1,editPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewSkills:1},
-  nurse:         {viewPatients:1,editPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewInventory:1,viewSkills:1},
-  admin:         {applyLeave:1,applyForm:1,viewSchedule:1,publishAnn:1},
-  admin_finance: {applyLeave:1,applyForm:1,approveForm:1,viewReports:1,exportData:1},
-  admin_hr:      {applyLeave:1,applyForm:1,approveLeave:1,manageSchedule:1,viewReports:1},
-  admin_purchase:{applyLeave:1,applyForm:1,approveForm:1,viewInventory:1,manageInventory:1},
-  admin_general: {applyLeave:1,applyForm:1,publishAnn:1,viewInventory:1},
-  admin_it:      {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
-  admin_warehouse:{applyLeave:1,applyForm:1,viewInventory:1,manageInventory:1},
-  it:            {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
-  other:         {applyLeave:1,applyForm:1},
+  // 主管階層
+  director_chief:    {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
+  director_vice:     {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,reportIR:1,manageIR:1,viewSOP:1,viewSkills:1,viewReports:1,exportData:1},
+  director_dept:     {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,reportIR:1,manageIR:1,viewSOP:1,viewSkills:1,viewReports:1},
+  assistant_special: {viewSchedule:1,applyLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewReports:1,exportData:1},
+  // 醫療專業
+  doctor:            {viewPatients:1,editPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewSkills:1},
+  nurse:             {viewPatients:1,editPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewInventory:1,viewSkills:1},
+  pharmacist:        {viewPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewInventory:1,manageInventory:1,viewSkills:1},
+  medlab:            {viewPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewSkills:1},
+  physio:            {viewPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewSkills:1},
+  radiologist:       {viewPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,reportIR:1,viewSOP:1,viewSkills:1},
+  nutritionist:      {viewPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,viewSOP:1,viewSkills:1},
+  socialworker:      {viewPatients:1,viewSchedule:1,applyLeave:1,applyForm:1,viewSOP:1},
+  // 行政
+  admin:             {applyLeave:1,applyForm:1,viewSchedule:1,publishAnn:1},
+  admin_finance:     {applyLeave:1,applyForm:1,approveForm:1,viewReports:1,exportData:1},
+  accountant:        {applyLeave:1,applyForm:1,approveForm:1,viewReports:1,exportData:1},
+  admin_hr:          {applyLeave:1,applyForm:1,approveLeave:1,manageSchedule:1,viewReports:1},
+  admin_purchase:    {applyLeave:1,applyForm:1,approveForm:1,viewInventory:1,manageInventory:1},
+  admin_general:     {applyLeave:1,applyForm:1,publishAnn:1,viewInventory:1},
+  admin_it:          {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
+  admin_warehouse:   {applyLeave:1,applyForm:1,viewInventory:1,manageInventory:1},
+  marketing:         {applyLeave:1,applyForm:1,publishAnn:1,viewReports:1},
+  // 技術 / 後勤
+  it:                {viewPatients:1,editPatients:1,viewSchedule:1,manageSchedule:1,applyLeave:1,approveLeave:1,applyForm:1,approveForm:1,publishAnn:1,viewInventory:1,manageInventory:1,reportIR:1,manageIR:1,viewSOP:1,manageSOP:1,viewSkills:1,manageSkills:1,viewReports:1,exportData:1},
+  cleaner:           {applyLeave:1,applyForm:1},
+  security:          {applyLeave:1,applyForm:1,viewSchedule:1},
+  guard:             {applyLeave:1,applyForm:1,viewSchedule:1},
+  other:             {applyLeave:1,applyForm:1},
 };
 function renderUserContent(){
   const c=document.getElementById('usersTabContent');if(!c)return;
   // Filter bar
   const dOpts='<option value="">全部科別</option>'+store.departments.map(d=>'<option value="'+d.id+'"'+(userFilter.dept===d.id?' selected':'')+'>'+esc(d.name)+'</option>').join('');
   const stOpts='<option value="">全部狀態</option><option value="active"'+(userFilter.status==='active'?' selected':'')+'>在職</option><option value="disabled"'+(userFilter.status==='disabled'?' selected':'')+'>停用</option><option value="resigned"'+(userFilter.status==='resigned'?' selected':'')+'>離職</option>';
-  const jtOpts='<option value="">全部職類</option><option value="nurse">護理師</option><option value="doctor">醫師</option><option value="admin">行政</option><option value="it">IT</option><option value="other">其他</option>';
+  const jtOpts='<option value="">全部職類</option>'+Object.keys(JOBTYPES).filter(k=>k).map(k=>'<option value="'+k+'"'+(userFilter.jobType===k?' selected':'')+'>'+esc(JOBTYPES[k])+'</option>').join('');
   const filterBar=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
     <input id="uSearch" placeholder="🔍 搜尋姓名/帳號" oninput="userFilter.q=this.value;renderUserContent()" value="${esc(userFilter.q)}" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit;min-width:150px">
     <select onchange="userFilter.dept=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${dOpts}</select>
@@ -273,17 +311,7 @@ function userFormHtml(u){
     <div class="form-row"><label>職類</label>
       <select id="uJobType">
         <option value="">（未指定）</option>
-        <option value="nurse"           ${u?.jobType==='nurse'?'selected':''}>護理師</option>
-        <option value="doctor"          ${u?.jobType==='doctor'?'selected':''}>醫師</option>
-        <option value="admin"           ${u?.jobType==='admin'?'selected':''}>行政</option>
-        <option value="admin_finance"   ${u?.jobType==='admin_finance'?'selected':''}>行政-財務</option>
-        <option value="admin_hr"        ${u?.jobType==='admin_hr'?'selected':''}>行政-人事</option>
-        <option value="admin_purchase"  ${u?.jobType==='admin_purchase'?'selected':''}>行政-採購</option>
-        <option value="admin_general"   ${u?.jobType==='admin_general'?'selected':''}>行政-總務</option>
-        <option value="admin_it"        ${u?.jobType==='admin_it'?'selected':''}>行政-資訊</option>
-        <option value="admin_warehouse" ${u?.jobType==='admin_warehouse'?'selected':''}>行政-倉管</option>
-        <option value="it"              ${u?.jobType==='it'?'selected':''}>IT（資訊）</option>
-        <option value="other"           ${u?.jobType==='other'?'selected':''}>其他</option>
+        ${Object.keys(JOBTYPES).filter(k=>k).map(k=>`<option value="${k}" ${u?.jobType===k?'selected':''}>${esc(JOBTYPES[k])}</option>`).join('')}
       </select>
     </div>
     <div class="form-row"><label>帳號狀態</label>
