@@ -273,7 +273,7 @@ function signShift(id){
 // 新增交班
 // ════════════════════════════════
 function openNewShift(){
-  var nurseOpts = store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'; })
+  var nurseOpts = store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin'; })
     .map(function(u){ return '<option value="'+u.id+'">'+esc(u.name)+' ('+esc(userDept(u.id))+')</option>'; }).join('');
 
   showModal('新增交班紀錄',
@@ -416,9 +416,9 @@ function deleteShift(id){
 
 function openEditShift(id){
   var s = store.shifts.find(function(x){ return x.id===id; }); if(!s) return;
-  var nurseOpts = store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'; })
+  var nurseOpts = store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin'; })
     .map(function(u){ return '<option value="'+u.id+'"'+(u.id===s.fromUserId?' selected':'')+'>'+esc(u.name)+' ('+esc(userDept(u.id))+')</option>'; }).join('');
-  var nurseOptsTo = store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'; })
+  var nurseOptsTo = store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin'; })
     .map(function(u){ return '<option value="'+u.id+'"'+(u.id===s.toUserId?' selected':'')+'>'+esc(u.name)+' ('+esc(userDept(u.id))+')</option>'; }).join('');
   var clText = (s.checklist||[]).map(function(i){ return i.text; }).join('\n');
   var shiftSel = ['morning','afternoon','night'].map(function(x){

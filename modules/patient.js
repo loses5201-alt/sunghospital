@@ -111,7 +111,7 @@ function openPatientDetail(id){
     return '<option value="'+s+'"'+(p.stage===s?' selected':'')+'>'+s+'</option>';
   }).join('');
   var assigneeOpts = '<option value="">未指派</option>'
-    +store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'; })
+    +store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin'; })
       .map(function(u){ return '<option value="'+u.id+'"'+(p.assigneeId===u.id?' selected':'')+'>'+esc(u.name)+'</option>'; }).join('');
   var flagsHtml = Object.entries(PATIENT_FLAGS).map(function(e){
     var checked = (p.flags||[]).indexOf(e[0])>=0 ? 'checked' : '';
@@ -176,7 +176,7 @@ function dischargePt(id){
 
 function openNewPatient(){
   var assigneeOpts = '<option value="">未指派</option>'
-    +store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'; })
+    +store.users.filter(function(u){ return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin'; })
       .map(function(u){ return '<option value="'+u.id+'">'+esc(u.name)+'</option>'; }).join('');
   showModal('新增病患',
     '<div class="form-row"><label>姓名</label><input id="pn" placeholder="病患姓名（可用代稱）"></div>'

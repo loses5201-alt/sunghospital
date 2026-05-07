@@ -143,7 +143,7 @@ function catStyle(cat: string) {
 function userName(id?: string) { return users.value.find((u) => u.id === id)?.name ?? '' }
 function ackCount(sop: Sop) {
   const acks = sop.acks ?? {}
-  return users.value.filter((u) => acks[u.id]).length
+  return users.value.filter((u) => u.username !== 'admin' && acks[u.id]).length
 }
 function ackPct(sop: Sop) {
   return totalUsers.value ? Math.round(ackCount(sop) / totalUsers.value * 100) : 0

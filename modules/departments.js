@@ -13,7 +13,7 @@ function renderDepartmentsPage(c){
 function renderDeptContent(){
   const c=document.getElementById('deptContent');if(!c)return;
   const cards=store.departments.map(d=>{
-    const members=store.users.filter(u=>u.deptId===d.id);
+    const members=store.users.filter(u=>u.deptId===d.id&&u.username!=='admin');
     const mHtml=members.map(u=>`<div class="member-mini">${avatarEl(u.id,20)}<span>${esc(u.name)}</span><span class="title-chip">${esc(u.title||'')}</span></div>`).join('');
     return`<div class="dept-card">
       <div class="dept-card-name">${esc(d.name)}</div>

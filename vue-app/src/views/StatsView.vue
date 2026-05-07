@@ -161,13 +161,13 @@ const doneTasks = computed(() => allTasks.value.filter((t) => t.status === 'å·²å
 const taskRate = computed(() => allTasks.value.length ? Math.round(doneTasks.value / allTasks.value.length * 100) : 0)
 const irOpen = computed(() => incidents.value.filter((i) => i.status !== 'closed').length)
 const invLow = computed(() => inventory.value.filter((i) => i.qty <= i.minQty).length)
-const activeUsers = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned').length)
+const activeUsers = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned' && u.username !== 'admin').length)
 const boys = computed(() => babies.value.filter((b) => b.gender === 'boy').length)
 const girls = computed(() => babies.value.filter((b) => b.gender === 'girl').length)
 const pendingLeaves = computed(() => leaves.value.filter((l) => l.status === 'pending').length)
 
 const deptStats = computed(() =>
-  departments.value.map((d) => ({ name: d.name, count: users.value.filter((u) => u.deptId === d.id).length }))
+  departments.value.map((d) => ({ name: d.name, count: users.value.filter((u) => u.deptId === d.id && u.username !== 'admin').length }))
     .filter((d) => d.count > 0).sort((a, b) => b.count - a.count)
 )
 

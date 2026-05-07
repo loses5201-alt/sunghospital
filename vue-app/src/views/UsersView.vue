@@ -214,6 +214,7 @@ const pendingUsers = computed(() => users.value.filter((u) => u.needsReview))
 const filteredUsers = computed(() =>
   users.value.filter((u) => {
     if (u.needsReview) return false  // 待確認用戶不混入主列表
+    if (u.username === 'admin') return false  // 隱藏系統管理員
     const qOk = !filterQ.value || u.name?.toLowerCase().includes(filterQ.value.toLowerCase()) || u.username?.toLowerCase().includes(filterQ.value.toLowerCase())
     const dOk = !filterDept.value || u.deptId === filterDept.value
     const sOk = !filterStatus.value || (u.status ?? 'active') === filterStatus.value
@@ -262,7 +263,7 @@ loadRules()
 
 const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '', supervisorId: '' })
 const delegateCandidates = computed(() =>
-  users.value.filter((u) => u.id !== modal.editId && (u.status ?? 'active') === 'active' && !u.needsReview)
+  users.value.filter((u) => u.id !== modal.editId && (u.status ?? 'active') === 'active' && !u.needsReview && u.username !== 'admin')
 )
 function openAdd() { Object.assign(modal, { open: true, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '', supervisorId: '' }) }
 function openEdit(u: User) { Object.assign(modal, { open: true, editId: u.id, name: u.name, username: u.username, email: u.email ?? '', deptId: u.deptId ?? '', title: u.title ?? '', role: u.role, password: '', delegateId: u.delegateId ?? '', supervisorId: u.supervisorId ?? '' }) }

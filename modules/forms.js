@@ -50,7 +50,7 @@ var _approverPicks=[''];
 
 function getApproverCandidates(){
   return store.users.filter(function(u){
-    return u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'
+    return u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin'
       &&(u.role==='admin'||u.role==='supervisor'||(u.permissions&&u.permissions.approveForm));
   });
 }

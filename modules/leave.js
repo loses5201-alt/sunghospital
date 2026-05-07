@@ -99,7 +99,7 @@ function rnLeaveAll(c){
 }
 
 function rnLeaveBalance(c){
-  var users = store.users.filter(function(u){ return u.status==='active'; });
+  var users = store.users.filter(function(u){ return u.status==='active'&&u.username!=='admin'; });
   var ltypes = LEAVE_TYPES.filter(function(lt){ return lt.id!=='maternity'; });
   var html = '<div class="table-wrap"><table><thead><tr><th>人員</th>'
     +ltypes.map(function(lt){ return '<th style="text-align:center">'+lt.label+'<div style="font-size:9px;font-weight:400;color:var(--faint)">剩餘/總計</div></th>'; }).join('')

@@ -1,6 +1,6 @@
 // ════ 站內訊息/聊天室 ════
 function renderMessagesPage(c){
-  var activeUsers=store.users.filter(function(u){return u.status==='active'&&u.id!==currentUser.id;});
+  var activeUsers=store.users.filter(function(u){return u.status==='active'&&u.id!==currentUser.id&&u.username!=='admin';});
   var rooms=(store.chatRooms||[]).filter(function(r){return r.members.indexOf(currentUser.id)>=0;});
   rooms.sort(function(a,b){return (b.lastTs||'').localeCompare(a.lastTs||'');});
   var roomList=rooms.map(function(r){

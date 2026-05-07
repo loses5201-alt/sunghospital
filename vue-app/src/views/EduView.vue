@@ -120,7 +120,7 @@ const filtered = computed(() => items.value.filter((e) => {
 
 function readCount(eduId: string) {
   const reads = rtdb.store?.eduReads?.[eduId] ?? {}
-  return users.value.filter((u) => reads[u.id]).length
+  return users.value.filter((u) => u.username !== 'admin' && reads[u.id]).length
 }
 function readPct(eduId: string) { return totalUsers.value ? Math.round(readCount(eduId) / totalUsers.value * 100) : 0 }
 function isRead(eduId: string) { return !!(rtdb.store?.eduReads?.[eduId]?.[currentUserId.value]) }

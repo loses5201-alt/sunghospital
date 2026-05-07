@@ -277,7 +277,7 @@ const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const today = computed(() => todayStr())
 
 const users = computed(() => rtdb.store?.users ?? [])
-const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned'))
+const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned' && u.username !== 'admin'))
 const otherNurses = computed(() => activeNurses.value.filter((u) => u.id !== currentUserId.value))
 const dutySchedule = computed(() => rtdb.store?.dutySchedule ?? {})
 const leaves = computed(() => rtdb.store?.leaves ?? [])

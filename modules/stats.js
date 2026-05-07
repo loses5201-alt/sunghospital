@@ -35,17 +35,17 @@ function renderStatsPage(c){
   }
 
   var deptStats = store.departments.map(function(d){
-    return {name:d.name, count:store.users.filter(function(u){ return u.deptId===d.id; }).length};
+    return {name:d.name, count:store.users.filter(function(u){ return u.deptId===d.id&&u.username!=='admin'; }).length};
   }).filter(function(d){ return d.count>0; }).sort(function(a,b){ return b.count-a.count; });
 
-  var userTaskStats = store.users.map(function(u){
+  var userTaskStats = store.users.filter(function(u){return u.username!=='admin';}).map(function(u){
     var assigned = allTasks.filter(function(t){ return t.assigneeId===u.id; });
     var done = assigned.filter(function(t){ return t.status==='已完成'; }).length;
     return {name:u.name, total:assigned.length, done:done, pct:assigned.length?Math.round(done/assigned.length*100):0};
   }).filter(function(u){ return u.total>0; }).sort(function(a,b){ return b.pct-a.pct; });
 
   var annReadRates = (store.announcements||[]).slice(0,6).map(function(a){
-    var total = (store.users||[]).length;
+    var total = (store.users||[]).filter(function(u){return u.username!=='admin';}).length;
     var read = Object.values(a.reads||{}).filter(Boolean).length;
     return {title:a.title||'(無標題)', pct:total?Math.round(read/total*100):0};
   });

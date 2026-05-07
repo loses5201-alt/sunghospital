@@ -27,6 +27,7 @@ function renderPeoplePicker(pickerId, opts){
   var pool = (store.users || []).filter(function(u){
     if (exclude.indexOf(u.id) >= 0) return false;
     if ((u.status || 'active') !== 'active') return false;
+    if (u.username === 'admin') return false; // 隱藏系統管理員
     if (filterFn && !filterFn(u)) return false;
     return true;
   });

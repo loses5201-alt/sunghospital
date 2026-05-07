@@ -72,7 +72,7 @@ function rnDutyWeek(c){
   var wk=getWkOffset(_dutyWeekOffset);
   var todayStr=today();
   var minStaff=store.dutyMinStaff||{morning:2,afternoon:2,night:1};
-  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';});
+  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin';});
 
   // 每天各班人數
   var coverage={};
@@ -168,7 +168,7 @@ function rnDutyMonth(c){
   for(var i=0;i<startDay;i++){var dt=new Date(year,month,-(startDay-1-i));cells.push({date:dt.toISOString().slice(0,10),cur:false});}
   for(var d=1;d<=last.getDate();d++){var dt2=new Date(year,month,d);cells.push({date:dt2.toISOString().slice(0,10),cur:true});}
   while(cells.length%7!==0){var dt3=new Date(year,month+1,cells.length-last.getDate()-startDay+1);cells.push({date:dt3.toISOString().slice(0,10),cur:false});}
-  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';});
+  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin';});
   var minStaff=store.dutyMinStaff||{morning:2,afternoon:2,night:1};
   var myId=currentUser.id;
 
@@ -361,7 +361,7 @@ function rnDutyStats(c){
     allDays.push(dt.toISOString().slice(0,10));
 
   var minStaff=store.dutyMinStaff||{morning:2,afternoon:2,night:1};
-  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';});
+  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin';});
 
   var stats=nurses.map(function(u){
     var cnt={morning:0,afternoon:0,night:0,oncall:0,training:0};
@@ -475,7 +475,7 @@ function editDC(uid,date){
 
 // 批次排班
 function openBatchEdit(){
-  var uOpts=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';})
+  var uOpts=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin';})
     .map(function(u){return '<option value="'+u.id+'">'+esc(u.name)+'</option>';}).join('');
   var sOpts=Object.entries(SHINFO).map(function(e){return '<option value="'+e[0]+'">'+e[1].l+'</option>';}).join('');
   showModal('批次排班',
@@ -521,7 +521,7 @@ function openNewSw(){
     var sh=(store.dutySchedule[currentUser.id]&&store.dutySchedule[currentUser.id][d])||'off';
     if(sh!=='off')myDates.push({date:d,sh:sh});
   }
-  var uOpts=store.users.filter(function(u){return u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned';})
+  var uOpts=store.users.filter(function(u){return u.id!==currentUser.id&&u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin';})
     .map(function(u){return '<option value="'+u.id+'">'+esc(u.name)+'</option>';}).join('');
   var myDOpts=myDates.map(function(x){
     return '<option value="'+x.date+'">'+fmtDate(x.date)+' ('+(SHINFO[x.sh]||SHINFO.off).l+')</option>';
@@ -620,7 +620,7 @@ function openMinStaffSettings(){
 // CSV 匯出
 function exportDutyCSV(){
   var wk=getWkOffset(_dutyWeekOffset);
-  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned';});
+  var nurses=store.users.filter(function(u){return u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin';});
   var header=['姓名'].concat(wk.map(function(d){return fmtDate(d);}));
   var rows=nurses.map(function(u){
     return [esc(u.name)].concat(wk.map(function(d){

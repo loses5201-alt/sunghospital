@@ -202,9 +202,9 @@ function renderUserContent(){
     <select onchange="userFilter.dept=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${dOpts}</select>
     <select onchange="userFilter.status=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${stOpts}</select>
     <select onchange="userFilter.jobType=this.value;renderUserContent()" style="padding:7px 10px;border:1px solid var(--b1);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:12px;font-family:inherit">${jtOpts}</select>
-    <span style="font-size:12px;color:var(--faint);margin-left:auto">共 ${store.users.filter(u=>u.status!=='disabled'&&u.status!=='resigned').length} 位在職</span>
+    <span style="font-size:12px;color:var(--faint);margin-left:auto">共 ${store.users.filter(u=>u.status!=='disabled'&&u.status!=='resigned'&&u.username!=='admin').length} 位在職</span>
   </div>`;
-  let users=[...store.users];
+  let users=[...store.users].filter(u=>u.username!=='admin'); // 隱藏系統管理員
   if(userFilter.q){const q=userFilter.q.toLowerCase();users=users.filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q));}
   if(userFilter.dept)users=users.filter(u=>u.deptId===userFilter.dept);
   if(userFilter.status)users=users.filter(u=>(u.status||'active')===userFilter.status);
@@ -325,13 +325,13 @@ function userFormHtml(u){
     <div class="form-row" style="grid-column:1/-1"><label>直屬上司 <span style="font-size:11px;color:var(--faint);font-weight:400">（送表單時自動帶入為第一階審核人）</span></label>
       <select id="uSupervisor">
         <option value="">（無上司）</option>
-        ${store.users.filter(x=>x.id!==(u&&u.id)&&(x.status||'active')==='active').map(x=>`<option value="${x.id}" ${u&&u.supervisorId===x.id?'selected':''}>${esc(x.name)}${x.title?' · '+esc(x.title):''}</option>`).join('')}
+        ${store.users.filter(x=>x.id!==(u&&u.id)&&(x.status||'active')==='active'&&x.username!=='admin').map(x=>`<option value="${x.id}" ${u&&u.supervisorId===x.id?'selected':''}>${esc(x.name)}${x.title?' · '+esc(x.title):''}</option>`).join('')}
       </select>
     </div>
     <div class="form-row" style="grid-column:1/-1"><label>簽核代理人 <span style="font-size:11px;color:var(--faint);font-weight:400">（不在時可代為簽核此人應審的表單）</span></label>
       <select id="uDelegate">
         <option value="">（無代理人）</option>
-        ${store.users.filter(x=>x.id!==(u&&u.id)&&(x.status||'active')==='active').map(x=>`<option value="${x.id}" ${u&&u.delegateId===x.id?'selected':''}>${esc(x.name)}${x.title?' · '+esc(x.title):''}</option>`).join('')}
+        ${store.users.filter(x=>x.id!==(u&&u.id)&&(x.status||'active')==='active'&&x.username!=='admin').map(x=>`<option value="${x.id}" ${u&&u.delegateId===x.id?'selected':''}>${esc(x.name)}${x.title?' · '+esc(x.title):''}</option>`).join('')}
       </select>
     </div>
   </div>

@@ -181,7 +181,7 @@ const activeFilter = ref('all')
 const today = todayStr()
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
-const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned'))
+const activeNurses = computed(() => users.value.filter((u) => u.status !== 'disabled' && u.status !== 'resigned' && u.username !== 'admin'))
 const shifts = computed(() => rtdb.store?.shifts ?? [])
 
 const todayCount = computed(() => shifts.value.filter((s) => s.date === today).length)

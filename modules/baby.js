@@ -51,7 +51,7 @@ function rnBaby(q){
 }
 function _babyFormHtml(b){
   b=b||{};
-  const nOpts=store.users.map(function(u){return'<option value="'+u.id+'"'+(b.nurse===u.id?' selected':'')+'>'+esc(u.name)+'</option>';}).join('');
+  const nOpts=store.users.filter(function(u){return u.username!=='admin';}).map(function(u){return'<option value="'+u.id+'"'+(b.nurse===u.id?' selected':'')+'>'+esc(u.name)+'</option>';}).join('');
   return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +'<div class="form-row"><label>寶寶暱稱</label><input id="bn" placeholder="例：小睿寶" value="'+esc(b.name||'')+'"></div>'
     +'<div class="form-row"><label>性別</label><select id="bg"><option value="boy"'+(b.gender==='boy'?' selected':'')+'>男寶</option><option value="girl"'+(b.gender==='girl'?' selected':'')+'>女寶</option></select></div>'

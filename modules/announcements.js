@@ -55,7 +55,7 @@ function renderAnnList(){
     const w=x=>x.infectionLevel==='red'?0:x.infectionLevel==='orange'?1:x.pinned?2:3;
     return w(a)-w(b)||(b.time||'').localeCompare(a.time||'');
   });
-  const allIds=(store.users||[]).map(u=>u.id);
+  const allIds=(store.users||[]).filter(u=>u.username!=='admin').map(u=>u.id);
   const cards=sorted.map((a,i)=>{
     const reads=a.reads||{};
     const infClass=a.infectionLevel==='red'?'infection-red':a.infectionLevel==='orange'?'infection-orange':a.infectionLevel==='yellow'?'infection-yellow':a.pinned?'pinned':'';
@@ -94,7 +94,7 @@ function saveAnn(){
   const title=document.getElementById('annTitle').value.trim();
   const body=document.getElementById('annBody').value.trim();
   if(!title||!body)return;
-  const reads={};store.users.forEach(u=>reads[u.id]=u.id===currentUser.id);
+  const reads={};store.users.forEach(u=>{if(u.username!=='admin')reads[u.id]=u.id===currentUser.id;});
   store.announcements.unshift({id:uid(),title,body,authorId:currentUser.id,
     time:today()+' '+nowTime(),pinned:document.getElementById('annPinned').checked,
     category:document.getElementById('annCat').value,
@@ -137,7 +137,7 @@ function sendEmergency(){
   store.emergencies.push(em);
   store.announcements.unshift({id:uid(),title:'⚡ '+title,body,authorId:currentUser.id,
     time:today()+' '+nowTime(),pinned:true,category:'emergency',infectionLevel:level==='red'?'red':level==='orange'?'orange':level==='yellow'?'yellow':'',
-    reads:Object.fromEntries(store.users.map(u=>[u.id,u.id===currentUser.id]))});
+    reads:Object.fromEntries(store.users.filter(u=>u.username!=='admin').map(u=>[u.id,u.id===currentUser.id]))});
   saveMultiple(['emergencies','announcements']);closeModal();showEmergencyOverlay(em);
 }
 function checkPendingEmergency(){
@@ -153,7 +153,7 @@ function showEmergencyOverlay(em){
   document.getElementById('emTitle').style&&(document.getElementById('emTitle').style.cssText='');
   document.getElementById('emTitle').textContent=em.title;
   document.getElementById('emBody').textContent=em.body;
-  const confirmList=store.users.map(u=>`<div class="em-confirm-item">
+  const confirmList=store.users.filter(u=>u.username!=='admin').map(u=>`<div class="em-confirm-item">
     <div class="em-read-dot" style="background:${em.confirms[u.id]?'var(--green)':'#ccc'}"></div>
     <span style="font-size:12px">${esc(u.name)}</span>
     <span style="font-size:11px;color:var(--faint);margin-left:auto">${em.confirms[u.id]?'已確認':'待確認'}</span>

@@ -166,7 +166,7 @@ function badgeOf(ann: Announcement): { text: string; cls: string } | null {
   if (ann.pinned) return { text: '📌 置頂', cls: 'badge-pin' }
   return null
 }
-function readCount(ann: Announcement) { return users.value.filter((u) => ann.reads[u.id]).length }
+function readCount(ann: Announcement) { return users.value.filter((u) => u.username !== 'admin' && ann.reads[u.id]).length }
 function readPct(ann: Announcement) { return totalUsers.value ? Math.round(readCount(ann) / totalUsers.value * 100) : 0 }
 
 function markRead(ann: Announcement) {

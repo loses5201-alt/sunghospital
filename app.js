@@ -1904,16 +1904,18 @@ function renderAuditTab(c){
   renderAuditLog(wrap);
 }
 function renderUserStats(c){
-  var total=store.users.length;
-  var active=store.users.filter(function(u){return(u.status||'active')==='active';}).length;
-  var disabled=store.users.filter(function(u){return u.status==='disabled';}).length;
-  var resigned=store.users.filter(function(u){return u.status==='resigned';}).length;
+  // 排除系統管理員（admin），不出現在任何統計
+  var visUsers=store.users.filter(function(u){return u.username!=='admin';});
+  var total=visUsers.length;
+  var active=visUsers.filter(function(u){return(u.status||'active')==='active';}).length;
+  var disabled=visUsers.filter(function(u){return u.status==='disabled';}).length;
+  var resigned=visUsers.filter(function(u){return u.status==='resigned';}).length;
   var byDept=store.departments.map(function(d){
-    var cnt=store.users.filter(function(u){return u.deptId===d.id&&(u.status||'active')==='active';}).length;
+    var cnt=visUsers.filter(function(u){return u.deptId===d.id&&(u.status||'active')==='active';}).length;
     return{name:d.name,cnt:cnt};
   });
   var byJob=[['nurse','護理師'],['doctor','醫師'],['admin','行政'],['it','IT'],['other','其他']].map(function(j){
-    var cnt=store.users.filter(function(u){return u.jobType===j[0]&&(u.status||'active')==='active';}).length;
+    var cnt=visUsers.filter(function(u){return u.jobType===j[0]&&(u.status||'active')==='active';}).length;
     return{label:j[1],cnt:cnt};
   }).filter(function(x){return x.cnt>0;});
   var statCards=[
@@ -2068,6 +2070,7 @@ function renderShiftCalView(){
     var dayShifts = [];
     if(store.dutySchedule){
       store.users.forEach(function(u){
+        if(u.username==='admin') return;
         var sh = store.dutySchedule[u.id] && store.dutySchedule[u.id][ds];
         if(sh && sh !== 'off'){
           dayShifts.push({name:u.name.slice(0,2), sh:sh});
@@ -2340,7 +2343,7 @@ openSettings=function(){
 // ⑦ 績效出勤報表 + 排班建議 patch
 // ════════════════════════════════════════════════════════
 function renderPerformanceSection(){
-  var rows=store.users.filter(function(u){return u.status==='active';}).map(function(u){
+  var rows=store.users.filter(function(u){return u.status==='active'&&u.username!=='admin';}).map(function(u){
     var myDuty=store.dutySchedule&&store.dutySchedule[u.id]
       ?Object.values(store.dutySchedule[u.id]).filter(function(s){return s&&s!=='off';}).length:0;
     var leaves=(store.formRequests||[]).filter(function(f){return f.applicantId===u.id&&f.type==='leave'&&f.status==='approved';}).length;

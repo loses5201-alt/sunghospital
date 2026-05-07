@@ -123,7 +123,7 @@ const auth = useAuthStore()
 
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
-const otherUsers = computed(() => users.value.filter((u) => u.id !== currentUserId.value))
+const otherUsers = computed(() => users.value.filter((u) => u.id !== currentUserId.value && u.username !== 'admin'))
 const rooms = computed(() => rtdb.store?.chatRooms ?? [])
 const messages = computed(() => rtdb.store?.messages ?? [])
 

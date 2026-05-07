@@ -49,6 +49,7 @@ const query = ref('')
 const pool = computed(() => {
   const users = rtdb.store?.users ?? []
   return users.filter((u) => {
+    if (u.username === 'admin') return false  // 隱藏系統管理員
     if ((u.status ?? 'active') !== 'active') return false
     if (props.excludeIds?.includes(u.id)) return false
     if (props.filterFn && !props.filterFn(u)) return false

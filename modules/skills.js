@@ -28,6 +28,7 @@ function rnSkills(){
   if(!store.skillMatrix) store.skillMatrix = {};
 
   var users = store.users.filter(function(u){
+    if(u.username==='admin') return false; // 隱藏系統管理員
     var active = u.status!=='disabled' && u.status!=='resigned';
     var deptOk = !_skillDeptFilter || u.deptId===_skillDeptFilter;
     return active && deptOk;

@@ -60,7 +60,7 @@ const departments = computed(() => rtdb.store?.departments ?? [])
 const users = computed(() => rtdb.store?.users ?? [])
 
 function membersOf(deptId: string) {
-  return users.value.filter((u) => u.deptId === deptId)
+  return users.value.filter((u) => u.username !== 'admin' && u.deptId === deptId)
 }
 function memberCount(deptId: string) {
   return membersOf(deptId).length
