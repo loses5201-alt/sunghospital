@@ -13,6 +13,7 @@ export interface User {
   needsReview?: boolean   // true = 新 Google 用戶，待管理員確認身分
   firstLoginAt?: string   // Google 首次登入時間
   delegateId?: string     // 簽核代理人（不在時可代為簽核此人應審的表單）
+  supervisorId?: string   // 直屬上司（送表單時自動帶入第一階審核人）
 }
 
 export interface AppStore {

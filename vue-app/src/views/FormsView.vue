@@ -295,10 +295,15 @@ const LEAVE_TYPE_LABELS: Record<string, string> = {
 const currentUserId = computed(() => auth.currentUser?.id ?? '')
 const users = computed(() => rtdb.store?.users ?? [])
 
-// 預設帶入主管/管理員為審核人（PeoplePicker 仍可搜尋勾選其他人）
-const defaultApprovers = computed(() =>
-  users.value.filter(u => (u.role === 'admin' || u.role === 'manager') && u.id !== currentUserId.value && (u.status ?? 'active') === 'active').map(u => u.id)
-)
+// 預設審核人：直屬上司（如有）優先，否則帶入所有主管/管理員
+const defaultApprovers = computed(() => {
+  const me = users.value.find(u => u.id === currentUserId.value)
+  if (me?.supervisorId) {
+    const sup = users.value.find(u => u.id === me.supervisorId && (u.status ?? 'active') === 'active')
+    if (sup) return [sup.id]
+  }
+  return users.value.filter(u => (u.role === 'admin' || u.role === 'manager') && u.id !== currentUserId.value && (u.status ?? 'active') === 'active').map(u => u.id)
+})
 
 const forms = computed(() => [...(rtdb.store?.formRequests ?? [])].sort((a, b) => {
   if (a.urgent && !b.urgent) return -1
@@ -369,13 +374,27 @@ const myMonthRejected = computed(() => {
   return forms.value.filter(f => f.applicantId === currentUserId.value && f.status === 'rejected' && (f.createdAt || '').slice(0, 7) === ym).length
 })
 
-const FILTER_TABS = computed(() => [
-  { key: 'all',        label: '全部',       count: 0 },
-  { key: 'mine',       label: '我的申請',   count: 0 },
-  { key: 'my-pending', label: '我送出審核中', count: 0 },
-  { key: 'pending-me', label: '待我審核',   count: pendingMeCount.value },
-  { key: 'overdue',    label: '逾期',       count: overdueCount.value },
-])
+// 下屬送出（我是他們的直屬上司）
+const subordinateIds = computed(() =>
+  users.value.filter(u => u.supervisorId === currentUserId.value).map(u => u.id)
+)
+const subordinateCount = computed(() =>
+  forms.value.filter(f => subordinateIds.value.includes(f.applicantId)).length
+)
+
+const FILTER_TABS = computed(() => {
+  const base = [
+    { key: 'all',        label: '全部',         count: 0 },
+    { key: 'mine',       label: '我的申請',     count: 0 },
+    { key: 'my-pending', label: '我送出審核中', count: 0 },
+    { key: 'pending-me', label: '待我審核',     count: pendingMeCount.value },
+    { key: 'overdue',    label: '逾期',         count: overdueCount.value },
+  ]
+  if (subordinateIds.value.length) {
+    base.push({ key: 'subordinate', label: '下屬送出', count: subordinateCount.value })
+  }
+  return base
+})
 
 const filterKey = ref('all')
 const filtered = computed(() => {
@@ -384,6 +403,7 @@ const filtered = computed(() => {
     case 'my-pending': return forms.value.filter(f => f.applicantId === currentUserId.value && f.status === 'pending')
     case 'pending-me': return forms.value.filter(f => f.status === 'pending' && (isApprover(f) || isApproverViaDelegate(f)))
     case 'overdue':    return forms.value.filter(isFormOverdue)
+    case 'subordinate':return forms.value.filter(f => subordinateIds.value.includes(f.applicantId))
     default:           return forms.value
   }
 })

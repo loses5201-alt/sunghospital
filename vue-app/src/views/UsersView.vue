@@ -163,6 +163,13 @@
             </div>
           </div>
           <div class="form-row">
+            <label>直屬上司 <span class="label-hint">送表單時自動帶入為第一階審核人</span></label>
+            <select v-model="modal.supervisorId">
+              <option value="">（無上司）</option>
+              <option v-for="u in delegateCandidates" :key="u.id" :value="u.id">{{ u.name }}{{ u.title ? ' · ' + u.title : '' }}</option>
+            </select>
+          </div>
+          <div class="form-row">
             <label>簽核代理人 <span class="label-hint">不在時可代為簽核此人應審的表單</span></label>
             <select v-model="modal.delegateId">
               <option value="">（無代理人）</option>
@@ -253,12 +260,12 @@ function resetRules() {
 watch(activeTab, (v) => { if (v === 'rules') loadRules() })
 loadRules()
 
-const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '' })
+const modal = reactive({ open: false, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '', supervisorId: '' })
 const delegateCandidates = computed(() =>
   users.value.filter((u) => u.id !== modal.editId && (u.status ?? 'active') === 'active' && !u.needsReview)
 )
-function openAdd() { Object.assign(modal, { open: true, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '' }) }
-function openEdit(u: User) { Object.assign(modal, { open: true, editId: u.id, name: u.name, username: u.username, email: u.email ?? '', deptId: u.deptId ?? '', title: u.title ?? '', role: u.role, password: '', delegateId: u.delegateId ?? '' }) }
+function openAdd() { Object.assign(modal, { open: true, editId: '', name: '', username: '', email: '', deptId: '', title: '', role: 'member', password: '', delegateId: '', supervisorId: '' }) }
+function openEdit(u: User) { Object.assign(modal, { open: true, editId: u.id, name: u.name, username: u.username, email: u.email ?? '', deptId: u.deptId ?? '', title: u.title ?? '', role: u.role, password: '', delegateId: u.delegateId ?? '', supervisorId: u.supervisorId ?? '' }) }
 function save() {
   if (!modal.name.trim() || !modal.username.trim() || !rtdb.store) return
   if (modal.editId) {
@@ -271,6 +278,7 @@ function save() {
       u.title = modal.title
       u.role = modal.role as User['role']
       u.delegateId = modal.delegateId || undefined
+      u.supervisorId = modal.supervisorId || undefined
       u.needsReview = false  // 管理員確認後清除旗標
     }
   } else {
@@ -279,6 +287,7 @@ function save() {
       email: modal.email, deptId: modal.deptId, title: modal.title,
       role: modal.role as User['role'], password: modal.password, avatar: 'av-a',
       delegateId: modal.delegateId || undefined,
+      supervisorId: modal.supervisorId || undefined,
     })
   }
   saveUsers()

@@ -60,10 +60,17 @@ function suggestApproversByRule(type){
   var n=rule.stages(rule.getCtx());
   var pool=getApproverCandidates();
   var deptId=currentUser.deptId;
-  var s1=pool.filter(function(u){return u.role==='supervisor'&&u.deptId===deptId;})[0]
+  // 優先順序：直屬上司 > 同科主管 > 任一主管 > 有 approveForm 權限的人 > 第一個候選
+  var s1=null;
+  if(currentUser.supervisorId){
+    s1=pool.find(function(u){return u.id===currentUser.supervisorId;});
+  }
+  if(!s1){
+    s1=pool.filter(function(u){return u.role==='supervisor'&&u.deptId===deptId;})[0]
        ||pool.filter(function(u){return u.role==='supervisor';})[0]
        ||pool.filter(function(u){return u.permissions&&u.permissions.approveForm;})[0]
        ||pool[0];
+  }
   if(n===1)return s1?[s1.id]:[''];
   var s2=pool.filter(function(u){return u.role==='admin'&&(!s1||u.id!==s1.id);})[0]
        ||pool.filter(function(u){return !s1||u.id!==s1.id;})[0];
@@ -410,6 +417,9 @@ function renderFormDashboard(all){
   var myMonthApproved=myThisMonth.filter(function(f){return f.status==='approved';}).length;
   var myMonthRejected=myThisMonth.filter(function(f){return f.status==='rejected';}).length;
   var overdueAll=all.filter(isFormOverdue);
+  // 下屬送出的申請（我是他們的直屬上司）
+  var subordinateIds=(store.users||[]).filter(function(u){return u.supervisorId===me;}).map(function(u){return u.id;});
+  var subordinateForms=subordinateIds.length?all.filter(function(f){return subordinateIds.indexOf(f.applicantId)>=0;}):[];
 
   function tile(label,val,sub,clr,key){
     var active=_formFilter===key?' style="outline:2px solid var(--primary);outline-offset:-2px"':'';
@@ -429,7 +439,9 @@ function renderFormDashboard(all){
     +tile('逾期',overdueAll.length,overdueAll.length?'>'+FORM_OVERDUE_HOURS+'h pending':'','var(--red,#e54545)','overdue')
     +'</div>'
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
-    +['all:全部','pending_me:待我審核','my_pending:我送出（審核中）','my_all:我送出（全部）','overdue:逾期'].map(function(s){
+    +(['all:全部','pending_me:待我審核','my_pending:我送出（審核中）','my_all:我送出（全部）','overdue:逾期']
+      .concat(subordinateIds.length?['subordinate:下屬送出（'+subordinateForms.length+'）']:[])
+    ).map(function(s){
       var p=s.split(':'),k=p[0],l=p[1];
       var on=_formFilter===k;
       return '<button class="btn-sm'+(on?' primary':'')+'" style="font-size:12px;padding:4px 10px" onclick="setFormFilter(\''+k+'\')">'+l+'</button>';
@@ -531,6 +543,10 @@ function rnForms(){
   } else if(_formFilter==='overdue'){
     listSrc = all.filter(isFormOverdue);
     sectionLabel = '\u903e\u671f\u7533\u8acb\uff08' + listSrc.length + '\uff09';
+  } else if(_formFilter==='subordinate'){
+    var subIds=(store.users||[]).filter(function(u){return u.supervisorId===me;}).map(function(u){return u.id;});
+    listSrc = all.filter(function(f){ return subIds.indexOf(f.applicantId)>=0; });
+    sectionLabel = '\u4e0b\u5c6c\u9001\u51fa\uff08' + listSrc.length + '\uff09';
   } else {
     listSrc = all;
     sectionLabel = '\u5168\u90e8\u7533\u8acb\uff08' + listSrc.length + '\uff09';
