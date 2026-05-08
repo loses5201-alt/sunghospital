@@ -1593,6 +1593,7 @@ function renderHomePage(c){
     +'<div class="home-quick">'+quickHtml+'</div>'
     +'<div class="home-section">今日概覽</div>'
     +'<div class="home-grid">'+cardsHtml+'</div>'
+    +(typeof renderMyAchievements==='function'?renderMyAchievements():'')
     +'<div class="home-section">本週會議 <span style="font-size:12px;font-weight:400;color:var(--primary);text-transform:none;letter-spacing:0;cursor:pointer" onclick="setPage(\'meetings\')">全部 ›</span></div>'
     +'<div class="home-mtg-list">'+mtgHtml+'</div>'
     +pendHtml

@@ -2526,3 +2526,14 @@ input[type="radio"]{border-radius:50% !important}
 .thanks-emoji-btn{font-size:22px;width:46px;height:46px;border:1.5px solid var(--b1);border-radius:50%;background:var(--surface);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center}
 .thanks-emoji-btn:hover{transform:scale(1.1);border-color:var(--primary)}
 .thanks-emoji-btn.selected{border-color:var(--primary);background:var(--primary-light);box-shadow:0 2px 8px rgba(196,82,122,0.25);transform:scale(1.05)}
+
+/* ── 個人成就卡 ── */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.ach-card{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--b1);border-radius:14px;padding:14px 16px;transition:transform .15s,box-shadow .15s;border-left:3px solid var(--ach-clr,var(--primary));position:relative;overflow:hidden}
+.ach-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,var(--ach-clr,var(--primary)),transparent 70%);opacity:.08;border-radius:50%;transform:translate(15px,-15px);pointer-events:none}
+.ach-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(196,82,122,0.1)}
+.ach-icon{font-size:30px;line-height:1;flex-shrink:0;width:46px;height:46px;background:color-mix(in srgb,var(--ach-clr,var(--primary)) 12%,transparent);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ach-body{flex:1;min-width:0}
+.ach-value{font-size:20px;font-weight:800;color:var(--ach-clr,var(--text));line-height:1.1}
+.ach-label{font-size:13px;color:var(--text);font-weight:600;margin-top:2px}
+.ach-desc{font-size:11px;color:var(--faint);margin-top:2px}
