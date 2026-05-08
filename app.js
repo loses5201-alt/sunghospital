@@ -28,7 +28,7 @@ function _normalizeStoreInner(s) {
   ['meetings','users','departments','shifts','announcements','incidents',
    'emergencies','babies','rooms','formRequests','swapRequests','journals',
    'eduItems','titles','formNotifs','messages','chatRooms','equipment',
-   'patients','sops','inventory','inventoryLogs','skillDefs','leaves'].forEach(function(f) {
+   'patients','sops','inventory','inventoryLogs','skillDefs','leaves','thanks'].forEach(function(f) {
     s[f] = normalizeArr(s[f]);
   });
   // 防禦：補上每筆記錄缺少的關鍵欄位，避免 render 時 crash
@@ -81,6 +81,8 @@ function _normalizeStoreInner(s) {
     b.parentMessages = normalizeArr(b.parentMessages);
     b.responsibleNurses = normalizeArr(b.responsibleNurses);
   });
+  // 感謝牆
+  s.thanks = normalizeArr(s.thanks);
   return s;
 }
 
@@ -714,6 +716,8 @@ var NAV_GROUPS = [
       svg:'<rect x="3" y="4" width="14" height="14" rx="2"/><path d="M7 2v4M13 2v4M3 9h14"/>'},
     { id:'navJournal',  page:'journal',       label:'留言板',
       svg:'<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>'},
+    { id:'navThanks',   page:'thanks',        label:'感謝牆',
+      svg:'<path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>'},
     { id:'navMessages', page:'messages',      label:'站內訊息', badge:'msg',
       svg:'<path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>'}
   ]},
@@ -849,6 +853,7 @@ function setPage(page){
     else if(page==='forms'){hideSidebar();renderPageInMain(renderFormsPage);}
     else if(page==='duty'){hideSidebar();renderPageInMain(renderDutyPage);}
     else if(page==='journal'){hideSidebar();renderPageInMain(renderJournalPage);}
+    else if(page==='thanks'){hideSidebar();renderPageInMain(renderThanksPage);}
     else if(page==='edu'){hideSidebar();renderPageInMain(renderEduPage);}
     else if(page==='home'){hideSidebar();renderPageInMain(renderHomePage);}
     else if(page==='messages'){hideSidebar();renderPageInMain(renderMessagesPage);}
