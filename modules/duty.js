@@ -31,6 +31,7 @@ function renderDutyPage(c){
     +'<div class="users-tab" id="dtab_month" onclick="setDutyTab(\'month\')">月曆</div>'
     +'<div class="users-tab" id="dtab_mine"  onclick="setDutyTab(\'mine\')">我的班表</div>'
     +'<div class="users-tab" id="dtab_swap"  onclick="setDutyTab(\'swap\')">換班申請<span id="swapPendBadge"></span></div>'
+    +'<div class="users-tab" id="dtab_radar" onclick="setDutyTab(\'radar\')">📡 接班雷達</div>'
     +'<div class="users-tab" id="dtab_stats" onclick="setDutyTab(\'stats\')">排班統計</div>'
     +'</div>'
     +'<div class="admin-content" id="dutyC"></div></div>';
@@ -39,7 +40,7 @@ function renderDutyPage(c){
 
 function setDutyTab(tab){
   _dutyTab=tab;
-  ['week','month','mine','swap','stats'].forEach(function(t){
+  ['week','month','mine','swap','radar','stats'].forEach(function(t){
     var el=document.getElementById('dtab_'+t);
     if(el)el.className='users-tab'+(t===tab?' active':'');
   });
@@ -62,6 +63,7 @@ function rnDuty(){
   else if(_dutyTab==='month')rnDutyMonth(c);
   else if(_dutyTab==='mine')rnDutyMine(c);
   else if(_dutyTab==='swap')rnDutySwap(c);
+  else if(_dutyTab==='radar')rnDutyRadar(c);
   else if(_dutyTab==='stats')rnDutyStats(c);
 }
 
@@ -634,6 +636,98 @@ function exportDutyCSV(){
   a.href=URL.createObjectURL(blob);
   a.download='排班表_'+wk[0]+'.csv';
   a.click();
+}
+
+// ════════════════════════════════════════════════════════
+// 接班雷達 — 員工標記「我這天有空可接班」，幫想換班的人快速找到對象
+// ════════════════════════════════════════════════════════
+function _radarRange(){
+  var todayStr=today();
+  var dates=[];
+  for(var i=0;i<14;i++){
+    var dt=new Date(todayStr);dt.setDate(dt.getDate()+i);
+    dates.push(dt.toISOString().slice(0,10));
+  }
+  return dates;
+}
+
+function toggleAvailability(date){
+  if(!store.dutyAvailability)store.dutyAvailability={};
+  if(!store.dutyAvailability[currentUser.id])store.dutyAvailability[currentUser.id]={};
+  var cur=store.dutyAvailability[currentUser.id][date];
+  if(cur)delete store.dutyAvailability[currentUser.id][date];
+  else store.dutyAvailability[currentUser.id][date]=true;
+  saveCollection('dutyAvailability');
+  rnDuty();
+}
+
+function rnDutyRadar(c){
+  if(!store.dutyAvailability)store.dutyAvailability={};
+  var dates=_radarRange();
+  var me=currentUser.id;
+  var myAv=store.dutyAvailability[me]||{};
+
+  // 統計每天有空的人
+  var dayMap={};
+  dates.forEach(function(d){dayMap[d]=[];});
+  Object.keys(store.dutyAvailability).forEach(function(uid2){
+    if(uid2===me)return;
+    var u=store.users.find(function(x){return x.id===uid2;});
+    if(!u||u.status==='disabled'||u.status==='resigned'||u.username==='admin')return;
+    var av=store.dutyAvailability[uid2]||{};
+    dates.forEach(function(d){
+      if(av[d])dayMap[d].push(uid2);
+    });
+  });
+
+  var intro='<div style="background:linear-gradient(135deg,#f0f7ff,#e8eef9);border:1px solid #c8d8ec;border-radius:12px;padding:14px 18px;margin-bottom:18px;font-size:13px;line-height:1.7">'
+    +'<div style="font-weight:800;color:#1558a0;margin-bottom:4px">📡 接班雷達怎麼用</div>'
+    +'<div style="color:#5a6678">標記「我這天有空可接班」讓需要換班的同事一眼找到你。也可以從下方看到誰目前有空，主動連繫他們聊換班。</div>'
+    +'</div>';
+
+  // 我的可接班標記
+  var myCards=dates.map(function(d){
+    var dt=new Date(d);
+    var weekday=['日','一','二','三','四','五','六'][dt.getDay()];
+    var sh=(store.dutySchedule[me]&&store.dutySchedule[me][d])||'off';
+    var hasShift=sh!=='off';
+    var marked=!!myAv[d];
+    var bg=marked?'background:linear-gradient(135deg,#d8f0e0,#b8e0c8);color:#0d4a30;border-color:#1a6645':(hasShift?'background:#fef3c7;color:#7a4a00;border-color:#f0c040':'background:var(--surface);border-color:var(--b1)');
+    var subText=hasShift?(SHINFO[sh]||SHINFO.off).l:(marked?'✓ 已標記有空':'點擊標記');
+    return '<div onclick="toggleAvailability(\''+d+'\')" '
+      +'style="cursor:pointer;border:1.5px solid;'+bg+';border-radius:10px;padding:10px 8px;text-align:center;transition:transform .1s" '
+      +'onmouseover="this.style.transform=\'translateY(-2px)\'" '
+      +'onmouseout="this.style.transform=\'\'">'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:2px">'+(d.slice(5))+' '+weekday+'</div>'
+      +'<div style="font-size:13px;font-weight:700">'+subText+'</div>'
+      +'</div>';
+  }).join('');
+
+  // 全院誰有空
+  var radarCards=dates.map(function(d){
+    var people=dayMap[d];
+    if(!people.length)return '';
+    var dt=new Date(d);
+    var weekday=['日','一','二','三','四','五','六'][dt.getDay()];
+    var nameChips=people.map(function(uid2){
+      var u=store.users.find(function(x){return x.id===uid2;});
+      var dept=(typeof userDept==='function')?userDept(uid2):'';
+      return '<span style="background:#fff;border:1px solid var(--b2);border-radius:99px;padding:5px 12px;font-size:12px;display:inline-flex;align-items:center;gap:6px">'
+        +'<span style="font-weight:700">'+esc(u.name)+'</span>'
+        +(dept?'<span style="color:var(--faint);font-size:11px">'+esc(dept)+'</span>':'')
+        +'</span>';
+    }).join(' ');
+    return '<div style="background:var(--surface);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+      +'<div style="font-size:12px;color:var(--primary-dark);font-weight:700;margin-bottom:6px">'+fmtDate(d)+' '+weekday+' · 共 '+people.length+' 人有空</div>'
+      +'<div>'+nameChips+'</div>'
+      +'</div>';
+  }).filter(Boolean).join('');
+
+  c.innerHTML=intro
+    +'<div class="sec-label">我的可接班時段（點擊切換 · 兩週內）</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:24px">'+myCards+'</div>'
+    +'<div class="sec-label">📡 目前有空的同事</div>'
+    +(radarCards||'<div style="text-align:center;padding:40px 20px;color:var(--faint);font-size:13px;background:var(--s2);border-radius:10px">目前還沒有同事標記可接班 — 你可以先標記自己，讓需要換班的人看到你</div>');
 }
 
 // ════════════════════════════════════════════════════════

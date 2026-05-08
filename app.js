@@ -83,6 +83,8 @@ function _normalizeStoreInner(s) {
   });
   // 感謝牆
   s.thanks = normalizeArr(s.thanks);
+  // 接班雷達可用性（object，非陣列）
+  if(!s.dutyAvailability || typeof s.dutyAvailability !== 'object' || Array.isArray(s.dutyAvailability)) s.dutyAvailability = {};
   return s;
 }
 
