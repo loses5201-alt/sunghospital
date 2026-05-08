@@ -77,6 +77,10 @@ function _normalizeStoreInner(s) {
   s.equipment.forEach(function(eq) {
     eq.comments = normalizeArr(eq.comments);
   });
+  s.babies.forEach(function(b) {
+    b.parentMessages = normalizeArr(b.parentMessages);
+    b.responsibleNurses = normalizeArr(b.responsibleNurses);
+  });
   return s;
 }
 
